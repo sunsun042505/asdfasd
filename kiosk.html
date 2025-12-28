@@ -761,7 +761,7 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
     // 클릭하면 라벨 페이지 열기
     box.querySelectorAll(".item").forEach(el => {
       el.style.cursor = "pointer";
-      el.onclick = () => {
+      el.onclick = async () => {
         const wb = (el.querySelector(".mono")?.textContent || "").trim();
         if(!wb) return;
         // try to find full record for payload
