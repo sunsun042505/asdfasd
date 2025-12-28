@@ -402,6 +402,22 @@
             <button class="btn" id="s_mode_handover">고객전달</button>
           </div>
 
+          <div class="card" style="margin-top:12px;">
+            <div style="font-weight:900; font-size:14px;">배송조회(점포)</div>
+            <div class="sub">운송장 번호로 실시간 조회</div>
+            <div style="height:10px;"></div>
+            <div class="row" style="grid-template-columns: 2fr 1fr;">
+              <div>
+                <label>운송장 번호</label>
+                <input id="s_trackWaybill" class="mono" placeholder="18자리 운송장" />
+              </div>
+              <div style="align-self:end;">
+                <button class="btn" id="s_trackSearch" type="button">배송조회</button>
+              </div>
+            </div>
+            <div class="card" id="s_trackResult" style="display:none; margin-top:10px;"></div>
+          </div>
+
           <div id="s_acceptWrap">
 
 
@@ -494,10 +510,11 @@
           <div style="height:12px;"></div>
           <div class="row" style="grid-template-columns:1fr 1fr; margin-top:6px;">
             <button class="btn" id="c_mode_domestic">국내택배 기사</button>
+            <button class="btn" id="c_mode_intl">국제택배 기사</button>
             <button class="btn" id="c_mode_economy">반값택배 기사</button>
           </div>
           <div class="hint" style="margin-top:8px;">
-            • 로그인은 코드만으로 가능. 단, 기사 구분이 다르면 자동으로 맞는 화면으로 전환돼.
+            • 로그인은 코드만으로 가능. 단, 기사 구분이 다르면 “국내/국제/반값” 중 맞는 화면으로 전환돼.
           </div>
 
 
@@ -514,7 +531,8 @@
             <div>
               <label>기사 구분(등록 시 선택)</label>
               <select id="c_role">
-                <option value="DOMESTIC">국내/국제/반품</option>
+                <option value="DOMESTIC">국내/반품</option>
+                <option value="INTERNATIONAL">국제택배</option>
                 <option value="ECONOMY_CVS">반값택배</option>
               </select>
             </div>
@@ -597,7 +615,39 @@
             <div class="hint">• 순서(추천): 기사수거 → 서브터미널도착 → 서브터미널출발 → 허브도착 → 허브출발 → 배송지터미널도착 → 배송출발 → 배송완료</div>
           </div>
 
-          <div id="c_economyOps" style="display:none; margin-top:10px;">
+          <div id="c_intlOps" style="display:none; margin-top:10px;">
+            <div style="font-weight:900; font-size:13px;">항공 처리(국제택배)</div>
+
+            <div class="row" style="grid-template-columns: 2fr 1fr; margin-top:8px;">
+              <div>
+                <label>항공사 추가</label>
+                <input id="c_airlineName" placeholder="예: 대한항공" />
+              </div>
+              <div style="align-self:end;">
+                <button class="btn" id="c_addAirline" type="button">추가</button>
+              </div>
+            </div>
+
+            <div class="row" style="grid-template-columns:1fr; margin-top:8px;">
+              <div>
+                <label>항공사 선택</label>
+                <select id="c_airlineSelect"></select>
+              </div>
+            </div>
+
+            <div class="row" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+              <button class="btn" id="c_btn_airPrep" type="button">비행기 이륙 준비</button>
+              <button class="btn" id="c_btn_airDepart" type="button">출발</button>
+            </div>
+            <div class="row" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+              <button class="btn" id="c_btn_countryArrive" type="button">국가 도착</button>
+              <button class="btn" id="c_btn_addrDelivered" type="button">주소지 배송완료</button>
+            </div>
+
+            <div class="hint">• 순서(추천): 배송지 터미널 도착 → 비행기 이륙 준비 → 출발 → 국가 도착 → 주소지 배송완료</div>
+          </div>
+
+          <div id="c_economyOps" style="display:none; margin-top:10px;"> style="display:none; margin-top:10px;">
             <div style="font-weight:900; font-size:13px;">센터 처리(반값택배)</div>
 
             <div class="row" style="grid-template-columns: 2fr 1fr; margin-top:8px;">
@@ -647,6 +697,7 @@
     COURIERS: "DELIVERY_COURIERS_V1",
     CENTERS: "DELIVERY_CENTERS_V1",
     TERMINALS: "DELIVERY_TERMINALS_V1",
+    AIRLINES: "DELIVERY_AIRLINES_V1",
     SESSION: "DELIVERY_SESSION_V1" // session remains local on purpose
   };
 
@@ -818,6 +869,12 @@
     if(s === "ARRIVED_DEST_TERMINAL") return "배송지터미널도착";
     if(s === "DELIVERY_STARTED") return "배송출발";
     if(s === "DELIVERED") return "배송완료";
+
+    // 국제 항공
+    if(s === "AIRLINE_PREP") return "항공준비";
+    if(s === "AIRLINE_DEPARTED") return "항공출발";
+    if(s === "COUNTRY_ARRIVED") return "국가도착";
+    if(s === "DELIVERED_ADDRESS") return "주소지배송완료";
 
     return s || "-";
   }
@@ -1106,6 +1163,47 @@
     `;
   };
 
+  // STORE: tracking (실시간)
+  $("s_trackSearch")?.addEventListener("click", async () => {
+    const wb = ($("s_trackWaybill")?.value || "").trim();
+    if(!wb){ alert("운송장 번호를 입력해줘!"); return; }
+    const rec = await findByWaybill(wb);
+    $("s_trackResult").style.display = "";
+    if(!rec){
+      $("s_trackResult").innerHTML = `<div class="err">등록된 운송장이 아님</div>`;
+      return;
+    }
+    const p = pkgSummary(rec);
+    const events = renderEvents(rec);
+    const historyHtml = events.map(e => `
+      <div class="item">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+          <div style="font-weight:800;">${escapeHtml(e.place || "-")} ${escapeHtml(e.message || "-")}</div>
+          <div class="mono" style="color:var(--muted); font-size:12px;">${escapeHtml(e.at || "-")}</div>
+        </div>
+      </div>
+    `).join("");
+
+    $("s_trackResult").innerHTML = `
+      <div class="ok">조회 성공</div>
+      <div class="mono" style="margin-top:8px; white-space:pre-wrap; line-height:1.45;">
+운송장: ${escapeHtml(rec.waybillNo)}
+유형: ${escapeHtml(TYPE_LABEL[rec.type] || rec.type)}
+상태: ${escapeHtml(statusLabel(rec))}
+접수지점: ${escapeHtml(rec.storeName || "-")}
+도착점포: ${escapeHtml(rec.destStoreName || "-")}
+주소/비고: ${escapeHtml(p.addr)}
+무게(kg): ${escapeHtml(p.w)}
+종류: ${escapeHtml(p.kind)}${rec.type==="INTERNATIONAL" ? `\n국가: ${escapeHtml(p.country || "-")}` : ""}
+      </div>
+
+      <div style="height:10px;"></div>
+      <div style="font-weight:900; font-size:13px;">지금까지의 배송정보</div>
+      <div class="list" style="margin-top:8px;">${historyHtml || `<div class="item"><div style="color:var(--muted)">히스토리가 없어.</div></div>`}</div>
+    `;
+  });
+
+
   // ---------- STORE: register/login/session ----------
   async function getStores(){ return await apiGet(STORAGE_KEYS.STORES, []); }
   async function saveStores(arr){ await apiSet(STORAGE_KEYS.STORES, arr); }
@@ -1344,15 +1442,20 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
   var courierMode = "DOMESTIC";
   function updateCourierModeUI(){
     $("c_mode_domestic").classList.toggle("primary", courierMode==="DOMESTIC");
+    $("c_mode_intl").classList.toggle("primary", courierMode==="INTERNATIONAL");
     $("c_mode_economy").classList.toggle("primary", courierMode==="ECONOMY_CVS");
     $("c_mode_domestic").classList.toggle("btn", true);
+    $("c_mode_intl").classList.toggle("btn", true);
     $("c_mode_economy").classList.toggle("btn", true);
 
-    if($("c_domesticOps")) $("c_domesticOps").style.display = (courierMode==="DOMESTIC") ? "" : "none";
+    const showDomestic = (courierMode==="DOMESTIC" || courierMode==="INTERNATIONAL");
+    if($("c_domesticOps")) $("c_domesticOps").style.display = showDomestic ? "" : "none";
+    if($("c_intlOps")) $("c_intlOps").style.display = (courierMode==="INTERNATIONAL") ? "" : "none";
     if($("c_economyOps")) $("c_economyOps").style.display = (courierMode==="ECONOMY_CVS") ? "" : "none";
   }
-  $("c_mode_domestic").onclick = () => { courierMode="DOMESTIC"; updateCourierModeUI(); };
-  $("c_mode_economy").onclick = () => { courierMode="ECONOMY_CVS"; updateCourierModeUI(); };
+  $("c_mode_domestic").onclick = () => { courierMode="DOMESTIC"; updateCourierModeUI(); void renderCourierLists(); };
+  $("c_mode_intl").onclick = () => { courierMode="INTERNATIONAL"; updateCourierModeUI(); void renderCourierLists(); };
+  $("c_mode_economy").onclick = () => { courierMode="ECONOMY_CVS"; updateCourierModeUI(); void renderCourierLists(); };
 
   updateCourierModeUI();
 
@@ -1554,6 +1657,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
   $("c_btn_deliveryStart")?.addEventListener("click", async () => {
     await withSelectedRecDomestic(async (rec) => {
       if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(rec.type === "INTERNATIONAL"){ alert("국제택배는 항공 처리로 진행해줘!"); throw new Error("stop"); }
       if(rec.status !== "ARRIVED_DEST_TERMINAL"){ alert("배송지 터미널 도착 이후에 가능"); throw new Error("stop"); }
       const term = rec.destTerminalName || ($("c_terminalSelect")?.value || "").trim();
       if(!term){ alert("터미널을 선택해줘!"); throw new Error("stop"); }
@@ -1566,6 +1670,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
   $("c_btn_delivered")?.addEventListener("click", async () => {
     await withSelectedRecDomestic(async (rec) => {
       if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(rec.type === "INTERNATIONAL"){ alert("국제택배는 항공 처리로 진행해줘!"); throw new Error("stop"); }
       if(rec.status !== "DELIVERY_STARTED"){ alert("배송출발 이후에 가능"); throw new Error("stop"); }
       const sess = loadSession();
       const courier = await courierByCode(sess.courier.code);
@@ -1579,6 +1684,85 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
 
   // init terminal select
   refreshTerminalSelect();
+
+  // Airlines (KV) - 국제택배 기사 흐름
+  async function getAirlines(){ return await apiGet(STORAGE_KEYS.AIRLINES, []); }
+  async function setAirlines(arr){ await apiSet(STORAGE_KEYS.AIRLINES, arr); }
+
+  async function refreshAirlineSelect(){
+    const arr = (await getAirlines()) || [];
+    const sel = $("c_airlineSelect");
+    if(!sel) return;
+    const safe = arr.filter(x => typeof x === "string" && x.trim());
+    sel.innerHTML = safe.length
+      ? safe.map(a => `<option value="${escapeAttr(a)}">${escapeHtml(a)}</option>`).join("")
+      : `<option value="">(항공사 없음)</option>`;
+  }
+
+  $("c_addAirline")?.addEventListener("click", async () => {
+    const name = ($("c_airlineName")?.value || "").trim();
+    if(!name){ alert("항공사명을 입력해줘!"); return; }
+    const arr = (await getAirlines()) || [];
+    if(!arr.includes(name)) arr.push(name);
+    await setAirlines(arr);
+    $("c_airlineName").value = "";
+    await refreshAirlineSelect();
+    alert("항공사 추가 완료!");
+  });
+
+  async function withSelectedRecIntl(fn){
+    if(!selectedWaybill){ alert("운송장을 먼저 선택해줘!"); return; }
+    const rec = await findByWaybill(selectedWaybill);
+    if(!rec){ alert("내역이 없어!"); return; }
+    if(rec.type !== "INTERNATIONAL"){ alert("국제택배만 가능"); return; }
+    await fn(rec);
+    await upsertRes(rec);
+    await renderCourierLists();
+  }
+
+  $("c_btn_airPrep")?.addEventListener("click", async () => {
+    await withSelectedRecIntl(async (rec) => {
+      if(rec.status !== "ARRIVED_DEST_TERMINAL"){ alert("배송지 터미널 도착 이후에 가능"); throw new Error("stop"); }
+      const air = ($("c_airlineSelect")?.value || "").trim();
+      if(!air){ alert("항공사를 먼저 추가/선택해줘!"); throw new Error("stop"); }
+      rec.status = "AIRLINE_PREP";
+      rec.airlineName = air;
+      rec.airPrepAt = nowStr();
+      pushEvent(rec, air, "비행기 이륙 준비중입니다", rec.airPrepAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_airDepart")?.addEventListener("click", async () => {
+    await withSelectedRecIntl(async (rec) => {
+      if(rec.status !== "AIRLINE_PREP"){ alert("비행기 이륙 준비 이후에 가능"); throw new Error("stop"); }
+      const air = rec.airlineName || ($("c_airlineSelect")?.value || "").trim();
+      if(!air){ alert("항공사를 선택해줘!"); throw new Error("stop"); }
+      rec.status = "AIRLINE_DEPARTED";
+      rec.airDepartAt = nowStr();
+      pushEvent(rec, air, "출발하였습니다", rec.airDepartAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_countryArrive")?.addEventListener("click", async () => {
+    await withSelectedRecIntl(async (rec) => {
+      if(rec.status !== "AIRLINE_DEPARTED"){ alert("출발 이후에 가능"); throw new Error("stop"); }
+      rec.status = "COUNTRY_ARRIVED";
+      rec.countryArrivedAt = nowStr();
+      const country = rec.country || (pkgSummary(rec).country || "도착국가");
+      pushEvent(rec, country, "국가 도착하였습니다", rec.countryArrivedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_addrDelivered")?.addEventListener("click", async () => {
+    await withSelectedRecIntl(async (rec) => {
+      if(rec.status !== "COUNTRY_ARRIVED"){ alert("국가 도착 이후에 가능"); throw new Error("stop"); }
+      rec.status = "DELIVERED_ADDRESS";
+      rec.addrDeliveredAt = nowStr();
+      pushEvent(rec, rec.addr || "주소지", "주소지 배송완료되었습니다", rec.addrDeliveredAt);
+    }).catch(()=>{});
+  });
+
+  refreshAirlineSelect();
 
   // ---------- COURIER: register/login/session ----------
   async function getCouriers(){ return await apiGet(STORAGE_KEYS.COURIERS, []); }
@@ -1596,10 +1780,22 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
       $("courierDash").style.display = "";
       $("courierListCard").style.display = "";
       const c = await courierByCode(sess.courier.code);
-      const modeLabel = (courierMode==="ECONOMY_CVS") ? "반값택배 기사" : "국내택배 기사";
+
+      if(c?.role){
+        courierMode = c.role;
+        updateCourierModeUI();
+      }
+
+      const modeLabel = (courierMode==="ECONOMY_CVS") ? "반값택배 기사" : (courierMode==="INTERNATIONAL" ? "국제택배 기사" : "국내/반품 기사");
       $("c_who").textContent = `로그인: ${c.name} (${c.code}) · ${modeLabel}`;
-      renderCourierLists();
-    }else{
+      void renderCourierLists();
+      return;
+    }
+    // not logged in
+    $("courierAuth").style.display = "";
+    $("courierDash").style.display = "none";
+    $("courierListCard").style.display = "none";
+  }else{
       $("courierAuth").style.display = "";
       $("courierDash").style.display = "none";
       $("courierListCard").style.display = "none";
@@ -1676,15 +1872,39 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     const courier = await courierByCode(sess.courier.code);
     if(!courier) return;
 
+    // If courier role mismatches chosen screen, auto-switch
+    if(courier.role && courierMode !== courier.role){
+      if(courier.role === "ECONOMY_CVS"){
+        courierMode = "ECONOMY_CVS";
+        alert("반값택배 기사입니다. 반값 기사 화면으로 전환할게.");
+      }else if(courier.role === "INTERNATIONAL"){
+        courierMode = "INTERNATIONAL";
+        alert("국제택배 기사입니다. 국제 기사 화면으로 전환할게.");
+      }else{
+        courierMode = "DOMESTIC";
+        alert("국내/반품 기사입니다. 국내 기사 화면으로 전환할게.");
+      }
+      updateCourierModeUI();
+    }
+
     const all = await getReservations();
+
+    const allowEconomy = ["FINAL","PICKED_UP","ARRIVED_COLLECTION_CENTER","ARRIVED_HUB","OUTBOUND_PREP","STORE_DEPARTED"];
+    const allowDomestic = ["FINAL","PICKED_UP","ARRIVED_SUB_TERMINAL","DEPARTED_SUB_TERMINAL","ARRIVED_HUB_TERMINAL","DEPARTED_HUB_TERMINAL","ARRIVED_DEST_TERMINAL","DELIVERY_STARTED"];
+    const allowIntl = ["FINAL","PICKED_UP","ARRIVED_SUB_TERMINAL","DEPARTED_SUB_TERMINAL","ARRIVED_HUB_TERMINAL","DEPARTED_HUB_TERMINAL","ARRIVED_DEST_TERMINAL","AIRLINE_PREP","AIRLINE_DEPARTED","COUNTRY_ARRIVED"];
+
     const statusAllow = (courierMode === "ECONOMY_CVS")
-      ? ["FINAL","PICKED_UP","ARRIVED_COLLECTION_CENTER","ARRIVED_HUB","OUTBOUND_PREP","STORE_DEPARTED"]
-      : ["FINAL","PICKED_UP","ARRIVED_SUB_TERMINAL","DEPARTED_SUB_TERMINAL","ARRIVED_HUB_TERMINAL","DEPARTED_HUB_TERMINAL","ARRIVED_DEST_TERMINAL","DELIVERY_STARTED"];
+      ? allowEconomy
+      : (courierMode === "INTERNATIONAL" ? allowIntl : allowDomestic);
 
     const arr = all
-      .filter(x => x.waybillNo && (statusAllow.includes(x.status) || x.status==="DELIVERED"))
-      .filter(x => (courierMode === "ECONOMY_CVS") ? (x.type === "ECONOMY_CVS") : (x.type !== "ECONOMY_CVS"))
-      .slice(0, 80);
+      .filter(x => x.waybillNo && (statusAllow.includes(x.status) || x.status==="DELIVERED" || x.status==="DELIVERED_ADDRESS" || x.status==="DELIVERED_TO_CUSTOMER"))
+      .filter(x => {
+        if(courierMode === "ECONOMY_CVS") return x.type === "ECONOMY_CVS";
+        if(courierMode === "INTERNATIONAL") return x.type === "INTERNATIONAL";
+        return (x.type !== "ECONOMY_CVS" && x.type !== "INTERNATIONAL");
+      })
+      .slice(0, 100);
 
     const box = $("c_list");
     box.innerHTML = "";
@@ -1720,6 +1940,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
         setSelectedWaybill(wb);
         await refreshCenterSelect();
         await refreshTerminalSelect();
+        await refreshAirlineSelect();
 
         const rec = await findByWaybill(wb);
         if(!rec){ alert("내역 없음"); return; }
