@@ -162,7 +162,19 @@
       font-size:11px;
       white-space:nowrap;
     }
-  </style>
+  
+  /* Modal */
+  .modalOverlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.45);
+    display:flex; align-items:center; justify-content:center;
+    padding:16px; z-index:9999;
+  }
+  .modalBox{ width:min(520px, 100%); max-height:80vh; overflow:auto; }
+  .modalHeader{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .modalTitle{ font-weight:900; font-size:15px; }
+
+</style>
 </head>
 <body>
   <div class="panel">
@@ -269,9 +281,24 @@
             </div>
 
             <div style="grid-column:1/-1">
-              <label>주소/지점명(선택)</label>
-              <input id="c_addr" placeholder="예: 배송지 주소 / 편의점 지점명+주소" />
-            
+              <label id="c_addrLabel">주소(필수)</label>
+              <input id="c_addr" placeholder="예: 배송지 주소" />
+            </div>
+
+            <div id="c_storePickWrap" style="display:none; grid-column:1/-1; margin-top:10px;">
+              <label>반값택배 도착 점포(필수)</label>
+              <div class="row" style="grid-template-columns: 2fr 1fr; align-items:end;">
+                <div>
+                  <input id="c_destStoreName" placeholder="점포조회로 선택" readonly />
+                  <input id="c_destStoreCode" type="hidden" />
+                </div>
+                <div>
+                  <button class="btn" id="c_storeLookup" type="button">점포조회</button>
+                </div>
+              </div>
+              <div class="hint">• 등록된 점포만 표시돼. (점포코드는 숨김)</div>
+            </div>
+
             <div id="c_overseasWrap" style="display:none; grid-column:1/-1; margin-top:10px;">
               <label>해외주소(국제택배 필수)</label>
               <textarea id="c_overseas" placeholder="예: 123 Main St, City, State/Province, Postal Code, Country" style="min-height:70px;"></textarea>
@@ -523,9 +550,44 @@
         </div>
 
         <div class="card" id="courierListCard" style="display:none;">
-          <div style="font-weight:900; font-size:14px;">최종접수 목록(FINAL)</div>
-          <div class="sub">클릭하면 집화 처리</div>
-          <div class="list" id="c_list"></div>
+          <div style="font-weight:900; font-size:14px;">운송장 목록</div>
+          <div class="sub">항목을 선택하면 작업 버튼이 활성화돼.</div>
+
+          <div class="hint" style="margin-top:8px;">선택된 운송장: <span class="mono" id="c_selectedWb">-</span></div>
+
+          <div id="c_economyOps" style="display:none; margin-top:10px;">
+            <div style="font-weight:900; font-size:13px;">센터 처리(반값택배)</div>
+
+            <div class="row" style="grid-template-columns: 2fr 1fr; margin-top:8px;">
+              <div>
+                <label>센터 추가</label>
+                <input id="c_centerName" placeholder="예: 성수집화센터" />
+              </div>
+              <div style="align-self:end;">
+                <button class="btn" id="c_addCenter" type="button">추가</button>
+              </div>
+            </div>
+
+            <div class="row" style="grid-template-columns:1fr; margin-top:8px;">
+              <div>
+                <label>센터 선택</label>
+                <select id="c_centerSelect"></select>
+              </div>
+            </div>
+
+            <div class="row" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+              <button class="btn" id="c_btn_collection" type="button">집화센터 도착</button>
+              <button class="btn" id="c_btn_hub" type="button">허브센터 도착</button>
+            </div>
+            <div class="row" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+              <button class="btn" id="c_btn_outbound" type="button">출고준비</button>
+              <button class="btn" id="c_btn_storeDepart" type="button">점포출발</button>
+            </div>
+
+            <div class="hint">• 순서: 기사수거 → 집화센터도착 → 허브센터도착 → 출고준비 → 점포출발</div>
+          </div>
+
+          <div class="list" id="c_list" style="margin-top:10px;"></div>
         </div>
       </div>
     </div>
@@ -541,6 +603,7 @@
     RES: "DELIVERY_RESERVATIONS_V1",
     STORES: "DELIVERY_STORES_V1",
     COURIERS: "DELIVERY_COURIERS_V1",
+    CENTERS: "DELIVERY_CENTERS_V1",
     SESSION: "DELIVERY_SESSION_V1" // session remains local on purpose
   };
 
@@ -627,6 +690,35 @@
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 
+
+  function ensureEvents(rec){
+    if(!rec.events || !Array.isArray(rec.events)) rec.events = [];
+    return rec.events;
+  }
+
+  function pushEvent(rec, place, message, atOpt){
+    const events = ensureEvents(rec);
+    events.push({ at: atOpt || nowStr(), place: place || "-", message: message || "-" });
+  }
+
+  function renderEvents(rec){
+    const events = (rec.events && Array.isArray(rec.events)) ? rec.events.slice() : [];
+    // If older records have no events, derive from known fields.
+    if(events.length === 0){
+      if(rec.storeAcceptedAt && rec.storeName) events.push({ at: rec.storeAcceptedAt, place: rec.storeName, message: "점포접수 하였습니다" });
+      if(rec.pickedAt && rec.storeName) events.push({ at: rec.pickedAt, place: rec.storeName, message: "기사수거 하였습니다" });
+      if(rec.collectionArrivedAt && rec.collectionCenterName) events.push({ at: rec.collectionArrivedAt, place: rec.collectionCenterName, message: "집화센터에 도착하였습니다" });
+      if(rec.hubArrivedAt) events.push({ at: rec.hubArrivedAt, place: (rec.hubName || "강남허브센터"), message: "허브센터 도착했습니다" });
+      if(rec.outboundPrepAt && rec.outboundCenterName) events.push({ at: rec.outboundPrepAt, place: rec.outboundCenterName, message: "출고센터 배송준비중입니다" });
+      if(rec.storeDepartedAt) events.push({ at: rec.storeDepartedAt, place: rec.destStoreName || rec.storeName || "-", message: "점포출발 했습니다" });
+      if(rec.arrivedAt) events.push({ at: rec.arrivedAt, place: rec.destStoreName || rec.storeName || "-", message: "점포도착하였습니다" });
+      if(rec.deliveredAt) events.push({ at: rec.deliveredAt, place: rec.destStoreName || rec.storeName || "-", message: "고객에게 전달하였습니다" });
+    }
+    // sort by time string if possible
+    events.sort((a,b) => String(a.at||"").localeCompare(String(b.at||"")));
+    return events;
+  }
+
   function makeReserveNo(){
     const d = new Date();
     const y = d.getFullYear();
@@ -661,10 +753,18 @@
   }
 
   function statusLabel(rec){
-    if(rec.status === "PICKED_UP") return "집화완료";
-    if(rec.status === "FINAL") return "점포접수(최종)";
-    if(rec.status === "WAYBILL_ISSUED") return "운송장발급";
-    return "예약";
+    const s = rec.status || "";
+    if(s === "RESERVED") return "예약";
+    if(s === "WAYBILL_ISSUED") return "운송장발급";
+    if(s === "FINAL") return "점포접수";
+    if(s === "PICKED_UP") return "기사수거";
+    if(s === "ARRIVED_COLLECTION_CENTER") return "집화센터도착";
+    if(s === "ARRIVED_HUB") return "허브센터도착";
+    if(s === "OUTBOUND_PREP") return "출고준비";
+    if(s === "STORE_DEPARTED") return "점포출발";
+    if(s === "ARRIVED_STORE") return "점포도착";
+    if(s === "DELIVERED_TO_CUSTOMER") return "고객전달완료";
+    return s || "-";
   }
 
   function pkgSummary(rec){
@@ -727,9 +827,71 @@
     const type = $("c_type").value;
     $("c_overseasWrap").style.display = (type === "INTERNATIONAL") ? "" : "none";
     $("c_economyHint").style.display = (type === "ECONOMY_CVS") ? "" : "none";
+    $("c_storePickWrap").style.display = (type === "ECONOMY_CVS") ? "" : "none";
+
+    // label / placeholder
+    $("c_addrLabel").textContent = (type === "ECONOMY_CVS") ? "추가 메모/상세주소(선택)" : "주소(필수)";
+    $("c_addr").placeholder = (type === "ECONOMY_CVS") ? "예: (선택) 상세주소/비고" : "예: 배송지 주소";
+
+    if(type !== "ECONOMY_CVS"){
+      $("c_destStoreName").value = "";
+      $("c_destStoreCode").value = "";
+    }
   }
   $("c_type").onchange = updateCustomerTypeUI;
   updateCustomerTypeUI();
+
+  // CUSTOMER: store picker (반값택배 도착 점포 선택)
+  async function openStorePicker(){
+    const modal = $("storePickerModal");
+    const list = $("storePickerList");
+    list.innerHTML = `<div class="item"><div style="color:var(--muted)">불러오는 중...</div></div>`;
+    modal.style.display = "flex";
+
+    const stores = await getStores();
+    if(!stores || stores.length === 0){
+      list.innerHTML = `<div class="item"><div class="err">등록된 점포가 없어. (점포 화면에서 점포등록 먼저!)</div></div>`;
+      return;
+    }
+
+    // unique by code
+    const uniq = [];
+    const seen = new Set();
+    stores.forEach(s => {
+      if(!s || !s.code || seen.has(s.code)) return;
+      seen.add(s.code);
+      uniq.push(s);
+    });
+    uniq.sort((a,b) => String(a.name||"").localeCompare(String(b.name||"")));
+
+    list.innerHTML = "";
+    uniq.forEach(s => {
+      const el = document.createElement("div");
+      el.className = "item";
+      el.innerHTML = `
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+          <div style="font-weight:800;">${escapeHtml(s.name || "-")}</div>
+          <button class="btn" type="button">선택</button>
+        </div>
+      `;
+      el.querySelector("button").onclick = () => {
+        $("c_destStoreName").value = s.name || "";
+        $("c_destStoreCode").value = s.code || "";
+        closeStorePicker();
+      };
+      list.appendChild(el);
+    });
+  }
+
+  function closeStorePicker(){
+    $("storePickerModal").style.display = "none";
+  }
+
+  $("c_storeLookup").onclick = () => openStorePicker();
+  $("storePickerClose").onclick = () => closeStorePicker();
+  $("storePickerModal").addEventListener("click", (e) => {
+    if(e.target && e.target.id === "storePickerModal") closeStorePicker();
+  });
 
   function makePickupCode(){
     // 6 chars: A-Z0-9 (avoid confusing ones)
@@ -758,12 +920,26 @@
       alert("받는 사람 이름/연락처도 필수야!");
       return;
     }
-    const addr = $("c_addr").value.trim();
-    if(!addr){
-      alert(($("c_type").value==="ECONOMY_CVS") ? "반값택배는 편의점 주소(지점명+주소)가 필수야!" : "주소는 필수야!");
-      return;
+    let addr = $("c_addr").value.trim();
+    let destStoreName = "";
+    let destStoreCode = "";
+    if(type === "ECONOMY_CVS"){
+      destStoreName = $("c_destStoreName").value.trim();
+      destStoreCode = $("c_destStoreCode").value.trim();
+      if(!destStoreCode || !destStoreName){
+        alert("반값택배는 점포조회로 도착 점포를 선택해야 해!");
+        return;
+      }
+      // 기본 주소는 선택한 점포명. c_addr은 선택(상세메모)
+      addr = destStoreName + (addr ? ` / ${addr}` : "");
+    }else{
+      if(!addr){
+        alert("주소는 필수야!");
+        return;
+      }
     }
-    if($("c_type").value==="INTERNATIONAL"){
+
+    if(type==="INTERNATIONAL"){
       const ov = $("c_overseas").value.trim();
       if(!ov){ alert("국제택배는 해외주소가 필수야!"); return; }
     }
@@ -783,6 +959,17 @@
       sender: { name:sName, phone:sPhone },
       receiver: { name: rName, phone: rPhone },
       addr: addr,
+      destStoreName: (type==="ECONOMY_CVS") ? destStoreName : "",
+      destStoreCode: (type==="ECONOMY_CVS") ? destStoreCode : "",
+      // 배송 단계 기록
+      collectionCenterName: "",
+      collectionArrivedAt: "",
+      hubName: "",
+      hubArrivedAt: "",
+      outboundCenterName: "",
+      outboundPrepAt: "",
+      storeDepartedAt: "",
+      events: [],
       overseasAddr: ($("c_type").value === "INTERNATIONAL") ? ($("c_overseas").value.trim()) : "",
       arrivedAt: "",
       pickupCode: "",
@@ -806,7 +993,7 @@
     `;
   };
 
-  // CUSTOMER: tracking (✅ 상세정보 표시)
+  // CUSTOMER: tracking (✅ 한글 + 히스토리)
   $("t_search").onclick = async () => {
     const wb = $("t_waybill").value.trim();
     if(!wb){
@@ -821,32 +1008,43 @@
     }
 
     const p = pkgSummary(rec);
-    const storeInfo = rec.storeName ? `\n점포: ${rec.storeName} (접수: ${rec.storeAcceptedAt || "-"})` : "";
-    const courierInfo = (rec.status === "PICKED_UP" && rec.courier?.name)
-      ? `\n기사: ${rec.courier.name} (${rec.courier.phone || "-"})\n집화: ${rec.pickedAt || "-"}`
-      : "";
+    const events = renderEvents(rec);
 
-    const arrivedInfo = (rec.status === "ARRIVED_STORE" && rec.storeName)
-      ? `\n도착: ${rec.storeName} (입고: ${rec.arrivedAt || "-"})\n고유번호: ${rec.pickupCode || "-"}\n안내: 점포에 택배가 도착했습니다. 고유번호를 점포에 제시해 주세요.`
-      : "";
-    const deliveredInfo = (rec.status === "DELIVERED_TO_CUSTOMER")
-      ? `\n고객전달 완료: ${rec.deliveredAt || "-"}`
-      : "";
+    const historyHtml = events.map(e => `
+      <div class="item">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+          <div style="font-weight:800;">${escapeHtml(e.place || "-")} ${escapeHtml(e.message || "-")}</div>
+          <div class="mono" style="color:var(--muted); font-size:12px;">${escapeHtml(e.at || "-")}</div>
+        </div>
+      </div>
+    `).join("");
 
-    const pkgInfo =
-`\n주소: ${p.addr}
-무게(kg): ${p.w}
-종류: ${p.kind}` + (rec.type==="INTERNATIONAL" ? `\n국가: ${p.country || "-"}` : "");
+    const extra =
+      (rec.status === "ARRIVED_STORE" && rec.pickupCode)
+        ? `<div class="hint" style="margin-top:10px;">• 점포에 택배가 도착했습니다. 고유번호: <span class="mono">${escapeHtml(rec.pickupCode)}</span> 를 점포에 제시해 주세요.</div>`
+        : "";
+
+    const courierLine = rec.courier?.name ? `${rec.courier.name} (${rec.courier.phone || "-"})` : "-";
 
     $("t_result").innerHTML = `
       <div class="ok">조회 성공</div>
       <div class="mono" style="margin-top:8px; white-space:pre-wrap; line-height:1.45;">
 운송장: ${escapeHtml(rec.waybillNo)}
-유형: ${escapeHtml(TYPE_LABEL[rec.type])}
-예약번호: ${escapeHtml(rec.reserveNo)}
-상태: ${escapeHtml(rec.status)} (${escapeHtml(statusLabel(rec))})
-운송장발급: ${escapeHtml(rec.waybillIssuedAt || "-")}${escapeHtml(storeInfo)}${escapeHtml(courierInfo)}${escapeHtml(pkgInfo)}
+유형: ${escapeHtml(TYPE_LABEL[rec.type] || rec.type)}
+상태: ${escapeHtml(statusLabel(rec))}
+접수지점: ${escapeHtml(rec.storeName || "-")}
+도착점포: ${escapeHtml(rec.destStoreName || "-")}
+기사: ${escapeHtml(courierLine)}
+주소/비고: ${escapeHtml(p.addr)}
+무게(kg): ${escapeHtml(p.w)}
+종류: ${escapeHtml(p.kind)}${rec.type==="INTERNATIONAL" ? `
+국가: ${escapeHtml(p.country || "-")}` : ""}
       </div>
+
+      <div style="height:10px;"></div>
+      <div style="font-weight:900; font-size:13px;">지금까지의 배송정보</div>
+      <div class="list" style="margin-top:8px;">${historyHtml || `<div class="item"><div style="color:var(--muted)">히스토리가 없어.</div></div>`}</div>
+      ${extra}
     `;
   };
 
@@ -999,6 +1197,7 @@ ${detailText(rec)}
     rec.status = "FINAL";
     rec.storeName = sess.store.name;
     rec.storeAcceptedAt = nowStr();
+    pushEvent(rec, sess.store.name, "점포접수 하였습니다", rec.storeAcceptedAt);
     await upsertRes(rec);
 
     const p = pkgSummary(rec);
@@ -1042,12 +1241,14 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     const rec = await findByWaybill(wb);
     if(!rec){ $("s_inboundResult").innerHTML = `<div class="err">등록된 운송장이 아님</div>`; return; }
     if(rec.type !== "ECONOMY_CVS"){ $("s_inboundResult").innerHTML = `<div class="err">반값택배만 입고 처리 가능해!</div>`; return; }
+    if(rec.destStoreCode && rec.destStoreCode !== sess.store.code){ $("s_inboundResult").innerHTML = `<div class="err">이 운송장은 이 점포로 도착하는 건이 아니야.</div>`; return; }
     // allow FINAL or PICKED_UP 등, 입고는 반값택배 흐름상 중간/후반 단계
     rec.status = "ARRIVED_STORE";
-    rec.storeName = sess.store.name;
-    rec.storeCode = sess.store.code;
+    rec.arrivedStoreName = sess.store.name;
+    rec.arrivedStoreCode = sess.store.code;
     rec.arrivedAt = nowStr();
     rec.pickupCode = rec.pickupCode || makePickupCode();
+    pushEvent(rec, sess.store.name, "점포도착하였습니다", rec.arrivedAt);
     await upsertRes(rec);
     $("s_inboundResult").innerHTML = `<div class="ok">입고 완료</div><div class="mono" style="margin-top:8px;">운송장: ${escapeHtml(rec.waybillNo)}\n고유번호: ${escapeHtml(rec.pickupCode)}</div>`;
   }
@@ -1063,11 +1264,12 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     if(!rec){ $("s_handoverResult").innerHTML = `<div class="err">등록된 운송장이 아님</div>`; return; }
     if(rec.type !== "ECONOMY_CVS"){ $("s_handoverResult").innerHTML = `<div class="err">반값택배만 고객전달 가능해!</div>`; return; }
     if(rec.status !== "ARRIVED_STORE"){ $("s_handoverResult").innerHTML = `<div class="err">입고(ARRIVED_STORE) 상태가 아니야.</div>`; return; }
-    if((rec.storeCode || "") !== sess.store.code){ $("s_handoverResult").innerHTML = `<div class="err">이 점포로 입고된 건이 아냐.</div>`; return; }
+    if(((rec.arrivedStoreCode || rec.destStoreCode || "") !== sess.store.code)){ $("s_handoverResult").innerHTML = `<div class="err">이 점포로 입고된 건이 아냐.</div>`; return; }
     if((rec.pickupCode || "").toUpperCase() !== code){ $("s_handoverResult").innerHTML = `<div class="err">고유번호가 달라!</div>`; return; }
 
     rec.status = "DELIVERED_TO_CUSTOMER";
     rec.deliveredAt = nowStr();
+    pushEvent(rec, sess.store.name, "고객에게 전달하였습니다", rec.deliveredAt);
     await upsertRes(rec);
 
     $("s_handoverResult").innerHTML = `<div class="ok">고객전달 완료</div><div class="mono" style="margin-top:8px;">운송장: ${escapeHtml(rec.waybillNo)}\n완료: ${escapeHtml(rec.deliveredAt)}</div>`;
@@ -1087,11 +1289,112 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     $("c_mode_economy").classList.toggle("primary", courierMode==="ECONOMY_CVS");
     $("c_mode_domestic").classList.toggle("btn", true);
     $("c_mode_economy").classList.toggle("btn", true);
+    if($("c_economyOps")) $("c_economyOps").style.display = (courierMode==="ECONOMY_CVS") ? "" : "none";
   }
   $("c_mode_domestic").onclick = () => { courierMode="DOMESTIC"; updateCourierModeUI(); };
   $("c_mode_economy").onclick = () => { courierMode="ECONOMY_CVS"; updateCourierModeUI(); };
 
   updateCourierModeUI();
+
+  // courier selected waybill
+  let selectedWaybill = "";
+  function setSelectedWaybill(wb){
+    selectedWaybill = wb || "";
+    if($("c_selectedWb")) $("c_selectedWb").textContent = selectedWaybill || "-";
+  }
+  setSelectedWaybill("");
+
+  // Centers (KV)
+  async function getCenters(){ return await apiGet(STORAGE_KEYS.CENTERS, []); }
+  async function setCenters(arr){ await apiSet(STORAGE_KEYS.CENTERS, arr); }
+
+  async function refreshCenterSelect(){
+    const centers = (await getCenters()) || [];
+    const sel = $("c_centerSelect");
+    if(!sel) return;
+    const safe = centers.filter(x => typeof x === "string" && x.trim());
+    sel.innerHTML = safe.length
+      ? safe.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join("")
+      : `<option value="">(센터 없음)</option>`;
+  }
+
+  $("c_addCenter")?.addEventListener("click", async () => {
+    const name = ($("c_centerName")?.value || "").trim();
+    if(!name){ alert("센터명을 입력해줘!"); return; }
+    const centers = (await getCenters()) || [];
+    if(!centers.includes(name)) centers.push(name);
+    await setCenters(centers);
+    $("c_centerName").value = "";
+    await refreshCenterSelect();
+    alert("센터 추가 완료!");
+  });
+
+  async function withSelectedRec(fn){
+    if(!selectedWaybill){
+      alert("운송장을 먼저 선택해줘!");
+      return;
+    }
+    const rec = await findByWaybill(selectedWaybill);
+    if(!rec){ alert("내역이 없어!"); return; }
+    await fn(rec);
+    await upsertRes(rec);
+    await renderCourierLists();
+  }
+
+  // Economy: center status buttons
+  $("c_btn_collection")?.addEventListener("click", async () => {
+    await withSelectedRec(async (rec) => {
+      if(rec.type !== "ECONOMY_CVS"){ alert("반값택배만 가능"); throw new Error("stop"); }
+      if(rec.status !== "PICKED_UP"){ alert("기사수거(PICKED_UP) 이후에 가능"); throw new Error("stop"); }
+      const center = ($("c_centerSelect")?.value || "").trim();
+      if(!center){ alert("센터를 먼저 추가/선택해줘!"); throw new Error("stop"); }
+      rec.status = "ARRIVED_COLLECTION_CENTER";
+      rec.collectionCenterName = center;
+      rec.collectionArrivedAt = nowStr();
+      pushEvent(rec, center, "집화센터에 도착하였습니다", rec.collectionArrivedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_hub")?.addEventListener("click", async () => {
+    await withSelectedRec(async (rec) => {
+      if(rec.type !== "ECONOMY_CVS"){ alert("반값택배만 가능"); throw new Error("stop"); }
+      if(!(rec.status === "ARRIVED_COLLECTION_CENTER" || rec.status === "PICKED_UP")){
+        alert("집화센터도착 이후에 가능"); throw new Error("stop");
+      }
+      rec.status = "ARRIVED_HUB";
+      rec.hubName = "강남허브센터";
+      rec.hubArrivedAt = nowStr();
+      pushEvent(rec, rec.hubName, "허브센터 도착했습니다", rec.hubArrivedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_outbound")?.addEventListener("click", async () => {
+    await withSelectedRec(async (rec) => {
+      if(rec.type !== "ECONOMY_CVS"){ alert("반값택배만 가능"); throw new Error("stop"); }
+      if(rec.status !== "ARRIVED_HUB"){ alert("허브센터 도착 이후에 가능"); throw new Error("stop"); }
+      const center = ($("c_centerSelect")?.value || "").trim();
+      if(!center){ alert("출고센터를 선택해줘!"); throw new Error("stop"); }
+      rec.status = "OUTBOUND_PREP";
+      rec.outboundCenterName = center;
+      rec.outboundPrepAt = nowStr();
+      pushEvent(rec, center, "출고센터 배송준비중입니다", rec.outboundPrepAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_storeDepart")?.addEventListener("click", async () => {
+    await withSelectedRec(async (rec) => {
+      if(rec.type !== "ECONOMY_CVS"){ alert("반값택배만 가능"); throw new Error("stop"); }
+      if(rec.status !== "OUTBOUND_PREP"){ alert("출고준비 이후에 가능"); throw new Error("stop"); }
+      const dest = rec.destStoreName || "-";
+      rec.status = "STORE_DEPARTED";
+      rec.storeDepartedAt = nowStr();
+      pushEvent(rec, dest, "점포출발 했습니다", rec.storeDepartedAt);
+    }).catch(()=>{});
+  });
+
+  // init center select
+  refreshCenterSelect();
+
   // ---------- COURIER: register/login/session ----------
   async function getCouriers(){ return await apiGet(STORAGE_KEYS.COURIERS, []); }
   async function saveCouriers(arr){ await apiSet(STORAGE_KEYS.COURIERS, arr); }
@@ -1188,34 +1491,40 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     const courier = await courierByCode(sess.courier.code);
     if(!courier) return;
 
-    const arr = (await getReservations())
-      .filter(x => x.waybillNo && x.status === "FINAL")
+    const all = await getReservations();
+    const statusAllow = (courierMode === "ECONOMY_CVS")
+      ? ["FINAL","PICKED_UP","ARRIVED_COLLECTION_CENTER","ARRIVED_HUB","OUTBOUND_PREP","STORE_DEPARTED"]
+      : ["FINAL"];
+
+    const arr = all
+      .filter(x => x.waybillNo && statusAllow.includes(x.status))
       .filter(x => (courierMode === "ECONOMY_CVS") ? (x.type === "ECONOMY_CVS") : (x.type !== "ECONOMY_CVS"))
-      .slice(0, 50);
+      .slice(0, 80);
 
     const box = $("c_list");
     box.innerHTML = "";
     if(arr.length === 0){
-      box.innerHTML = `<div class="item"><div style="color:var(--muted)">FINAL 내역이 없어.</div></div>`;
+      box.innerHTML = `<div class="item"><div style="color:var(--muted)">표시할 내역이 없어.</div></div>`;
       return;
     }
 
     arr.forEach(r => {
       const p = pkgSummary(r);
       const detailLine = `주소: ${p.addr} · 무게: ${p.w}kg · 종류: ${p.kind}` + (r.type==="INTERNATIONAL" ? ` · 국가: ${p.country || "-"}` : "");
+      const selected = (selectedWaybill && selectedWaybill === r.waybillNo);
       box.innerHTML += `
-        <div class="item" data-wb="${escapeAttr(r.waybillNo)}">
+        <div class="item" data-wb="${escapeAttr(r.waybillNo)}" style="${selected ? "outline:2px solid rgba(46,255,144,.35);" : ""}">
           <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
             <span class="tag mono">${escapeHtml(r.waybillNo)}</span>
-            <span class="tag">${escapeHtml(TYPE_LABEL[r.type])} · FINAL</span>
+            <span class="tag">${escapeHtml(TYPE_LABEL[r.type] || r.type)} · ${escapeHtml(statusLabel(r))}</span>
           </div>
           <div style="margin-top:6px; color:var(--muted); font-size:12px;">
-            점포: ${escapeHtml(r.storeName || "-")} · 접수: ${escapeHtml(r.storeAcceptedAt || "-")}
+            접수지점: ${escapeHtml(r.storeName || "-")} · 도착점포: ${escapeHtml(r.destStoreName || "-")}
           </div>
           <div style="margin-top:6px; color:var(--muted); font-size:12px;">
             ${escapeHtml(detailLine)}
           </div>
-          <div class="hint">클릭하면 “집화” 처리됨</div>
+          <div class="hint">${(r.status==="FINAL") ? "클릭하면 기사수거 처리됨" : "클릭하면 선택됨"}</div>
         </div>
       `;
     });
@@ -1223,31 +1532,37 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     box.querySelectorAll(".item").forEach(el => {
       el.onclick = async () => {
         const wb = el.dataset.wb;
+        setSelectedWaybill(wb);
+        await refreshCenterSelect();
+
         const rec = await findByWaybill(wb);
         if(!rec){ alert("내역 없음"); return; }
-        if(rec.status !== "FINAL"){ alert("FINAL만 집화 가능"); return; }
-        if((courierMode === "ECONOMY_CVS" && rec.type !== "ECONOMY_CVS") || (courierMode !== "ECONOMY_CVS" && rec.type === "ECONOMY_CVS")){
-          alert((courierMode==="ECONOMY_CVS") ? "반값택배 기사 화면에서는 반값택배만 집화할 수 있어!" : "국내택배 기사 화면에서는 반값택배를 집화할 수 없어!");
-          return;
-        }
 
-        const msg =
-`집화 처리할까?
+        // Both modes: if FINAL, allow pickup.
+        if(rec.status === "FINAL"){
+          const msg =
+`기사수거(집화) 처리할까?
 
 운송장: ${rec.waybillNo}
 유형: ${TYPE_LABEL[rec.type]}
-점포: ${rec.storeName || "-"}
+접수지점: ${rec.storeName || "-"}
 ${detailText(rec)}
 `;
-        if(!confirm(msg)) return;
+          if(!confirm(msg)) return;
 
-        rec.status = "PICKED_UP";
-        rec.pickedAt = nowStr();
-        rec.courier = { code: courier.code, name: courier.name, phone: courier.phone };
-        await upsertRes(rec);
+          rec.status = "PICKED_UP";
+          rec.pickedAt = nowStr();
+          rec.courier = { code: courier.code, name: courier.name, phone: courier.phone };
+          pushEvent(rec, rec.storeName || "-", "기사수거 하였습니다", rec.pickedAt);
+          await upsertRes(rec);
 
-        alert(`집화 완료!\n운송장: ${wb}\n기사: ${courier.name} (${courier.phone})`);
-        renderCourierLists();
+          alert(`기사수거 완료!\n운송장: ${wb}\n기사: ${courier.name} (${courier.phone || "-"})`);
+          await renderCourierLists();
+          return;
+        }
+
+        // just selection
+        await renderCourierLists();
       };
     });
   }
@@ -1276,5 +1591,19 @@ ${detailText(rec)}
   show("home");
   setCustTab("reserve");
 </script>
+
+  <!-- Store Picker Modal -->
+  <div id="storePickerModal" class="modalOverlay" style="display:none;">
+    <div class="card modalBox">
+      <div class="modalHeader">
+        <div class="modalTitle">점포 선택</div>
+        <button class="btn ghost" id="storePickerClose" type="button">닫기</button>
+      </div>
+      <div class="sub" style="margin-top:6px;">등록된 점포만 표시돼. (점포코드는 숨김)</div>
+      <div style="height:10px;"></div>
+      <div class="list" id="storePickerList"></div>
+    </div>
+  </div>
+
 </body>
 </html>
