@@ -158,6 +158,19 @@
   </style>
 </head>
 <body>
+  <div id="storeGate" style="position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:9999;">
+    <div class="card" style="max-width:520px; width:100%;">
+      <div style="font-weight:900; font-size:16px;">점포코드 입력</div>
+      <div class="sub">이 키오스크는 점포코드 확인 후 사용 가능</div>
+      <div style="height:12px;"></div>
+      <label>점포코드</label>
+      <input id="kg_storeCode" class="mono" placeholder="예: STORE-001" />
+      <div style="height:10px;"></div>
+      <button class="btn primary" id="kg_enter">입장</button>
+      <div class="card" id="kg_err" style="display:none; margin-top:12px;"></div>
+    </div>
+  </div>
+
   <div class="panel">
     <header>
       <div class="brand">
@@ -213,6 +226,7 @@
       <div id="view_walkin" style="display:none;">
         <div class="card" style="margin-top:0;">
           <div style="font-weight:900; font-size:16px;" id="walkinTitle">현장접수</div>
+          <div class="sub" id="k_storeBadge" style="font-weight:700;"></div>
           <div class="sub" id="walkinSub">회원/비회원 선택 → 필수 입력 → 운송장 즉시 발급</div>
 
           <div class="twoBtns">
@@ -275,7 +289,11 @@
             <div id="intlBlock" style="grid-column:1/-1; display:none;">
               <label>국가/지역(국제택배) <span class="req">*</span></label>
               <input id="w_country" placeholder="예: Japan / USA" />
-            </div>
+            
+              <div style="height:8px;"></div>
+              <label>해외주소 <span class="req">*</span></label>
+              <textarea id="w_overseas" placeholder="예: 123 Main St, City, State/Province, Postal Code"></textarea>
+</div>
 
             <div style="grid-column:1/-1">
               <label>메모(선택)</label>
@@ -336,7 +354,34 @@
 
   // ==== Persistent storage (Netlify Functions + Blobs) ====
   // Must match index.html keys
-  const STORAGE_KEYS = { RES: "DELIVERY_RESERVATIONS_V1" };
+  const STORAGE_KEYS = { RES: "DELIVERY_RESERVATIONS_V1", STORES: "DELIVERY_STORES_V1" };
+
+  // KIOSK store gate
+  let kioskStore = null; // {name, code}
+  async function loadStores(){ return await apiGet(STORAGE_KEYS.STORES, []); }
+
+  async function initStoreGate(){
+    const gate = document.getElementById("storeGate");
+    const err = document.getElementById("kg_err");
+    const input = document.getElementById("kg_storeCode");
+    const btn = document.getElementById("kg_enter");
+
+    btn.onclick = async () => {
+      const code = input.value.trim();
+      err.style.display = "none";
+      if(!code){ err.style.display=""; err.innerHTML='<div class="err">점포코드를 입력해줘!</div>'; return; }
+      const stores = await loadStores();
+      const s = stores.find(x => x.code === code);
+      if(!s){
+        err.style.display=""; err.innerHTML='<div class="err">없는 점포코드야. 점포 등록을 먼저 해줘!</div>';
+        return;
+      }
+      kioskStore = s;
+      const badge = document.getElementById("k_storeBadge");
+      if(badge) badge.textContent = `점포: ${s.name} (${s.code})`;
+      gate.style.display = "none";
+    };
+  }
   const API_BASE = "/api";
   const useLocalFallback = false;
   const mem = {};
@@ -533,6 +578,10 @@
       alert("회원/비회원부터 선택해줘!");
       return;
     }
+    if(!kioskStore){
+      alert("점포코드 확인이 필요해!");
+      return;
+    }
 
     const sName = $("w_sName").value.trim();
     const sPhone = $("w_sPhone").value.trim();
@@ -542,6 +591,7 @@
     const weight = $("w_weight").value.trim();
     const kind = $("w_kind").value;
     const country = $("w_country").value.trim();
+    const overseas = ($("w_overseas")?.value || "").trim();
 
     if(!requireField(sName) || !requireField(sPhone) || !requireField(rName) || !requireField(rPhone)){
       alert("보내는/받는 사람 이름/연락처는 다 필수야!");
@@ -563,6 +613,10 @@
       alert("국제택배는 국가/지역이 필수야!");
       return;
     }
+    if(currentType === "INTERNATIONAL" && !requireField(overseas)){
+      alert("국제택배는 해외주소가 필수야!");
+      return;
+    }
 
     const prefix2 = PREFIX[currentType];
     const waybill = makeWaybill(prefix2);
@@ -576,10 +630,16 @@
       waybillNo: waybill,
       waybillIssuedAt: nowStr(),
 
-      storeName: "",
+      issuedStore: { code: kioskStore.code, name: kioskStore.name },
+      storeCode: kioskStore.code,
+      storeName: kioskStore.name,
+
       storeAcceptedAt: "",
       courier: { code:"", name:"", phone:"" },
       pickedAt: "",
+      arrivedAt: "",
+      pickupCode: "",
+      deliveredAt: "",
 
       kiosk: { kind: "WALKIN", customerKind: currentCustomerKind },
 
@@ -587,6 +647,7 @@
       receiver: { name: rName, phone: rPhone },
 
       addr: addr,
+      overseasAddr: (currentType === "INTERNATIONAL") ? overseas : "",
 
       package: {
         weightKg: Number(weight),
@@ -657,6 +718,7 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
   $("r_issue").onclick = async () => {
     const resNo = $("reserveNo").value.trim();
     if(!resNo){ alert("예약번호를 입력해줘!"); return; }
+    if(!kioskStore){ alert("점포코드 확인이 필요해!"); return; }
 
     const rec = await findByReserveNo(resNo);
     $("reserveResult").style.display = "";
@@ -673,6 +735,10 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
     rec.waybillNo = wb;
     rec.status = "WAYBILL_ISSUED";
     rec.waybillIssuedAt = nowStr();
+    rec.issuedStore = { code: kioskStore.code, name: kioskStore.name };
+    rec.storeCode = kioskStore.code;
+    // storeName은 점포 최종접수에서도 다시 저장 가능
+    rec.storeName = rec.storeName || kioskStore.name;
     await upsert(rec);
 
     $("reserveResult").innerHTML = `
@@ -711,6 +777,7 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
   }
 
   // init
+  initStoreGate();
   show("view_home");
 </script>
 </body>

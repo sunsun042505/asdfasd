@@ -271,7 +271,16 @@
             <div style="grid-column:1/-1">
               <label>주소/지점명(선택)</label>
               <input id="c_addr" placeholder="예: 배송지 주소 / 편의점 지점명+주소" />
+            
+            <div id="c_overseasWrap" style="display:none; grid-column:1/-1; margin-top:10px;">
+              <label>해외주소(국제택배 필수)</label>
+              <textarea id="c_overseas" placeholder="예: 123 Main St, City, State/Province, Postal Code, Country" style="min-height:70px;"></textarea>
             </div>
+            <div class="hint" id="c_economyHint" style="display:none; grid-column:1/-1;">
+              • 반값택배는 편의점으로 보내는 서비스야. <b>최대 소요기간 6일</b> 안내 문구가 필요하면 영수증/안내에 같이 표시돼.<br>
+              • 받는 편의점 주소(지점명+주소)를 꼭 적어줘!
+            </div>
+</div>
 
             <div style="grid-column:1/-1">
               <label>요청사항(선택)</label>
@@ -360,6 +369,14 @@
           </div>
 
           <div style="height:12px;"></div>
+          <div class="row" style="grid-template-columns: 1fr 1fr 1fr; margin-top:6px;">
+            <button class="btn" id="s_mode_accept">택배접수</button>
+            <button class="btn" id="s_mode_inbound">입고</button>
+            <button class="btn" id="s_mode_handover">고객전달</button>
+          </div>
+
+          <div id="s_acceptWrap">
+
 
           <div class="row" style="grid-template-columns: 2fr 1fr;">
             <div>
@@ -378,7 +395,49 @@
             • 목록/확인창에 주소/무게/종류도 같이 보여줌.
           </div>
 
-          <div class="actions">
+          
+          </div> <!-- /s_acceptWrap -->
+
+          <div id="s_inboundWrap" style="display:none;">
+            <div style="height:10px;"></div>
+            <div style="font-weight:900; font-size:14px;">반값택배 입고 처리</div>
+            <div class="sub">편의점에 도착한 반값택배 운송장 번호를 입력</div>
+            <div style="height:10px;"></div>
+            <div class="row" style="grid-template-columns: 2fr 1fr;">
+              <div>
+                <label>운송장 번호(18자리)</label>
+                <input id="s_in_waybill" class="mono" placeholder="예: 30xxxxxxxxxxxxxxxx" />
+              </div>
+              <div>
+                <button class="btn primary" id="s_inbound">입고처리</button>
+              </div>
+            </div>
+            <div class="card" id="s_inboundResult" style="display:none;"></div>
+            <div class="hint">• 입고처리되면 고객 조회 화면에 “점포에 택배가 도착했습니다” + 고유번호가 표시돼.</div>
+          </div>
+
+          <div id="s_handoverWrap" style="display:none;">
+            <div style="height:10px;"></div>
+            <div style="font-weight:900; font-size:14px;">반값택배 고객 전달</div>
+            <div class="sub">고객이 가져온 고유번호로 전달 완료 처리</div>
+            <div style="height:10px;"></div>
+            <div class="row" style="grid-template-columns: 2fr 1fr;">
+              <div>
+                <label>운송장 번호(18자리)</label>
+                <input id="s_h_waybill" class="mono" placeholder="예: 30xxxxxxxxxxxxxxxx" />
+              </div>
+              <div>
+                <label>고유번호</label>
+                <input id="s_pickupCode" class="mono" placeholder="예: A1B2C3" />
+              </div>
+            </div>
+            <div class="actions" style="margin-top:8px;">
+              <button class="btn primary" id="s_handover">고객전달 완료</button>
+            </div>
+            <div class="card" id="s_handoverResult" style="display:none;"></div>
+          </div>
+
+<div class="actions">
             <button class="btn" id="s_logout">로그아웃</button>
             <button class="btn" id="s_refresh">목록 새로고침</button>
           </div>
@@ -406,6 +465,14 @@
           <div style="font-weight:900; font-size:15px;">기사 로그인</div>
           <div class="sub">기사 등록 기능 + 코드로 로그인</div>
           <div style="height:12px;"></div>
+          <div class="row" style="grid-template-columns:1fr 1fr; margin-top:6px;">
+            <button class="btn" id="c_mode_domestic">국내택배 기사</button>
+            <button class="btn" id="c_mode_economy">반값택배 기사</button>
+          </div>
+          <div class="hint" style="margin-top:8px;">
+            • 로그인은 코드만으로 가능. 단, 기사 구분이 다르면 자동으로 맞는 화면으로 전환돼.
+          </div>
+
 
           <div class="row">
             <div>
@@ -416,6 +483,15 @@
               <label>전화번호(등록 시 필요)</label>
               <input id="c_phone" placeholder="예: 010-9999-8888" />
             </div>
+
+            <div>
+              <label>기사 구분(등록 시 선택)</label>
+              <select id="c_role">
+                <option value="DOMESTIC">국내/국제/반품</option>
+                <option value="ECONOMY_CVS">반값택배</option>
+              </select>
+            </div>
+
             <div style="grid-column:1/-1">
               <label>기사코드(로그인/등록)</label>
               <input id="c_code" class="mono" placeholder="예: COURIER-1234" />
@@ -645,7 +721,26 @@
   $("tabReserve").onclick = () => setCustTab("reserve");
   $("tabTrack").onclick = () => setCustTab("track");
 
-  // CUSTOMER: reserve
+  
+  // CUSTOMER: type-specific UI
+  function updateCustomerTypeUI(){
+    const type = $("c_type").value;
+    $("c_overseasWrap").style.display = (type === "INTERNATIONAL") ? "" : "none";
+    $("c_economyHint").style.display = (type === "ECONOMY_CVS") ? "" : "none";
+  }
+  $("c_type").onchange = updateCustomerTypeUI;
+  updateCustomerTypeUI();
+
+  function makePickupCode(){
+    // 6 chars: A-Z0-9 (avoid confusing ones)
+    const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    let out = "";
+    for(let i=0;i<6;i++){
+      out += chars[Math.floor(Math.random()*chars.length)];
+    }
+    return out;
+  }
+// CUSTOMER: reserve
   $("c_reserveBtn").onclick = async () => {
     const type = $("c_type").value;
     const pickup = $("c_pickup").value;
@@ -656,6 +751,21 @@
     if(!sName || !sPhone){
       alert("보내는 사람 이름/연락처는 필수야!");
       return;
+    }
+    const rName = $("c_rName").value.trim();
+    const rPhone = $("c_rPhone").value.trim();
+    if(!rName || !rPhone){
+      alert("받는 사람 이름/연락처도 필수야!");
+      return;
+    }
+    const addr = $("c_addr").value.trim();
+    if(!addr){
+      alert(($("c_type").value==="ECONOMY_CVS") ? "반값택배는 편의점 주소(지점명+주소)가 필수야!" : "주소는 필수야!");
+      return;
+    }
+    if($("c_type").value==="INTERNATIONAL"){
+      const ov = $("c_overseas").value.trim();
+      if(!ov){ alert("국제택배는 해외주소가 필수야!"); return; }
     }
 
     const rec = {
@@ -671,8 +781,12 @@
       courier: { code:"", name:"", phone:"" },
       pickedAt: "",
       sender: { name:sName, phone:sPhone },
-      receiver: { name: $("c_rName").value.trim(), phone: $("c_rPhone").value.trim() },
-      addr: $("c_addr").value.trim(),
+      receiver: { name: rName, phone: rPhone },
+      addr: addr,
+      overseasAddr: ($("c_type").value === "INTERNATIONAL") ? ($("c_overseas").value.trim()) : "",
+      arrivedAt: "",
+      pickupCode: "",
+      deliveredAt: "",
       memo: $("c_memo").value.trim(),
     };
 
@@ -710,6 +824,13 @@
     const storeInfo = rec.storeName ? `\n점포: ${rec.storeName} (접수: ${rec.storeAcceptedAt || "-"})` : "";
     const courierInfo = (rec.status === "PICKED_UP" && rec.courier?.name)
       ? `\n기사: ${rec.courier.name} (${rec.courier.phone || "-"})\n집화: ${rec.pickedAt || "-"}`
+      : "";
+
+    const arrivedInfo = (rec.status === "ARRIVED_STORE" && rec.storeName)
+      ? `\n도착: ${rec.storeName} (입고: ${rec.arrivedAt || "-"})\n고유번호: ${rec.pickupCode || "-"}\n안내: 점포에 택배가 도착했습니다. 고유번호를 점포에 제시해 주세요.`
+      : "";
+    const deliveredInfo = (rec.status === "DELIVERED_TO_CUSTOMER")
+      ? `\n고객전달 완료: ${rec.deliveredAt || "-"}`
       : "";
 
     const pkgInfo =
@@ -896,9 +1017,81 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     `;
     renderStoreLists();
   }
+
+  // store mode
+  let storeMode = "ACCEPT"; // ACCEPT / INBOUND / HANDOVER
+  function updateStoreModeUI(){
+    $("s_mode_accept").classList.toggle("primary", storeMode==="ACCEPT");
+    $("s_mode_inbound").classList.toggle("primary", storeMode==="INBOUND");
+    $("s_mode_handover").classList.toggle("primary", storeMode==="HANDOVER");
+    $("s_acceptWrap").style.display = (storeMode==="ACCEPT") ? "" : "none";
+    $("s_inboundWrap").style.display = (storeMode==="INBOUND") ? "" : "none";
+    $("s_handoverWrap").style.display = (storeMode==="HANDOVER") ? "" : "none";
+  }
+  $("s_mode_accept").onclick = () => { storeMode="ACCEPT"; updateStoreModeUI(); };
+  $("s_mode_inbound").onclick = () => { storeMode="INBOUND"; updateStoreModeUI(); };
+  $("s_mode_handover").onclick = () => { storeMode="HANDOVER"; updateStoreModeUI(); };
+  updateStoreModeUI();
+
+  async function storeInbound(){
+    const sess = loadSession();
+    if(!sess.store) return;
+    const wb = $("s_in_waybill").value.trim();
+    $("s_inboundResult").style.display = "";
+    if(!wb){ alert("운송장 번호를 입력해줘!"); return; }
+    const rec = await findByWaybill(wb);
+    if(!rec){ $("s_inboundResult").innerHTML = `<div class="err">등록된 운송장이 아님</div>`; return; }
+    if(rec.type !== "ECONOMY_CVS"){ $("s_inboundResult").innerHTML = `<div class="err">반값택배만 입고 처리 가능해!</div>`; return; }
+    // allow FINAL or PICKED_UP 등, 입고는 반값택배 흐름상 중간/후반 단계
+    rec.status = "ARRIVED_STORE";
+    rec.storeName = sess.store.name;
+    rec.storeCode = sess.store.code;
+    rec.arrivedAt = nowStr();
+    rec.pickupCode = rec.pickupCode || makePickupCode();
+    await upsertRes(rec);
+    $("s_inboundResult").innerHTML = `<div class="ok">입고 완료</div><div class="mono" style="margin-top:8px;">운송장: ${escapeHtml(rec.waybillNo)}\n고유번호: ${escapeHtml(rec.pickupCode)}</div>`;
+  }
+
+  async function storeHandover(){
+    const sess = loadSession();
+    if(!sess.store) return;
+    const wb = $("s_h_waybill").value.trim();
+    const code = $("s_pickupCode").value.trim().toUpperCase();
+    $("s_handoverResult").style.display = "";
+    if(!wb || !code){ alert("운송장/고유번호 둘 다 입력해줘!"); return; }
+    const rec = await findByWaybill(wb);
+    if(!rec){ $("s_handoverResult").innerHTML = `<div class="err">등록된 운송장이 아님</div>`; return; }
+    if(rec.type !== "ECONOMY_CVS"){ $("s_handoverResult").innerHTML = `<div class="err">반값택배만 고객전달 가능해!</div>`; return; }
+    if(rec.status !== "ARRIVED_STORE"){ $("s_handoverResult").innerHTML = `<div class="err">입고(ARRIVED_STORE) 상태가 아니야.</div>`; return; }
+    if((rec.storeCode || "") !== sess.store.code){ $("s_handoverResult").innerHTML = `<div class="err">이 점포로 입고된 건이 아냐.</div>`; return; }
+    if((rec.pickupCode || "").toUpperCase() !== code){ $("s_handoverResult").innerHTML = `<div class="err">고유번호가 달라!</div>`; return; }
+
+    rec.status = "DELIVERED_TO_CUSTOMER";
+    rec.deliveredAt = nowStr();
+    await upsertRes(rec);
+
+    $("s_handoverResult").innerHTML = `<div class="ok">고객전달 완료</div><div class="mono" style="margin-top:8px;">운송장: ${escapeHtml(rec.waybillNo)}\n완료: ${escapeHtml(rec.deliveredAt)}</div>`;
+  }
+
+  $("s_inbound").onclick = storeInbound;
+  $("s_handover").onclick = storeHandover;
+
   $("s_accept").onclick = () => storeAcceptWaybill(false);
   $("s_refresh").onclick = renderStoreLists;
 
+
+  // courier mode (DOMESTIC / ECONOMY_CVS)
+  let courierMode = "DOMESTIC";
+  function updateCourierModeUI(){
+    $("c_mode_domestic").classList.toggle("primary", courierMode==="DOMESTIC");
+    $("c_mode_economy").classList.toggle("primary", courierMode==="ECONOMY_CVS");
+    $("c_mode_domestic").classList.toggle("btn", true);
+    $("c_mode_economy").classList.toggle("btn", true);
+  }
+  $("c_mode_domestic").onclick = () => { courierMode="DOMESTIC"; updateCourierModeUI(); };
+  $("c_mode_economy").onclick = () => { courierMode="ECONOMY_CVS"; updateCourierModeUI(); };
+
+  updateCourierModeUI();
   // ---------- COURIER: register/login/session ----------
   async function getCouriers(){ return await apiGet(STORAGE_KEYS.COURIERS, []); }
   async function saveCouriers(arr){ await apiSet(STORAGE_KEYS.COURIERS, arr); }
@@ -915,7 +1108,8 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
       $("courierDash").style.display = "";
       $("courierListCard").style.display = "";
       const c = await courierByCode(sess.courier.code);
-      $("c_who").textContent = `로그인: ${c.name} (${c.code})`;
+      const modeLabel = (courierMode==="ECONOMY_CVS") ? "반값택배 기사" : "국내택배 기사";
+      $("c_who").textContent = `로그인: ${c.name} (${c.code}) · ${modeLabel}`;
       renderCourierLists();
     }else{
       $("courierAuth").style.display = "";
@@ -929,6 +1123,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     const name = $("c_name").value.trim();
     const phone = $("c_phone").value.trim();
     const code = $("c_code").value.trim();
+    const role = ($("c_role")?.value || "DOMESTIC");
     if(!name || !phone || !code){
       alert("기사명/전화/코드 다 입력해줘!");
       return;
@@ -939,8 +1134,10 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
       $("c_authResult").innerHTML = `<div class="err">이미 존재하는 기사코드야.</div>`;
       return;
     }
-    list.push({ name, phone, code, createdAt: nowStr() });
+    list.push({ name, phone, code, role, createdAt: nowStr() });
     await saveCouriers(list);
+    courierMode = role;
+    updateCourierModeUI();
     $("c_authResult").style.display = "";
     $("c_authResult").innerHTML = `<div class="ok">기사 등록 완료</div><div class="hint">이제 코드로 로그인해.</div>`;
   };
@@ -957,6 +1154,18 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
       $("c_authResult").innerHTML = `<div class="err">없는 기사입니다.</div>`;
       return;
     }
+
+    const role = c.role || "DOMESTIC";
+    if(role !== courierMode){
+      if(role === "ECONOMY_CVS"){
+        alert("반값택배 기사입니다. 반값택배 기사 화면으로 전환할게!");
+      }else{
+        alert("국내택배 기사입니다. 국내택배 기사 화면으로 전환할게!");
+      }
+      courierMode = role;
+      updateCourierModeUI();
+    }
+
     const sess = loadSession();
     sess.courier = { code };
     saveSession(sess);
@@ -981,6 +1190,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
 
     const arr = (await getReservations())
       .filter(x => x.waybillNo && x.status === "FINAL")
+      .filter(x => (courierMode === "ECONOMY_CVS") ? (x.type === "ECONOMY_CVS") : (x.type !== "ECONOMY_CVS"))
       .slice(0, 50);
 
     const box = $("c_list");
@@ -1016,6 +1226,10 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
         const rec = await findByWaybill(wb);
         if(!rec){ alert("내역 없음"); return; }
         if(rec.status !== "FINAL"){ alert("FINAL만 집화 가능"); return; }
+        if((courierMode === "ECONOMY_CVS" && rec.type !== "ECONOMY_CVS") || (courierMode !== "ECONOMY_CVS" && rec.type === "ECONOMY_CVS")){
+          alert((courierMode==="ECONOMY_CVS") ? "반값택배 기사 화면에서는 반값택배만 집화할 수 있어!" : "국내택배 기사 화면에서는 반값택배를 집화할 수 없어!");
+          return;
+        }
 
         const msg =
 `집화 처리할까?
