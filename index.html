@@ -198,7 +198,13 @@
             <div class="d">예약 버튼 + 배송조회 버튼</div>
           </button>
 
-          <button class="bigbtn" id="goKiosk">
+          
+
+          <button class="bigbtn" id="goTracking">
+            <div class="t">배송조회 <span class="pill">tracking.html</span></div>
+            <div class="d">운송장 번호로 배송흐름 조회</div>
+          </button>
+<button class="bigbtn" id="goKiosk">
             <div class="t">키오스크 화면 <span class="pill">kiosk.html</span></div>
             <div class="d">예약접수/현장접수 → 운송장 18자리 발급</div>
           </button>
@@ -228,13 +234,15 @@
       <div id="customer" style="display:none;">
         <div class="card" style="margin-top:0;">
           <div style="font-weight:900; font-size:16px;">고객 화면</div>
-          <div class="sub">예약 / 배송조회</div>
+          <div class="sub">예약</div>
           <div class="tabs">
             <div class="tab on" id="tabReserve">예약</div>
-            <div class="tab" id="tabTrack">배송조회</div>
+            
           </div>
           <div class="actions">
+          <div class="actions">
             <button class="btn ghost" data-home>기본 화면</button>
+            <button class="btn" id="custGoTracking" type="button">배송조회</button>
           </div>
         </div>
 
@@ -323,32 +331,6 @@
         </div>
 
         <div class="card" id="custReserveResult" style="display:none;"></div>
-
-        <!-- Tracking -->
-        <div class="card" id="custTrackCard" style="display:none;">
-          <div style="font-weight:900; font-size:15px;">배송조회</div>
-          <div class="sub">운송장 번호로 조회 (등록된 운송장인지 확인)</div>
-
-          <div style="height:12px;"></div>
-          <div class="row" style="grid-template-columns: 2fr 1fr;">
-            <div>
-              <label>운송장 번호(18자리)</label>
-              <input id="t_waybill" class="mono" placeholder="예: 81xxxxxxxxxxxxxxxx" />
-            </div>
-            <div>
-              <button class="btn primary" id="t_search">조회</button>
-            </div>
-          </div>
-
-          <div class="card" id="t_result" style="display:none;"></div>
-
-          <div class="hint">
-            • 집화 완료 상태면 기사 이름/전화번호가 표시돼.<br>
-            • 점포 접수까지 됐으면 점포명도 표시돼.<br>
-            • 주소/무게/종류/국가(국제)도 같이 표시돼.
-          </div>
-        </div>
-      </div>
 
       <!-- STORE -->
       <div id="store" style="display:none;">
@@ -920,21 +902,17 @@
   $("goKiosk").onclick = () => { window.location.href = "./kiosk.html"; };
   $("goStore").onclick = () => { show("store"); hydrateStoreSession(); };
   $("goCourier").onclick = () => { show("courier"); hydrateCourierSession(); };
+  $("goTracking").onclick = () => { window.location.href = "./tracking.html"; };
+  $("custGoTracking").onclick = () => { window.location.href = "./tracking.html"; };
 
   // ---------- CUSTOMER: tabs ----------
   function setCustTab(which){
-    const reserveOn = which === "reserve";
-    $("tabReserve").classList.toggle("on", reserveOn);
-    $("tabTrack").classList.toggle("on", !reserveOn);
-    $("custReserveCard").style.display = reserveOn ? "" : "none";
+    // Customer 화면에서는 예약만 사용 (배송조회는 tracking.html로 분리)
+    $("custReserveCard").style.display = "";
     $("custReserveResult").style.display = "none";
-    $("custTrackCard").style.display = reserveOn ? "none" : "";
   }
   $("tabReserve").onclick = () => setCustTab("reserve");
-  $("tabTrack").onclick = () => setCustTab("track");
-
-  
-  // CUSTOMER: type-specific UI
+// CUSTOMER: type-specific UI
   function updateCustomerTypeUI(){
     const type = $("c_type").value;
     $("c_overseasWrap").style.display = (type === "INTERNATIONAL") ? "" : "none";
@@ -1108,61 +1086,7 @@
     `;
   };
 
-  // CUSTOMER: tracking (✅ 한글 + 히스토리)
-  $("t_search").onclick = async () => {
-    const wb = $("t_waybill").value.trim();
-    if(!wb){
-      alert("운송장 번호를 입력해줘!");
-      return;
-    }
-    const rec = await findByWaybill(wb);
-    $("t_result").style.display = "";
-    if(!rec){
-      $("t_result").innerHTML = `<div class="err">등록된 운송장이 아님</div>`;
-      return;
-    }
-
-    const p = pkgSummary(rec);
-    const events = renderEvents(rec);
-
-    const historyHtml = events.map(e => `
-      <div class="item">
-        <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-          <div style="font-weight:800;">${escapeHtml(e.place || "-")} ${escapeHtml(e.message || "-")}</div>
-          <div class="mono" style="color:var(--muted); font-size:12px;">${escapeHtml(e.at || "-")}</div>
-        </div>
-      </div>
-    `).join("");
-
-    const extra =
-      (rec.status === "ARRIVED_STORE" && rec.pickupCode)
-        ? `<div class="hint" style="margin-top:10px;">• 점포에 택배가 도착했습니다. 고유번호: <span class="mono">${escapeHtml(rec.pickupCode)}</span> 를 점포에 제시해 주세요.</div>`
-        : "";
-
-    const courierLine = rec.courier?.name ? `${rec.courier.name} (${rec.courier.phone || "-"})` : "-";
-
-    $("t_result").innerHTML = `
-      <div class="ok">조회 성공</div>
-      <div class="mono" style="margin-top:8px; white-space:pre-wrap; line-height:1.45;">
-운송장: ${escapeHtml(rec.waybillNo)}
-유형: ${escapeHtml(TYPE_LABEL[rec.type] || rec.type)}
-상태: ${escapeHtml(statusLabel(rec))}
-접수지점: ${escapeHtml(rec.storeName || "-")}
-도착점포: ${escapeHtml(rec.destStoreName || "-")}
-기사: ${escapeHtml(courierLine)}
-주소/비고: ${escapeHtml(p.addr)}
-무게(kg): ${escapeHtml(p.w)}
-종류: ${escapeHtml(p.kind)}${rec.type==="INTERNATIONAL" ? `
-국가: ${escapeHtml(p.country || "-")}` : ""}
-      </div>
-
-      <div style="height:10px;"></div>
-      <div style="font-weight:900; font-size:13px;">지금까지의 배송정보</div>
-      <div class="list" style="margin-top:8px;">${historyHtml || `<div class="item"><div style="color:var(--muted)">히스토리가 없어.</div></div>`}</div>
-      ${extra}
-    `;
-  };
-
+  
   // STORE: tracking (실시간)
   $("s_trackSearch")?.addEventListener("click", async () => {
     const wb = ($("s_trackWaybill")?.value || "").trim();
