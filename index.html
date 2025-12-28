@@ -887,9 +887,12 @@
     $("storePickerModal").style.display = "none";
   }
 
-  $("c_storeLookup").onclick = () => openStorePicker();
-  $("storePickerClose").onclick = () => closeStorePicker();
-  $("storePickerModal").addEventListener("click", (e) => {
+  const __c_storeLookup = $("c_storeLookup");
+  if(__c_storeLookup) __c_storeLookup.onclick = () => openStorePicker();
+  const __storePickerClose = $("storePickerClose");
+  if(__storePickerClose) __storePickerClose.onclick = () => closeStorePicker();
+  const __storePickerModal = $("storePickerModal");
+  if(__storePickerModal) __storePickerModal.addEventListener("click", (e) => {
     if(e.target && e.target.id === "storePickerModal") closeStorePicker();
   });
 
@@ -1283,7 +1286,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
 
 
   // courier mode (DOMESTIC / ECONOMY_CVS)
-  let courierMode = "DOMESTIC";
+  var courierMode = "DOMESTIC";
   function updateCourierModeUI(){
     $("c_mode_domestic").classList.toggle("primary", courierMode==="DOMESTIC");
     $("c_mode_economy").classList.toggle("primary", courierMode==="ECONOMY_CVS");
