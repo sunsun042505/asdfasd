@@ -17,11 +17,40 @@ const nowStr = () => {
   )}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 };
 
+function normalizePath(pathname) {
+  // supports both:
+  //  - /.netlify/functions/data/...
+  //  - /api/...
+  let path = pathname;
+
+  const baseFn = "/.netlify/functions/data";
+  if (path.startsWith(baseFn)) path = path.slice(baseFn.length);
+
+  if (path.startsWith("/api")) path = path.slice("/api".length);
+
+  if (!path.startsWith("/")) path = "/" + path;
+  path = path.replace(/\/+$/, "") || "/";
+  return path;
+}
+
+// ---------- KV helpers (for legacy frontend) ----------
+const kvKey = (key) => `kv:${key}`;
+
+async function kvGet(store, key) {
+  const s = await store.get(kvKey(key), { consistency: "strong" });
+  return s ? JSON.parse(s) : null;
+}
+
+async function kvSet(store, key, value) {
+  await store.set(kvKey(key), JSON.stringify(value));
+}
+
+// ---------- Reservations helpers ----------
 async function listReservations(store) {
-  const { blobs } = await store.list({ prefix: "res:" });
+  const { blobs } = await store.list({ prefix: "res:", consistency: "strong" });
   const out = [];
   for (const b of blobs) {
-    const s = await store.get(b.key);
+    const s = await store.get(b.key, { consistency: "strong" });
     if (s) out.push(JSON.parse(s));
   }
   out.sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
@@ -29,12 +58,12 @@ async function listReservations(store) {
 }
 
 async function getByReserve(store, reserveNo) {
-  const s = await store.get(`res:${reserveNo}`);
+  const s = await store.get(`res:${reserveNo}`, { consistency: "strong" });
   return s ? JSON.parse(s) : null;
 }
 
 async function getByWaybill(store, waybillNo) {
-  const reserveNo = await store.get(`wb:${waybillNo}`);
+  const reserveNo = await store.get(`wb:${waybillNo}`, { consistency: "strong" });
   if (!reserveNo) return null;
   return getByReserve(store, reserveNo);
 }
@@ -46,32 +75,33 @@ async function upsertReservation(store, rec) {
   return rec;
 }
 
-// ✅ Netlify Functions v2: Request -> Response
 export default async (request) => {
   try {
     const url = new URL(request.url);
     const method = request.method.toUpperCase();
+    const path = normalizePath(url.pathname);
 
-    // store 생성: 문서 예시대로 object 옵션 가능 (name/consistency) :contentReference[oaicite:1]{index=1}
-    const store = getStore({ name: "sunwoo-takbae-v1", consistency: "strong" });
+    const store = getStore("sunwoo-takbae-v1");
 
-    // /.netlify/functions/data/<...> 로 들어오는 걸 기준으로 path 추출
-    const baseFn = "/.netlify/functions/data";
-let path = url.pathname;
+    // ---- KV API (used by patched index/kiosk) ----
+    // GET /kv/get?key=...
+    if (method === "GET" && path === "/kv/get") {
+      const key = url.searchParams.get("key") || "";
+      if (!key) return j(400, { error: "key required" });
+      const value = await kvGet(store, key);
+      return j(200, { key, value });
+    }
 
-// 1) 함수 직통 호출인 경우: /.netlify/functions/data/...
-if (path.startsWith(baseFn)) path = path.slice(baseFn.length);
+    // POST /kv/set {key, value}
+    if (method === "POST" && path === "/kv/set") {
+      const body = await request.json();
+      const key = String(body?.key || "");
+      if (!key) return j(400, { error: "key required" });
+      await kvSet(store, key, body?.value);
+      return j(200, { ok: true });
+    }
 
-// 2) 리다이렉트 호출인 경우: /api/...
-if (path.startsWith("/api")) path = path.slice("/api".length);
-
-if (!path.startsWith("/")) path = "/" + path;
-path = path.replace(/\/+$/, "") || "/";
-
-    if (!path.startsWith("/")) path = "/" + path;
-    path = path.replace(/\/+$/, "") || "/";
-
-    // ---- Reservations ----
+    // ---- Reservations (structured API) ----
     if (method === "GET" && path === "/reservations") {
       return j(200, await listReservations(store));
     }
@@ -95,14 +125,14 @@ path = path.replace(/\/+$/, "") || "/";
       return j(200, { ok: true, rec: saved });
     }
 
-    // ---- Stores ----
+    // ---- Stores / Couriers (simple) ----
     if (method === "POST" && path === "/stores/register") {
       const body = await request.json();
       const name = String(body?.name || "").trim();
       const code = String(body?.code || "").trim();
       if (!name || !code) return j(400, { error: "name/code required" });
 
-      const exist = await store.get(`store:${code}`);
+      const exist = await store.get(`store:${code}`, { consistency: "strong" });
       if (exist) return j(409, { error: "DUPLICATE_CODE" });
 
       await store.set(`store:${code}`, JSON.stringify({ name, code, createdAt: nowStr() }));
@@ -114,7 +144,7 @@ path = path.replace(/\/+$/, "") || "/";
       const name = String(body?.name || "").trim();
       const code = String(body?.code || "").trim();
 
-      const s = await store.get(`store:${code}`);
+      const s = await store.get(`store:${code}`, { consistency: "strong" });
       if (!s) return j(404, { error: "NO_STORE" });
       const obj = JSON.parse(s);
       if (obj.name !== name) return j(404, { error: "NO_STORE" });
@@ -122,7 +152,6 @@ path = path.replace(/\/+$/, "") || "/";
       return j(200, { ok: true, store: obj });
     }
 
-    // ---- Couriers ----
     if (method === "POST" && path === "/couriers/register") {
       const body = await request.json();
       const name = String(body?.name || "").trim();
@@ -130,10 +159,13 @@ path = path.replace(/\/+$/, "") || "/";
       const code = String(body?.code || "").trim();
       if (!name || !phone || !code) return j(400, { error: "name/phone/code required" });
 
-      const exist = await store.get(`courier:${code}`);
+      const exist = await store.get(`courier:${code}`, { consistency: "strong" });
       if (exist) return j(409, { error: "DUPLICATE_CODE" });
 
-      await store.set(`courier:${code}`, JSON.stringify({ name, phone, code, createdAt: nowStr() }));
+      await store.set(
+        `courier:${code}`,
+        JSON.stringify({ name, phone, code, createdAt: nowStr() })
+      );
       return j(200, { ok: true });
     }
 
@@ -141,7 +173,7 @@ path = path.replace(/\/+$/, "") || "/";
       const body = await request.json();
       const code = String(body?.code || "").trim();
 
-      const s = await store.get(`courier:${code}`);
+      const s = await store.get(`courier:${code}`, { consistency: "strong" });
       if (!s) return j(404, { error: "NO_COURIER" });
 
       return j(200, { ok: true, courier: JSON.parse(s) });

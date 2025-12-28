@@ -337,10 +337,8 @@
   // ==== Persistent storage (Netlify Functions + Blobs) ====
   // Must match index.html keys
   const STORAGE_KEYS = { RES: "DELIVERY_RESERVATIONS_V1" };
-  const API_BASE = "/.netlify/functions";
-  const useLocalFallback = (() => {
-    try { return location.protocol === "file:"; } catch { return true; }
-  })();
+  const API_BASE = "/api";
+  const useLocalFallback = false;
   const mem = {};
 
   async function apiGet(key, fallback){
@@ -350,7 +348,7 @@
     }
     if(key in mem) return mem[key];
     try{
-      const res = await fetch(`${API_BASE}/data?key=${encodeURIComponent(key)}`, { cache:"no-store" });
+      const res = await fetch(`${API_BASE}/kv/get?key=${encodeURIComponent(key)}`, { cache:"no-store" });
       if(!res.ok) throw new Error("GET failed");
       const json = await res.json();
       mem[key] = json.value ?? fallback;
@@ -373,14 +371,15 @@
       return;
     }
     try{
-      const res = await fetch(`${API_BASE}/data`, {
+      const res = await fetch(`${API_BASE}/kv/set`, {
         method:"POST",
         headers:{ "content-type":"application/json" },
         body: JSON.stringify({ key, value })
       });
       if(!res.ok) throw new Error("POST failed");
-    }catch(e){
-      localStorage.setItem(key, JSON.stringify(value));
+    }
+    catch(e){
+      throw e;
     }
   }
 

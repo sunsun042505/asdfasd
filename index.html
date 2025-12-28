@@ -468,11 +468,8 @@
     SESSION: "DELIVERY_SESSION_V1" // session remains local on purpose
   };
 
-  const API_BASE = "/.netlify/functions";
-  const useLocalFallback = (() => {
-    // file:// or no functions available
-    try { return location.protocol === "file:"; } catch { return true; }
-  })();
+  const API_BASE = "/api";
+  const useLocalFallback = false;
 
   const mem = {}; // in-memory cache
 
@@ -484,20 +481,13 @@
     // cached?
     if(key in mem) return mem[key];
     try{
-      const res = await fetch(`${API_BASE}/data?key=${encodeURIComponent(key)}`, { cache: "no-store" });
+      const res = await fetch(`${API_BASE}/kv/get?key=${encodeURIComponent(key)}`, { cache: "no-store" });
       if(!res.ok) throw new Error("GET failed");
       const json = await res.json();
       mem[key] = json.value ?? fallback;
       return mem[key];
     }catch(e){
-      // fallback to local if functions not reachable
-      try{
-        const v = JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
-        mem[key] = v;
-        return v;
-      }catch{
-        return fallback;
-      }
+      return fallback;
     }
   }
 
@@ -508,15 +498,15 @@
       return;
     }
     try{
-      const res = await fetch(`${API_BASE}/data`, {
+      const res = await fetch(`${API_BASE}/kv/set`, {
         method: "POST",
         headers: { "content-type":"application/json" },
         body: JSON.stringify({ key, value })
       });
       if(!res.ok) throw new Error("POST failed");
-    }catch(e){
-      // still keep local copy so at least this device works
-      localStorage.setItem(key, JSON.stringify(value));
+    }
+    catch(e){
+      throw e;
     }
   }
 
@@ -527,13 +517,14 @@
       return;
     }
     try{
-      await fetch(`${API_BASE}/data`, {
+      await fetch(`${API_BASE}/kv/set`, {
         method: "DELETE",
         headers: { "content-type":"application/json" },
         body: JSON.stringify({ key })
       });
-    }catch(e){
-      localStorage.removeItem(key);
+    }
+    catch(e){
+      throw e;
     }
   }
 
