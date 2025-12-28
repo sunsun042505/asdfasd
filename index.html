@@ -1110,15 +1110,15 @@
     sess.store = { name, code };
     saveSession(sess);
     $("s_authResult").innerHTML = `<div class="ok">로그인 성공</div>`;
-    hydrateStoreSession();
-  };
+    void hydrateStoreSession();
+};
 
   $("s_logout").onclick = () => {
     const sess = loadSession();
     delete sess.store;
     saveSession(sess);
-    hydrateStoreSession();
-  };
+    void hydrateStoreSession();
+};
 
   // Store list (WAYBILL_ISSUED only)
   async function renderStoreLists(){
@@ -1473,15 +1473,15 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     sess.courier = { code };
     saveSession(sess);
     $("c_authResult").innerHTML = `<div class="ok">로그인 성공</div>`;
-    hydrateCourierSession();
-  };
+    void hydrateCourierSession();
+};
 
   $("c_logout").onclick = () => {
     const sess = loadSession();
     delete sess.courier;
     saveSession(sess);
-    hydrateCourierSession();
-  };
+    void hydrateCourierSession();
+};
 
   // ✅ FINAL 목록에 상세정보 표시 + 집화 확인창에 상세 표시
   async function renderCourierLists(){
