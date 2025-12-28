@@ -121,11 +121,8 @@
       background: linear-gradient(180deg, rgba(53,208,127,.38), rgba(53,208,127,.14));
       border-color: rgba(53,208,127,.35);
     }
-    .btn.danger{
-      background: linear-gradient(180deg, rgba(255,107,107,.38), rgba(255,107,107,.15));
-      border-color: rgba(255,107,107,.35);
-    }
-    .btn.ghost{ color: var(--muted); }
+    .btn
+.btn.ghost{ color: var(--muted); }
 
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; letter-spacing:.3px;}
     .hint{font-size:12px; color:var(--muted); line-height:1.4; margin-top:10px;}
@@ -218,11 +215,8 @@
           <div class="hint">
             • 흐름: 고객 예약 → (kiosk.html) 운송장 발급 → 점포 접수 → 기사 집화 → 고객 조회에서 집화 완료 + 기사 정보 표시
           </div>
-          <div class="actions">
-            <button class="btn danger" id="wipeAll">전체 데이터 삭제</button>
-          </div>
-        </div>
-      </div>
+</div>
+</div>
 
       <!-- CUSTOMER -->
       <div id="customer" style="display:none;">
@@ -1057,7 +1051,7 @@
     return list.find(s => s.name === name && s.code === code) || null;
   }
 
-  async function hydrateStoreSession(){
+  async async async function hydrateStoreSession(){
     const sess = loadSession();
     if(sess.store?.name && sess.store?.code && await storeExists(sess.store.name, sess.store.code)){
       $("storeAuth").style.display = "none";
@@ -1110,15 +1104,15 @@
     sess.store = { name, code };
     saveSession(sess);
     $("s_authResult").innerHTML = `<div class="ok">로그인 성공</div>`;
-    hydrateStoreSession();
-  };
+    void hydrateStoreSession();
+};
 
   $("s_logout").onclick = () => {
     const sess = loadSession();
     delete sess.store;
     saveSession(sess);
-    hydrateStoreSession();
-  };
+    void hydrateStoreSession();
+};
 
   // Store list (WAYBILL_ISSUED only)
   async function renderStoreLists(){
@@ -1404,7 +1398,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     return list.find(c => c.code === code) || null;
   }
 
-  async function hydrateCourierSession(){
+  async async async function hydrateCourierSession(){
     const sess = loadSession();
     if(sess.courier?.code && await courierByCode(sess.courier.code)){
       $("courierAuth").style.display = "none";
@@ -1473,15 +1467,15 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     sess.courier = { code };
     saveSession(sess);
     $("c_authResult").innerHTML = `<div class="ok">로그인 성공</div>`;
-    hydrateCourierSession();
-  };
+    void hydrateCourierSession();
+};
 
   $("c_logout").onclick = () => {
     const sess = loadSession();
     delete sess.courier;
     saveSession(sess);
-    hydrateCourierSession();
-  };
+    void hydrateCourierSession();
+};
 
   // ✅ FINAL 목록에 상세정보 표시 + 집화 확인창에 상세 표시
   async function renderCourierLists(){
@@ -1578,45 +1572,14 @@ ${detailText(rec)}
   }
 
   // wipe (remote + local)
-  $("wipeAll").onclick = async () => {
-    if(!confirm("진짜 전체 데이터 삭제할까?")) return;
-    await apiDel(STORAGE_KEYS.RES);
-    await apiDel(STORAGE_KEYS.STORES);
-    await apiDel(STORAGE_KEYS.COURIERS);
-    localStorage.removeItem(STORAGE_KEYS.SESSION);
-    alert("삭제 완료");
-  };
-
-  // init
+// init
   show("home");
   setCustTab("reserve");
-
-  // ADMIN: wipe all data
-  $("adminWipeBtn")?.addEventListener("click", async () => {
-    const confirmText = ($("adminConfirm")?.value || "").trim();
-    if(confirmText !== "전체삭제"){
-      alert('확인 문구가 틀렸어. "전체삭제"를 정확히 입력해줘!');
-      return;
-    }
-    const ok1 = confirm("진짜로 전체 데이터를 삭제할까? (되돌릴 수 없음)");
-    if(!ok1) return;
-    const ok2 = confirm("마지막 확인! 정말 삭제할 거면 확인을 눌러.");
-    if(!ok2) return;
-
-    $("adminWipeResult").innerHTML = `<div style="color:var(--muted)">삭제 중...</div>`;
-    try{
-      const r = await fetch("/api/admin/wipe", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ confirm: "전체삭제" })
-      });
-      const t = await r.text();
+const t = await r.text();
       if(!r.ok) throw new Error(t);
-      $("adminWipeResult").innerHTML = `<div class="ok">삭제 완료</div><div class="mono" style="margin-top:6px; white-space:pre-wrap;">${escapeHtml(t)}</div>`;
       // optional: reload UI state
       setSelectedWaybill("");
     }catch(e){
-      $("adminWipeResult").innerHTML = `<div class="err">삭제 실패: ${escapeHtml(String(e.message||e))}</div>`;
     }
   });
 
@@ -1634,22 +1597,5 @@ ${detailText(rec)}
       <div class="list" id="storePickerList"></div>
     </div>
   </div>
-
-
-      <!-- ADMIN -->
-      <div class="card" id="adminCard" style="margin-top:14px;">
-        <div style="font-weight:900; font-size:14px;">관리자</div>
-        <div class="sub">⚠️ 전체 데이터(예약/운송장/점포/기사/센터)를 서버에서 전부 삭제해. 되돌릴 수 없음.</div>
-
-        <div style="height:10px;"></div>
-        <label>확인 문구 입력</label>
-        <input id="adminConfirm" placeholder='여기에 "전체삭제" 를 정확히 입력' />
-
-        <div style="height:10px;"></div>
-        <button class="btn danger" id="adminWipeBtn" type="button">전체 데이터 삭제</button>
-
-        <div id="adminWipeResult" style="margin-top:10px;"></div>
-      </div>
-
 </body>
 </html>
