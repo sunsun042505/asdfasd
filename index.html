@@ -555,6 +555,48 @@
 
           <div class="hint" style="margin-top:8px;">선택된 운송장: <span class="mono" id="c_selectedWb">-</span></div>
 
+          <div id="c_domesticOps" style="display:none; margin-top:10px;">
+            <div style="font-weight:900; font-size:13px;">터미널 처리(국내/국제/반품)</div>
+
+            <div class="row" style="grid-template-columns: 2fr 1fr; margin-top:8px;">
+              <div>
+                <label>터미널 추가</label>
+                <input id="c_terminalName" placeholder="예: 구로터미널" />
+              </div>
+              <div style="align-self:end;">
+                <button class="btn" id="c_addTerminal" type="button">추가</button>
+              </div>
+            </div>
+
+            <div class="row" style="grid-template-columns:1fr; margin-top:8px;">
+              <div>
+                <label>터미널 선택</label>
+                <select id="c_terminalSelect"></select>
+              </div>
+            </div>
+
+            <div class="row" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+              <button class="btn" id="c_btn_subArrive" type="button">서브터미널 도착</button>
+              <button class="btn" id="c_btn_subDepart" type="button">서브터미널 출발</button>
+            </div>
+
+            <div class="row" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+              <button class="btn" id="c_btn_hubArriveT" type="button">허브터미널 도착</button>
+              <button class="btn" id="c_btn_hubDepartT" type="button">허브터미널 출발</button>
+            </div>
+
+            <div class="row" style="grid-template-columns: 1fr 1fr; margin-top:8px;">
+              <button class="btn" id="c_btn_destArrive" type="button">배송지 터미널 도착</button>
+              <button class="btn" id="c_btn_deliveryStart" type="button">배송출발</button>
+            </div>
+
+            <div class="row" style="grid-template-columns: 1fr; margin-top:8px;">
+              <button class="btn" id="c_btn_delivered" type="button">도착(배송완료)</button>
+            </div>
+
+            <div class="hint">• 순서(추천): 기사수거 → 서브터미널도착 → 서브터미널출발 → 허브도착 → 허브출발 → 배송지터미널도착 → 배송출발 → 배송완료</div>
+          </div>
+
           <div id="c_economyOps" style="display:none; margin-top:10px;">
             <div style="font-weight:900; font-size:13px;">센터 처리(반값택배)</div>
 
@@ -604,6 +646,7 @@
     STORES: "DELIVERY_STORES_V1",
     COURIERS: "DELIVERY_COURIERS_V1",
     CENTERS: "DELIVERY_CENTERS_V1",
+    TERMINALS: "DELIVERY_TERMINALS_V1",
     SESSION: "DELIVERY_SESSION_V1" // session remains local on purpose
   };
 
@@ -758,12 +801,24 @@
     if(s === "WAYBILL_ISSUED") return "운송장발급";
     if(s === "FINAL") return "점포접수";
     if(s === "PICKED_UP") return "기사수거";
+
+    // 반값택배(편의점)
     if(s === "ARRIVED_COLLECTION_CENTER") return "집화센터도착";
     if(s === "ARRIVED_HUB") return "허브센터도착";
     if(s === "OUTBOUND_PREP") return "출고준비";
     if(s === "STORE_DEPARTED") return "점포출발";
     if(s === "ARRIVED_STORE") return "점포도착";
     if(s === "DELIVERED_TO_CUSTOMER") return "고객전달완료";
+
+    // 국내/국제/반품 흐름(터미널)
+    if(s === "ARRIVED_SUB_TERMINAL") return "서브터미널도착";
+    if(s === "DEPARTED_SUB_TERMINAL") return "서브터미널출발";
+    if(s === "ARRIVED_HUB_TERMINAL") return "허브터미널도착";
+    if(s === "DEPARTED_HUB_TERMINAL") return "허브터미널출발";
+    if(s === "ARRIVED_DEST_TERMINAL") return "배송지터미널도착";
+    if(s === "DELIVERY_STARTED") return "배송출발";
+    if(s === "DELIVERED") return "배송완료";
+
     return s || "-";
   }
 
@@ -1292,6 +1347,8 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     $("c_mode_economy").classList.toggle("primary", courierMode==="ECONOMY_CVS");
     $("c_mode_domestic").classList.toggle("btn", true);
     $("c_mode_economy").classList.toggle("btn", true);
+
+    if($("c_domesticOps")) $("c_domesticOps").style.display = (courierMode==="DOMESTIC") ? "" : "none";
     if($("c_economyOps")) $("c_economyOps").style.display = (courierMode==="ECONOMY_CVS") ? "" : "none";
   }
   $("c_mode_domestic").onclick = () => { courierMode="DOMESTIC"; updateCourierModeUI(); };
@@ -1398,6 +1455,131 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
   // init center select
   refreshCenterSelect();
 
+  // Terminals (KV) - 국내/국제/반품 기사 흐름
+  async function getTerminals(){ return await apiGet(STORAGE_KEYS.TERMINALS, []); }
+  async function setTerminals(arr){ await apiSet(STORAGE_KEYS.TERMINALS, arr); }
+
+  async function refreshTerminalSelect(){
+    const terms = (await getTerminals()) || [];
+    const sel = $("c_terminalSelect");
+    if(!sel) return;
+    const safe = terms.filter(x => typeof x === "string" && x.trim());
+    sel.innerHTML = safe.length
+      ? safe.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join("")
+      : `<option value="">(터미널 없음)</option>`;
+  }
+
+  $("c_addTerminal")?.addEventListener("click", async () => {
+    const name = ($("c_terminalName")?.value || "").trim();
+    if(!name){ alert("터미널명을 입력해줘!"); return; }
+    const terms = (await getTerminals()) || [];
+    if(!terms.includes(name)) terms.push(name);
+    await setTerminals(terms);
+    $("c_terminalName").value = "";
+    await refreshTerminalSelect();
+    alert("터미널 추가 완료!");
+  });
+
+  async function withSelectedRecDomestic(fn){
+    const sess = loadSession();
+    if(!sess.courier){ alert("기사 로그인 필요"); return; }
+    if(!selectedWaybill){ alert("운송장을 먼저 선택해줘!"); return; }
+    const rec = await findByWaybill(selectedWaybill);
+    if(!rec){ alert("내역이 없어!"); return; }
+    await fn(rec);
+    await upsertRes(rec);
+    await renderCourierLists();
+  }
+
+  const HUB_T = "강남허브터미널";
+
+  $("c_btn_subArrive")?.addEventListener("click", async () => {
+    await withSelectedRecDomestic(async (rec) => {
+      if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(rec.status !== "PICKED_UP"){ alert("기사수거 이후에 가능"); throw new Error("stop"); }
+      const term = ($("c_terminalSelect")?.value || "").trim();
+      if(!term){ alert("터미널을 먼저 추가/선택해줘!"); throw new Error("stop"); }
+      rec.status = "ARRIVED_SUB_TERMINAL";
+      rec.subTerminalName = term;
+      rec.subArrivedAt = nowStr();
+      pushEvent(rec, term, "간선하차 하였습니다", rec.subArrivedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_subDepart")?.addEventListener("click", async () => {
+    await withSelectedRecDomestic(async (rec) => {
+      if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(rec.status !== "ARRIVED_SUB_TERMINAL"){ alert("서브터미널 도착 이후에 가능"); throw new Error("stop"); }
+      const term = rec.subTerminalName || ($("c_terminalSelect")?.value || "").trim();
+      if(!term){ alert("터미널을 선택해줘!"); throw new Error("stop"); }
+      rec.status = "DEPARTED_SUB_TERMINAL";
+      rec.subDepartedAt = nowStr();
+      pushEvent(rec, term, "간선상차 하였습니다", rec.subDepartedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_hubArriveT")?.addEventListener("click", async () => {
+    await withSelectedRecDomestic(async (rec) => {
+      if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(!(rec.status === "DEPARTED_SUB_TERMINAL" || rec.status === "ARRIVED_SUB_TERMINAL")){ alert("서브터미널 출발 이후에 가능"); throw new Error("stop"); }
+      rec.status = "ARRIVED_HUB_TERMINAL";
+      rec.hubTerminalArrivedAt = nowStr();
+      pushEvent(rec, HUB_T, "간선하차하였습니다", rec.hubTerminalArrivedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_hubDepartT")?.addEventListener("click", async () => {
+    await withSelectedRecDomestic(async (rec) => {
+      if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(rec.status !== "ARRIVED_HUB_TERMINAL"){ alert("허브터미널 도착 이후에 가능"); throw new Error("stop"); }
+      rec.status = "DEPARTED_HUB_TERMINAL";
+      rec.hubTerminalDepartedAt = nowStr();
+      pushEvent(rec, HUB_T, "간선상차하였습니다", rec.hubTerminalDepartedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_destArrive")?.addEventListener("click", async () => {
+    await withSelectedRecDomestic(async (rec) => {
+      if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(rec.status != "DEPARTED_HUB_TERMINAL"){ alert("허브터미널 출발 이후에 가능"); throw new Error("stop"); }
+      const term = ($("c_terminalSelect")?.value || "").trim();
+      if(!term){ alert("배송지 터미널을 선택해줘!"); throw new Error("stop"); }
+      rec.status = "ARRIVED_DEST_TERMINAL";
+      rec.destTerminalName = term;
+      rec.destTerminalArrivedAt = nowStr();
+      pushEvent(rec, term, "간선하차하였습니다", rec.destTerminalArrivedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_deliveryStart")?.addEventListener("click", async () => {
+    await withSelectedRecDomestic(async (rec) => {
+      if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(rec.status !== "ARRIVED_DEST_TERMINAL"){ alert("배송지 터미널 도착 이후에 가능"); throw new Error("stop"); }
+      const term = rec.destTerminalName || ($("c_terminalSelect")?.value || "").trim();
+      if(!term){ alert("터미널을 선택해줘!"); throw new Error("stop"); }
+      rec.status = "DELIVERY_STARTED";
+      rec.deliveryStartedAt = nowStr();
+      pushEvent(rec, term, "배송출발하였습니다", rec.deliveryStartedAt);
+    }).catch(()=>{});
+  });
+
+  $("c_btn_delivered")?.addEventListener("click", async () => {
+    await withSelectedRecDomestic(async (rec) => {
+      if(rec.type === "ECONOMY_CVS"){ alert("반값택배는 반값 기사 화면에서 처리해줘!"); throw new Error("stop"); }
+      if(rec.status !== "DELIVERY_STARTED"){ alert("배송출발 이후에 가능"); throw new Error("stop"); }
+      const sess = loadSession();
+      const courier = await courierByCode(sess.courier.code);
+      const term = rec.destTerminalName || ($("c_terminalSelect")?.value || "").trim() || "-";
+      rec.status = "DELIVERED";
+      rec.deliveredAt = nowStr();
+      const who = courier ? `${courier.name} (${courier.phone || "-"})` : "기사정보없음";
+      pushEvent(rec, term, `배송완료 하였습니다 담당기사:${who}`, rec.deliveredAt);
+    }).catch(()=>{});
+  });
+
+  // init terminal select
+  refreshTerminalSelect();
+
   // ---------- COURIER: register/login/session ----------
   async function getCouriers(){ return await apiGet(STORAGE_KEYS.COURIERS, []); }
   async function saveCouriers(arr){ await apiSet(STORAGE_KEYS.COURIERS, arr); }
@@ -1497,10 +1679,10 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     const all = await getReservations();
     const statusAllow = (courierMode === "ECONOMY_CVS")
       ? ["FINAL","PICKED_UP","ARRIVED_COLLECTION_CENTER","ARRIVED_HUB","OUTBOUND_PREP","STORE_DEPARTED"]
-      : ["FINAL"];
+      : ["FINAL","PICKED_UP","ARRIVED_SUB_TERMINAL","DEPARTED_SUB_TERMINAL","ARRIVED_HUB_TERMINAL","DEPARTED_HUB_TERMINAL","ARRIVED_DEST_TERMINAL","DELIVERY_STARTED"];
 
     const arr = all
-      .filter(x => x.waybillNo && statusAllow.includes(x.status))
+      .filter(x => x.waybillNo && (statusAllow.includes(x.status) || x.status==="DELIVERED"))
       .filter(x => (courierMode === "ECONOMY_CVS") ? (x.type === "ECONOMY_CVS") : (x.type !== "ECONOMY_CVS"))
       .slice(0, 80);
 
@@ -1537,11 +1719,12 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
         const wb = el.dataset.wb;
         setSelectedWaybill(wb);
         await refreshCenterSelect();
+        await refreshTerminalSelect();
 
         const rec = await findByWaybill(wb);
         if(!rec){ alert("내역 없음"); return; }
 
-        // Both modes: if FINAL, allow pickup.
+        // If FINAL, allow pickup.
         if(rec.status === "FINAL"){
           const msg =
 `기사수거(집화) 처리할까?
