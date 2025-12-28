@@ -352,6 +352,14 @@
 <script>
   const $ = (id) => document.getElementById(id);
 
+  function openLabel(waybillNo){
+    const wb = String(waybillNo || "").trim();
+    if(!wb){ alert("운송장 번호가 없어!"); return; }
+    const url = `label.html?waybill=${encodeURIComponent(wb)}`;
+    window.open(url, "_blank");
+  }
+
+
   // ==== Persistent storage (Netlify Functions + Blobs) ====
   // Must match index.html keys
   const STORAGE_KEYS = { RES: "DELIVERY_RESERVATIONS_V1", STORES: "DELIVERY_STORES_V1" };
@@ -493,6 +501,8 @@
     const rand = Math.random().toString(36).slice(2,7).toUpperCase();
     return `WALKIN-${y}${m}${day}-${rand}`;
   }
+
+  function escapeAttr(s){ return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
   function escapeHtml(s){
     return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
@@ -675,7 +685,11 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
 발급시각: ${rec.waybillIssuedAt}
       </div>
       ${rec.type === "ECONOMY_CVS" ? `<div class="hint">※ 반값택배 안내: 최대 소요기간 6일(상황에 따라 변동 가능)</div>` : ""}
+      <div style="height:10px;"></div>
+      <button class="btn primary" id="w_print" type="button">운송장 출력</button>
     `;
+
+    $("w_print").onclick = () => openLabel(rec.waybillNo);
 
     // next customer
     $("walkinFormCard").style.display = "none";
@@ -708,6 +722,15 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
           </div>
         </div>
       `;
+    });
+
+    // 클릭하면 라벨 페이지 열기
+    box.querySelectorAll(".item").forEach(el => {
+      el.style.cursor = "pointer";
+      el.onclick = () => {
+        const wb = (el.querySelector(".mono")?.textContent || "").trim();
+        if(wb) openLabel(wb);
+      };
     });
   }
 
@@ -748,7 +771,11 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
 유형: ${TYPE_LABEL[rec.type]}
 운송장: ${rec.waybillNo}
       </div>
+      <div style="height:10px;"></div>
+      <button class="btn primary" id="r_print" type="button">운송장 출력</button>
     `;
+
+    $("r_print").onclick = () => openLabel(rec.waybillNo);
     await renderReserveList();
   };
 
