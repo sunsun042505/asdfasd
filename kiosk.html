@@ -353,24 +353,34 @@
   const $ = (id) => document.getElementById(id);
 
   function openLabel(arg){
-    // arg can be waybill string or a record object
+    // arg can be waybill string/number OR a record object
     const wb = (typeof arg === "string" || typeof arg === "number") ? String(arg).trim() : String(arg?.waybillNo || "").trim();
     if(!wb){ alert("운송장 번호가 없어!"); return; }
 
     let url = `label.html?waybill=${encodeURIComponent(wb)}`;
 
     // Build small payload so label works even when API isn't reachable
+    let payloadObj = null;
     if(arg && typeof arg === "object"){
+      payloadObj = {
+        waybillNo: wb,
+        type: arg.type || "",
+        storeName: arg.storeName || "",
+        destStoreName: arg.destStoreName || "",
+        addr: (arg.addr || arg.package?.addr || ""),
+        weightKg: (arg.package?.weightKg ?? arg.weightKg ?? arg.weight ?? ""),
+        kind: (arg.package?.kind ?? arg.kind ?? "")
+      };
+
+      // Save to localStorage too (same device fallback)
       try{
-        const payloadObj = {
-          waybillNo: wb,
-          type: arg.type || "",
-          storeName: arg.storeName || "",
-          destStoreName: arg.destStoreName || "",
-          addr: (arg.addr || arg.package?.addr || ""),
-          weightKg: (arg.package?.weightKg ?? arg.weightKg ?? arg.weight ?? ""),
-          kind: (arg.package?.kind ?? arg.kind ?? "")
-        };
+        localStorage.setItem(`SW_LABEL_PAYLOAD_${wb}`, JSON.stringify(payloadObj));
+      }catch(e){}
+    }
+
+    // Also attach payload in URL (works cross-tab)
+    if(payloadObj){
+      try{
         const jsonStr = JSON.stringify(payloadObj);
         const bytes = new TextEncoder().encode(jsonStr);
         let bin = "";
@@ -753,7 +763,14 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
       el.style.cursor = "pointer";
       el.onclick = () => {
         const wb = (el.querySelector(".mono")?.textContent || "").trim();
-        if(wb) openLabel(wb);
+        if(!wb) return;
+        // try to find full record for payload
+        try{
+          const all = await apiGetReservations();
+          const rec = (all||[]).find(x => String(x.waybillNo||"") === wb);
+          if(rec) return openLabel(rec);
+        }catch(e){}
+        openLabel(wb);
       };
     });
   }

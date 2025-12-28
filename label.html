@@ -141,12 +141,33 @@
       }catch(e){ return ""; }
     }
 
-    function parsePayload(){
+    function parsePayload(waybill){
+      const wb = String(waybill || "").trim();
+      // 1) query payload
       const p = qp("payload");
-      if(!p) return null;
-      const jsonStr = decodeB64Url(p);
-      if(!jsonStr) return null;
-      try{ return JSON.parse(jsonStr); }catch(e){ return null; }
+      if(p){
+        const jsonStr = decodeB64Url(p);
+        if(jsonStr){
+          try{
+            const obj = JSON.parse(jsonStr);
+            // cache for same-device fallback
+            if(wb){
+              try{ localStorage.setItem(`SW_LABEL_PAYLOAD_${wb}`, JSON.stringify(obj)); }catch(e){}
+            }
+            return obj;
+          }catch(e){}
+        }
+      }
+
+      // 2) localStorage fallback (same device)
+      if(wb){
+        try{
+          const raw = localStorage.getItem(`SW_LABEL_PAYLOAD_${wb}`);
+          if(raw) return JSON.parse(raw);
+        }catch(e){}
+      }
+
+      return null;
     }
 
     function qp(name){
@@ -224,7 +245,7 @@ function statusLabel(s){
       try{ JsBarcode("#barcode", waybill, { format:"CODE128", displayValue:false, margin:0, height:60 }); }catch(e){}
 
       // 0) payload-first (works even without server)
-      const payload = parsePayload();
+      const payload = parsePayload(waybill);
       if(payload && String(payload.waybillNo||payload.waybill||"") === waybill){
         // fill from payload immediately
         $("typeTag").textContent = typeLabel(payload.type);
