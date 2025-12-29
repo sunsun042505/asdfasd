@@ -352,6 +352,18 @@
 <script>
   const $ = (id) => document.getElementById(id);
 
+  function safe(fn){
+    return async (...args)=>{
+      try{ await fn(...args); }
+      catch(e){
+        console.error(e);
+        const msg = (e && e.message) ? e.message : String(e);
+        alert("동작 실패: 서버/저장 연결을 확인해줘!\n" + msg);
+      }
+    };
+  }
+
+
   function openLabel(arg){
     // arg can be waybill string/number OR a record object
     const wb = (typeof arg === "string" || typeof arg === "number") ? String(arg).trim() : String(arg?.waybillNo || "").trim();
