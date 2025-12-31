@@ -1,341 +1,1061 @@
-<!doctype html><html lang="ko"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>선우택배</title>
-<link rel="stylesheet" href="./style.css">
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>택배 시스템</title>
+  <style>
+    :root{
+      --bg:#0b1020; --text:#eaf0ff; --muted:#a9b3d7; --accent:#7aa2ff;
+      --good:#35d07f; --warn:#ffcc66; --bad:#ff6b6b;
+      --card: rgba(0,0,0,.18); --line: rgba(255,255,255,.10);
+      --shadow: 0 18px 40px rgba(0,0,0,.35); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(122,162,255,.18), transparent 55%),
+        radial-gradient(900px 500px at 80% 0%, rgba(53,208,127,.12), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+    }
+    .panel{
+      width:min(1100px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding:18px 20px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      background: linear-gradient(180deg, rgba(122,162,255,.12), rgba(0,0,0,0));
+    }
+    .brand{display:flex; align-items:center; gap:12px;}
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      background: linear-gradient(135deg, rgba(122,162,255,.65), rgba(53,208,127,.55));
+      box-shadow: 0 10px 20px rgba(0,0,0,.28);
+    }
+    h1{margin:0; font-size:16px;}
+    .sub{font-size:12px; color:var(--muted); margin-top:2px;}
+    .badge{
+      font-size:12px; padding:7px 10px; border:1px solid rgba(255,255,255,.12);
+      border-radius:999px; color:var(--muted); background: rgba(0,0,0,.18);
+      user-select:none; white-space:nowrap;
+    }
+    .content{padding:16px;}
+    .grid{display:grid; grid-template-columns: 1fr 1fr; gap:14px;}
+    @media (max-width: 560px){ .grid{grid-template-columns: 1fr;} }
+
+    .bigbtn{
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(122,162,255,.09), rgba(0,0,0,.18));
+      border-radius: 18px;
+      padding:18px;
+      text-align:left;
+      cursor:pointer;
+      min-height:110px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:10px;
+      transition: transform .08s ease, border-color .15s ease, background .15s ease;
+    }
+    .bigbtn:hover{ transform: translateY(-2px); border-color: rgba(122,162,255,.35); }
+    .t{font-size:18px; font-weight:900; display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .pill{
+      font-size:12px; padding:5px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12); color:var(--muted); background: rgba(0,0,0,.14);
+    }
+    .d{font-size:13px; color:var(--muted); line-height:1.45;}
+
+    .card{
+      margin-top:14px;
+      background: var(--card);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding:16px;
+    }
+
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px;}
+    input, select, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(16,24,48,.35);
+      color: var(--text);
+      outline:none;
+    }
+    textarea{min-height:90px; resize:vertical;}
+    .row{display:grid; grid-template-columns: 1fr 1fr; gap:12px;}
+    @media (max-width: 720px){ .row{grid-template-columns: 1fr;} }
+
+    .actions{display:flex; gap:10px; justify-content:space-between; margin-top:14px; flex-wrap:wrap;}
+    .btn{
+      border:none;
+      border-radius: 14px;
+      padding:12px 14px;
+      cursor:pointer;
+      color:var(--text);
+      background: rgba(0,0,0,.12);
+      border:1px solid rgba(255,255,255,.10);
+      min-width:140px;
+      font-weight:900;
+    }
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(122,162,255,.48), rgba(122,162,255,.18));
+      border-color: rgba(122,162,255,.40);
+    }
+    .btn.good{
+      background: linear-gradient(180deg, rgba(53,208,127,.38), rgba(53,208,127,.14));
+      border-color: rgba(53,208,127,.35);
+    }
+    .btn.danger{
+      background: linear-gradient(180deg, rgba(255,107,107,.38), rgba(255,107,107,.15));
+      border-color: rgba(255,107,107,.35);
+    }
+    .btn.ghost{ color: var(--muted); }
+
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; letter-spacing:.3px;}
+    .hint{font-size:12px; color:var(--muted); line-height:1.4; margin-top:10px;}
+    .ok{color: var(--good); font-weight:900;}
+    .err{color: var(--bad); font-weight:900;}
+
+    .tabs{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+    .tab{padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.14); color:var(--muted); cursor:pointer; user-select:none;}
+    .tab.on{border-color: rgba(122,162,255,.45); color: var(--text);}
+
+    .list{
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.16);
+      border-radius: 16px;
+      overflow:hidden;
+      max-height: 420px;
+      overflow:auto;
+      margin-top:10px;
+    }
+    .item{
+      padding:12px 12px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      cursor:pointer;
+    }
+    .item:hover{ background: rgba(255,255,255,.03); }
+    .item:last-child{ border-bottom:none; }
+    .tag{
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(16,24,48,.35);
+      color: var(--muted);
+      font-size:11px;
+      white-space:nowrap;
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="topbar">
-    <div>
-      <div class="title">선우택배</div>
-      <div class="sub">build 2025-12-31 15:48:00 KST · 데이터는 서버(Netlify Blobs)에 저장됨(기기 공용)</div>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <span class="pill" id="clock">--:--:--</span>
-      <button class="btn" id="btnCustomer">고객화면</button>
-      <button class="btn" onclick="location.href='./kiosk.html'">키오스크</button>
-      <button class="btn" id="btnStore">점포화면</button>
-      <button class="btn" id="btnCourier">기사화면</button>
-      <button class="btn primary" onclick="location.href='./tracking.html'">배송조회</button>
-    </div>
-  </div>
-
-  <div class="card" id="apiCard">
-    <b>서버 연결</b>
-    <div class="sub">여기서 OK면 저장/조회가 기기 공용으로 정상 동작</div>
-    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="btn" id="ping">/api/kv/get 테스트</button>
-      <span class="sub" id="pingMsg"></span>
-    </div>
-  </div>
-
-  <div class="card" id="customer">
-    <b>고객 예약</b>
-    <div class="sub">예약번호 생성 → 키오스크에서 예약접수하면 운송장 발급</div>
-
-    <div class="row" style="margin-top:10px;">
-      <div>
-        <label class="sub">서비스</label>
-        <select id="type">
-          <option value="DOMESTIC">국내택배</option>
-          <option value="INTERNATIONAL">국제택배</option>
-          <option value="ECONOMY_CVS">반값택배</option>
-          <option value="RETURN">반품택배</option>
-        </select>
-      </div>
-      <div>
-        <label class="sub">무게(kg)</label>
-        <input id="w" type="number" step="0.1" min="0.1" placeholder="예: 1.2">
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:10px;">
-      <div><input id="s_name" placeholder="보내는분 이름"></div>
-      <div><input id="s_phone" placeholder="보내는분 전화"></div>
-    </div>
-    <div style="margin-top:10px;"><input id="s_addr" placeholder="보내는분 주소"></div>
-
-    <div class="row" style="margin-top:10px;">
-      <div><input id="r_name" placeholder="받는분 이름"></div>
-      <div><input id="r_phone" placeholder="받는분 전화"></div>
-    </div>
-    <div style="margin-top:10px;"><input id="r_addr" placeholder="받는분/도착점포 주소"></div>
-
-    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="btn primary" id="reserve">예약하기</button>
-      <span class="sub" id="rmsg"></span>
-    </div>
-  </div>
-
-  <div class="card" id="store" style="display:none;">
-    <b>점포 화면</b>
-    <div class="sub">점포코드로 로그인 → 접수된 운송장 목록 확인</div>
-
-    <div class="row" style="margin-top:10px;">
-      <div><input id="storeName" placeholder="점포명"></div>
-      <div><input id="storeCode" placeholder="점포코드"></div>
-    </div>
-    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="btn" id="storeRegister">점포등록</button>
-      <button class="btn primary" id="storeLogin">로그인</button>
-      <button class="btn" id="storeLogout" style="display:none;">로그아웃</button>
-      <span class="sub" id="storeMsg"></span>
-    </div>
-
-    <div class="hr"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-      <b>접수/발급 목록</b>
-      <button class="btn" id="storeRefresh" style="display:none;">새로고침</button>
-    </div>
-    <div class="list" id="storeList"></div>
-  </div>
-
-  <div class="card" id="courier" style="display:none;">
-    <b>기사 화면</b>
-    <div class="sub">기사코드로 로그인 → 집화(수거) 처리</div>
-
-    <div class="row" style="margin-top:10px;">
-      <div><input id="courierCode" placeholder="기사코드"></div>
-      <div>
-        <select id="courierRole">
-          <option value="DOMESTIC">국내택배 기사</option>
-          <option value="ECONOMY_CVS">반값택배 기사</option>
-          <option value="INTERNATIONAL">국제택배 기사</option>
-        </select>
-      </div>
-    </div>
-    <div class="row" style="margin-top:10px;">
-      <div><input id="courierName" placeholder="기사명(등록용)"></div>
-      <div><input id="courierPhone" placeholder="전화번호(등록용)"></div>
-    </div>
-
-    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button class="btn" id="courierRegister">기사등록</button>
-      <button class="btn primary" id="courierLogin">로그인</button>
-      <button class="btn" id="courierLogout" style="display:none;">로그아웃</button>
-      <span class="sub" id="courierMsg"></span>
-    </div>
-
-    <div class="hr"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-      <b>집화 대기(점포접수됨)</b>
-      <button class="btn" id="courierRefresh" style="display:none;">새로고침</button>
-    </div>
-    <div class="list" id="courierList"></div>
-  </div>
-</div>
-
-<script type="module">
-import * as c from "./client.js";
-
-document.addEventListener("DOMContentLoaded", ()=>{
-  c.startClock(c.$("clock"));
-
-  const show=(k)=>{
-    c.$("customer").style.display = (k==="customer")? "" : "none";
-    c.$("store").style.display = (k==="store")? "" : "none";
-    c.$("courier").style.display = (k==="courier")? "" : "none";
-  };
-
-  c.$("btnCustomer").onclick=()=>show("customer");
-  c.$("btnStore").onclick=()=>show("store");
-  c.$("btnCourier").onclick=()=>show("courier");
-
-  // ping
-  c.$("ping").onclick=async()=>{
-    c.$("pingMsg").textContent="";
-    try{
-      await c.apiPost("/api/kv/set",{key:"_ping", value:{t:Date.now()}});
-      await c.apiGet("/api/kv/get?key=_ping");
-      c.$("pingMsg").innerHTML="<span class='ok'>OK</span>";
-    }catch(e){
-      c.$("pingMsg").innerHTML="<span class='err'>실패:</span> "+e.message+" (netlify.toml/Functions 확인)";
-    }
-  };
-
-  // customer reserve
-  c.$("reserve").onclick=async()=>{
-    c.$("rmsg").textContent="";
-    try{
-      const rec={
-        reserveNo: c.make12(),
-        waybillNo: null,
-        type: c.$("type").value,
-        status:"RESERVED",
-        sender:{name:c.$("s_name").value.trim(), phone:c.$("s_phone").value.trim(), address:c.$("s_addr").value.trim()},
-        receiver:{name:c.$("r_name").value.trim(), phone:c.$("r_phone").value.trim(), address:c.$("r_addr").value.trim()},
-        package:{weightKg:Number(c.$("w").value)},
-        storeName:null,
-        courier:null,
-        events:[{time:new Date().toISOString(), place:"예약", message:"예약이 생성되었습니다"}]
-      };
-      if(!rec.sender.name||!rec.sender.phone||!rec.sender.address) throw new Error("보내는분 필수");
-      if(!rec.receiver.name||!rec.receiver.phone||!rec.receiver.address) throw new Error("받는분/점포 주소 필수");
-      if(!rec.package.weightKg||rec.package.weightKg<=0) throw new Error("무게 입력");
-      await c.apiPost("/api/reservations/upsert", rec);
-      c.$("rmsg").innerHTML="<span class='ok'>예약완료</span> 예약번호: <span class='mono'>"+rec.reserveNo+"</span>";
-    }catch(e){
-      c.$("rmsg").innerHTML="<span class='err'>실패:</span> "+e.message;
-    }
-  };
-
-  // store register/login/list
-  let storeSession=null;
-
-  const renderStoreList = async ()=>{
-    const list=c.$("storeList");
-    list.innerHTML="";
-    if(!storeSession) return;
-    const all = await c.apiGet("/api/reservations");
-    const mine = (all||[]).filter(x=>x.storeName===storeSession.name && x.waybillNo);
-    if(mine.length===0){
-      list.innerHTML = "<div class='sub'>아직 없음 (키오스크에서 접수/발급하면 여기 뜸)</div>";
-      return;
-    }
-    mine.sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
-    mine.forEach(rec=>{
-      const last = (rec.events||[]).slice(-1)[0];
-      const div=document.createElement("div");
-      div.className="item";
-      div.innerHTML = `
-        <b>${c.typeLabel(rec.type)} · <span class="mono">${rec.waybillNo}</span></b>
-        <div class="sub">보내는분: ${rec.sender?.name||"-"} / 받는분: ${rec.receiver?.name||"-"}</div>
-        <div class="sub">최근: ${last? (last.place+" "+last.message) : "-"}</div>
-        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn" data-track="${rec.waybillNo}">배송조회</button>
-          <button class="btn primary" data-label="${rec.waybillNo}">라벨</button>
+  <div class="panel">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>택배 시스템</h1>
+          <div class="sub">고객(예약/조회) · 키오스크(운송장발급) · 점포(접수) · 기사(집화)</div>
         </div>
-      `;
-      div.querySelector("[data-track]").onclick=()=>location.href="./tracking.html?invoice_no="+encodeURIComponent(rec.waybillNo);
-      div.querySelector("[data-label]").onclick=()=>location.href="./label.html?invoice_no="+encodeURIComponent(rec.waybillNo);
-      list.appendChild(div);
-    });
-  };
+      </div>
+      <div class="badge" id="clock">—</div>
+    </header>
 
-  c.$("storeRegister").onclick=async()=>{
-    c.$("storeMsg").textContent="";
-    try{
-      await c.apiPost("/api/stores/register", {name:c.$("storeName").value.trim(), code:c.$("storeCode").value.trim()});
-      c.$("storeMsg").innerHTML="<span class='ok'>등록됨</span>";
-    }catch(e){
-      c.$("storeMsg").innerHTML="<span class='err'>"+e.message+"</span>";
-    }
-  };
+    <div class="content">
+      <!-- HOME -->
+      <div id="home">
+        <div class="grid">
+          <button class="bigbtn" id="goCustomer">
+            <div class="t">고객 화면 <span class="pill">예약/조회</span></div>
+            <div class="d">예약 버튼 + 배송조회 버튼</div>
+          </button>
 
-  c.$("storeLogin").onclick=async()=>{
-    c.$("storeMsg").textContent="";
-    try{
-      const r=await c.apiPost("/api/stores/login", {name:c.$("storeName").value.trim(), code:c.$("storeCode").value.trim()});
-      storeSession=r.store;
-      c.$("storeMsg").innerHTML="<span class='ok'>로그인됨</span>";
-      c.$("storeLogout").style.display="";
-      c.$("storeRefresh").style.display="";
-      await renderStoreList();
-    }catch(e){
-      c.$("storeMsg").innerHTML="<span class='err'>없는 점포</span>";
-    }
-  };
+          <button class="bigbtn" id="goKiosk">
+            <div class="t">키오스크 화면 <span class="pill">kiosk.html</span></div>
+            <div class="d">예약접수/현장접수 → 운송장 18자리 발급</div>
+          </button>
 
-  c.$("storeLogout").onclick=()=>{
-    storeSession=null;
-    c.$("storeMsg").innerHTML="<span class='sub'>로그아웃됨</span>";
-    c.$("storeLogout").style.display="none";
-    c.$("storeRefresh").style.display="none";
-    c.$("storeList").innerHTML="";
-  };
+          <button class="bigbtn" id="goStore">
+            <div class="t">점포 화면 <span class="pill">로그인</span></div>
+            <div class="d">점포 등록/로그인 → 운송장번호로 접수</div>
+          </button>
 
-  c.$("storeRefresh").onclick=()=>renderStoreList();
-
-  // courier register/login/pickup
-  let courierSession=null;
-
-  const renderCourierList = async ()=>{
-    const list=c.$("courierList");
-    list.innerHTML="";
-    if(!courierSession) return;
-    const all = await c.apiGet("/api/reservations");
-    const mine = (all||[]).filter(x=>x.waybillNo && x.storeName && (!x.courier || !x.courier.code) && x.type===courierSession.role);
-    if(mine.length===0){
-      list.innerHTML="<div class='sub'>대기 건 없음</div>";
-      return;
-    }
-    mine.sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
-    mine.forEach(rec=>{
-      const div=document.createElement("div");
-      div.className="item";
-      div.innerHTML=`
-        <b>${c.typeLabel(rec.type)} · <span class="mono">${rec.waybillNo}</span></b>
-        <div class="sub">접수지점: ${rec.storeName||"-"} · 받는분: ${rec.receiver?.name||"-"}</div>
-        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn primary">집화(수거)</button>
-          <button class="btn">배송조회</button>
+          <button class="bigbtn" id="goCourier">
+            <div class="t">기사 화면 <span class="pill">로그인</span></div>
+            <div class="d">기사 등록/로그인 → 집화 처리</div>
+          </button>
         </div>
-      `;
-      const btns = div.querySelectorAll("button");
-      const pickupBtn=btns[0];
-      const trackBtn=btns[1];
-      trackBtn.onclick=()=>location.href="./tracking.html?invoice_no="+encodeURIComponent(rec.waybillNo);
-      pickupBtn.onclick=async()=>{
-        pickupBtn.disabled=true;
-        try{
-          rec.courier = {name:courierSession.name, phone:courierSession.phone, code:courierSession.code, role:courierSession.role};
-          rec.status="PICKED_UP";
-          rec.events = rec.events || [];
-          rec.events.push({time:new Date().toISOString(), place:rec.storeName, message:"기사수거 하였습니다"});
-          await c.apiPost("/api/reservations/upsert", rec);
-          await renderCourierList();
-        }catch(e){
-          pickupBtn.disabled=false;
-          alert("실패: "+e.message);
-        }
-      };
-      list.appendChild(div);
+
+        <div class="card">
+          <div class="hint">
+            • 흐름: 고객 예약 → (kiosk.html) 운송장 발급 → 점포 접수 → 기사 집화 → 고객 조회에서 집화 완료 + 기사 정보 표시
+          </div>
+          <div class="actions">
+            <button class="btn danger" id="wipeAll">전체 데이터 삭제</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMER -->
+      <div id="customer" style="display:none;">
+        <div class="card" style="margin-top:0;">
+          <div style="font-weight:900; font-size:16px;">고객 화면</div>
+          <div class="sub">예약 / 배송조회</div>
+          <div class="tabs">
+            <div class="tab on" id="tabReserve">예약</div>
+            <div class="tab" id="tabTrack">배송조회</div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost" data-home>기본 화면</button>
+          </div>
+        </div>
+
+        <!-- Reserve form -->
+        <div class="card" id="custReserveCard">
+          <div style="font-weight:900; font-size:15px;">예약하기</div>
+          <div class="sub">예약번호 발급(운송장은 키오스크에서 생성)</div>
+          <div style="height:12px;"></div>
+
+          <div class="row">
+            <div>
+              <label>접수 유형</label>
+              <select id="c_type">
+                <option value="DOMESTIC">국내</option>
+                <option value="INTERNATIONAL">국제</option>
+                <option value="ECONOMY_CVS">반값택배(편의점)</option>
+                <option value="RETURN">반품</option>
+              </select>
+            </div>
+            <div>
+              <label>수거/접수 방식</label>
+              <select id="c_pickup">
+                <option value="STORE">매장 접수</option>
+                <option value="PICKUP">기사 수거(예약)</option>
+              </select>
+            </div>
+
+            <div>
+              <label>보내는 사람 이름</label>
+              <input id="c_sName" placeholder="예: 홍길동" />
+            </div>
+            <div>
+              <label>보내는 사람 연락처</label>
+              <input id="c_sPhone" placeholder="예: 010-1234-5678" />
+            </div>
+
+            <div>
+              <label>받는 사람 이름(선택)</label>
+              <input id="c_rName" placeholder="예: 김철수" />
+            </div>
+            <div>
+              <label>받는 사람 연락처(선택)</label>
+              <input id="c_rPhone" placeholder="예: 010-0000-0000" />
+            </div>
+
+            <div style="grid-column:1/-1">
+              <label>주소/지점명(선택)</label>
+              <input id="c_addr" placeholder="예: 배송지 주소 / 편의점 지점명+주소" />
+            </div>
+
+            <div style="grid-column:1/-1">
+              <label>요청사항(선택)</label>
+              <textarea id="c_memo" placeholder="예: 문 앞에 놓아주세요"></textarea>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" id="c_reserveBtn">예약하기</button>
+          </div>
+
+          <div class="hint">• 예약번호 생성 후 kiosk.html에서 “예약접수”로 운송장(18자리)이 만들어짐.</div>
+        </div>
+
+        <div class="card" id="custReserveResult" style="display:none;"></div>
+
+        <!-- Tracking -->
+        <div class="card" id="custTrackCard" style="display:none;">
+          <div style="font-weight:900; font-size:15px;">배송조회</div>
+          <div class="sub">운송장 번호로 조회 (등록된 운송장인지 확인)</div>
+
+          <div style="height:12px;"></div>
+          <div class="row" style="grid-template-columns: 2fr 1fr;">
+            <div>
+              <label>운송장 번호(18자리)</label>
+              <input id="t_waybill" class="mono" placeholder="예: 81xxxxxxxxxxxxxxxx" />
+            </div>
+            <div>
+              <button class="btn primary" id="t_search">조회</button>
+            </div>
+          </div>
+
+          <div class="card" id="t_result" style="display:none;"></div>
+
+          <div class="hint">
+            • 집화 완료 상태면 기사 이름/전화번호가 표시돼.<br>
+            • 점포 접수까지 됐으면 점포명도 표시돼.<br>
+            • 주소/무게/종류/국가(국제)도 같이 표시돼.
+          </div>
+        </div>
+      </div>
+
+      <!-- STORE -->
+      <div id="store" style="display:none;">
+        <div class="card" style="margin-top:0;">
+          <div style="font-weight:900; font-size:16px;">점포 화면</div>
+          <div class="sub">점포 등록/로그인 → 운송장 번호로 “접수(최종접수)”</div>
+          <div class="actions">
+            <button class="btn ghost" data-home>기본 화면</button>
+          </div>
+        </div>
+
+        <!-- Store auth -->
+        <div class="card" id="storeAuth">
+          <div style="font-weight:900; font-size:15px;">점포 로그인</div>
+          <div class="sub">점포명 + 점포코드</div>
+          <div style="height:12px;"></div>
+
+          <div class="row">
+            <div>
+              <label>점포명</label>
+              <input id="s_name" placeholder="예: GS25 강남점" />
+            </div>
+            <div>
+              <label>점포코드</label>
+              <input id="s_code" class="mono" placeholder="예: STORE-001" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn" id="s_register">점포등록</button>
+            <button class="btn primary" id="s_login">로그인</button>
+          </div>
+
+          <div class="card" id="s_authResult" style="display:none;"></div>
+        </div>
+
+        <!-- Store dashboard -->
+        <div class="card" id="storeDash" style="display:none;">
+          <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+            <div>
+              <div style="font-weight:900; font-size:15px;">점포 작업</div>
+              <div class="sub" id="s_who">—</div>
+            </div>
+            <span class="tag">운송장 접수</span>
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <div class="row" style="grid-template-columns: 2fr 1fr;">
+            <div>
+              <label>운송장 번호 입력(18자리)</label>
+              <input id="s_waybill" class="mono" placeholder="예: 81xxxxxxxxxxxxxxxx" />
+            </div>
+            <div>
+              <button class="btn primary" id="s_accept">접수(최종접수)</button>
+            </div>
+          </div>
+
+          <div class="card" id="s_acceptResult" style="display:none;"></div>
+
+          <div class="hint">
+            • “접수”하면 해당 운송장에 점포명이 저장되고, 기사 화면에 이 건이 표시돼.<br>
+            • 목록/확인창에 주소/무게/종류도 같이 보여줌.
+          </div>
+
+          <div class="actions">
+            <button class="btn" id="s_logout">로그아웃</button>
+            <button class="btn" id="s_refresh">목록 새로고침</button>
+          </div>
+        </div>
+
+        <div class="card" id="storeListCard" style="display:none;">
+          <div style="font-weight:900; font-size:14px;">접수대기(운송장 발급됨) 목록</div>
+          <div class="sub">상태: WAYBILL_ISSUED (점포 접수 전)</div>
+          <div class="list" id="s_list"></div>
+        </div>
+      </div>
+
+      <!-- COURIER -->
+      <div id="courier" style="display:none;">
+        <div class="card" style="margin-top:0;">
+          <div style="font-weight:900; font-size:16px;">기사 화면</div>
+          <div class="sub">기사 등록/로그인 → 집화</div>
+          <div class="actions">
+            <button class="btn ghost" data-home>기본 화면</button>
+          </div>
+        </div>
+
+        <!-- Courier auth -->
+        <div class="card" id="courierAuth">
+          <div style="font-weight:900; font-size:15px;">기사 로그인</div>
+          <div class="sub">기사 등록 기능 + 코드로 로그인</div>
+          <div style="height:12px;"></div>
+
+          <div class="row">
+            <div>
+              <label>기사명(등록 시 필요)</label>
+              <input id="c_name" placeholder="예: 김기사" />
+            </div>
+            <div>
+              <label>전화번호(등록 시 필요)</label>
+              <input id="c_phone" placeholder="예: 010-9999-8888" />
+            </div>
+            <div style="grid-column:1/-1">
+              <label>기사코드(로그인/등록)</label>
+              <input id="c_code" class="mono" placeholder="예: COURIER-1234" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn" id="c_register">기사등록</button>
+            <button class="btn primary" id="c_login">로그인(코드만)</button>
+          </div>
+
+          <div class="card" id="c_authResult" style="display:none;"></div>
+        </div>
+
+        <!-- Courier dashboard -->
+        <div class="card" id="courierDash" style="display:none;">
+          <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+            <div>
+              <div style="font-weight:900; font-size:15px;">집화 대상</div>
+              <div class="sub" id="c_who">—</div>
+            </div>
+            <span class="tag">FINAL만 표시</span>
+          </div>
+
+          <div class="actions">
+            <button class="btn" id="c_logout">로그아웃</button>
+            <button class="btn" id="c_refresh">목록 새로고침</button>
+          </div>
+        </div>
+
+        <div class="card" id="courierListCard" style="display:none;">
+          <div style="font-weight:900; font-size:14px;">최종접수 목록(FINAL)</div>
+          <div class="sub">클릭하면 집화 처리</div>
+          <div class="list" id="c_list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  // Shared with kiosk.html
+  const LS_RES = "DELIVERY_RESERVATIONS_V1";
+  const LS_STORES = "DELIVERY_STORES_V1";
+  const LS_COURIERS = "DELIVERY_COURIERS_V1";
+  const LS_SESSION = "DELIVERY_SESSION_V1"; // {store:{name,code}, courier:{code}}
+
+  const TYPE_LABEL = {
+    DOMESTIC: "국내",
+    INTERNATIONAL: "국제",
+    ECONOMY_CVS: "반값택배",
+    RETURN: "반품"
+  };
+
+  const KIND_LABEL = {
+    DOCUMENT: "서류",
+    SMALL_BOX: "소형 박스",
+    MEDIUM_BOX: "중형 박스",
+    LARGE_BOX: "대형 박스",
+    FRAGILE: "파손주의",
+    ETC: "기타"
+  };
+
+  function nowStr(){
+    const d = new Date();
+    const pad = (n)=> String(n).padStart(2,"0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  function makeReserveNo(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    const rand = Math.random().toString(36).slice(2,7).toUpperCase();
+    return `RSV-${y}${m}${day}-${rand}`;
+  }
+
+  
+  // ===== Cloud storage layer (Netlify Blobs via /api) =====
+  // LS_RES / LS_STORES / LS_COURIERS 는 서버(기기 공용), LS_SESSION 은 세션(이 기기만)
+  const CLOUD_KEYS = [LS_RES, LS_STORES, LS_COURIERS];
+  const __CACHE__ = Object.create(null);
+
+  async function apiGet(path){
+    const r = await fetch(path, { cache:"no-store" });
+    const t = await r.text();
+    let o; try{ o = JSON.parse(t); }catch{ o={ raw:t }; }
+    if(!r.ok) throw new Error(o?.error || ("HTTP_"+r.status));
+    return o;
+  }
+  async function apiPost(path, body){
+    const r = await fetch(path, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(body),
+      cache:"no-store"
     });
-  };
-
-  c.$("courierRegister").onclick=async()=>{
-    c.$("courierMsg").textContent="";
+    const t = await r.text();
+    let o; try{ o = JSON.parse(t); }catch{ o={ raw:t }; }
+    if(!r.ok) throw new Error(o?.error || ("HTTP_"+r.status));
+    return o;
+  }
+  async function cloudGet(key, defVal){
     try{
-      await c.apiPost("/api/couriers/register", {
-        name:c.$("courierName").value.trim(),
-        phone:c.$("courierPhone").value.trim(),
-        code:c.$("courierCode").value.trim(),
-        role:c.$("courierRole").value
-      });
-      c.$("courierMsg").innerHTML="<span class='ok'>등록됨</span>";
+      const o = await apiGet("/api/kv/get?key=" + encodeURIComponent(key));
+      return (o && o.value !== undefined && o.value !== null) ? o.value : defVal;
     }catch(e){
-      c.$("courierMsg").innerHTML="<span class='err'>"+e.message+"</span>";
+      return defVal;
     }
-  };
-
-  c.$("courierLogin").onclick=async()=>{
-    c.$("courierMsg").textContent="";
+  }
+  async function cloudSet(key, value){
+    await apiPost("/api/kv/set", { key, value });
+  }
+  async function preloadCloud(){
+    // 초기 로딩 동안 클릭 방지
+    document.documentElement.style.pointerEvents = "none";
     try{
-      const r=await c.apiPost("/api/couriers/login", {code:c.$("courierCode").value.trim()});
-      courierSession=r.courier;
-      const want=c.$("courierRole").value;
-      if(courierSession.role!==want){
-        c.$("courierMsg").innerHTML="<span class='err'>"+c.typeLabel(courierSession.role)+" 입니다</span>";
-        c.$("courierRole").value=courierSession.role;
-      }else{
-        c.$("courierMsg").innerHTML="<span class='ok'>로그인됨</span>";
+      for(const k of CLOUD_KEYS){
+        const defVal = [];
+        __CACHE__[k] = await cloudGet(k, defVal);
+        if(!Array.isArray(__CACHE__[k])) __CACHE__[k] = defVal;
       }
-      c.$("courierLogout").style.display="";
-      c.$("courierRefresh").style.display="";
-      await renderCourierList();
-    }catch(e){
-      c.$("courierMsg").innerHTML="<span class='err'>없는 기사입니다</span>";
+    }finally{
+      document.documentElement.style.pointerEvents = "";
     }
+  }
+
+  function load(key){
+    return __CACHE__[key] ?? [];
+  }
+  function save(key, val){
+    __CACHE__[key] = val;
+    cloudSet(key, val).catch(console.warn);
+  }
+  function loadSession(){
+    try{ return JSON.parse(sessionStorage.getItem(LS_SESSION) || "{}"); }catch{ return {}; }
+  }
+  function saveSession(sess){
+    sessionStorage.setItem(LS_SESSION, JSON.stringify(sess || {}));
+  }
+"); } catch { return {}; }
+  }
+  function saveSession(obj){
+    localStorage.setItem(LS_SESSION, JSON.stringify(obj));
+  }
+
+  function upsertRes(rec){
+    const arr = load(LS_RES);
+    const idx = arr.findIndex(x => x.reserveNo === rec.reserveNo);
+    if(idx >= 0) arr[idx] = rec; else arr.unshift(rec);
+    save(LS_RES, arr);
+  }
+
+  function findByWaybill(waybill){
+    const arr = load(LS_RES);
+    return arr.find(x => x.waybillNo === waybill) || null;
+  }
+
+  function statusLabel(rec){
+    if(rec.status === "PICKED_UP") return "집화완료";
+    if(rec.status === "FINAL") return "점포접수(최종)";
+    if(rec.status === "WAYBILL_ISSUED") return "운송장발급";
+    return "예약";
+  }
+
+  function pkgSummary(rec){
+    const addr = rec.addr ? rec.addr : "-";
+    const w = (rec.package && typeof rec.package.weightKg === "number") ? rec.package.weightKg : (rec.package?.weightKg || "-");
+    const kindKey = rec.package?.kind || "";
+    const kind = kindKey ? (KIND_LABEL[kindKey] || kindKey) : "-";
+    const country = rec.package?.country ? rec.package.country : "";
+    return { addr, w, kind, country };
+  }
+
+  function detailText(rec){
+    const p = pkgSummary(rec);
+    let t = "";
+    t += `주소: ${p.addr}\n`;
+    t += `무게(kg): ${p.w}\n`;
+    t += `종류: ${p.kind}\n`;
+    if(rec.type === "INTERNATIONAL"){
+      t += `국가: ${p.country || "-"}\n`;
+    }
+    return t.trim();
+  }
+
+  function tick(){
+    const d = new Date();
+    const pad = (n)=> String(n).padStart(2,"0");
+    $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  setInterval(tick, 1000); tick();
+
+  // Navigation
+  function show(view){
+    ["home","customer","store","courier"].forEach(id => $(id).style.display = "none");
+    $(view).style.display = "";
+    if(view === "store") renderStoreLists();
+    if(view === "courier") renderCourierLists();
+  }
+  document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => show("home"));
+
+  $("goCustomer").onclick = () => { show("customer"); };
+  $("goKiosk").onclick = () => { window.location.href = "./kiosk.html"; };
+  $("goStore").onclick = () => { show("store"); hydrateStoreSession(); };
+  $("goCourier").onclick = () => { show("courier"); hydrateCourierSession(); };
+
+  // ---------- CUSTOMER: tabs ----------
+  function setCustTab(which){
+    const reserveOn = which === "reserve";
+    $("tabReserve").classList.toggle("on", reserveOn);
+    $("tabTrack").classList.toggle("on", !reserveOn);
+    $("custReserveCard").style.display = reserveOn ? "" : "none";
+    $("custReserveResult").style.display = "none";
+    $("custTrackCard").style.display = reserveOn ? "none" : "";
+  }
+  $("tabReserve").onclick = () => setCustTab("reserve");
+  $("tabTrack").onclick = () => setCustTab("track");
+
+  // CUSTOMER: reserve
+  $("c_reserveBtn").onclick = () => {
+    const type = $("c_type").value;
+    const pickup = $("c_pickup").value;
+
+    const sName = $("c_sName").value.trim();
+    const sPhone = $("c_sPhone").value.trim();
+
+    if(!sName || !sPhone){
+      alert("보내는 사람 이름/연락처는 필수야!");
+      return;
+    }
+
+    const rec = {
+      reserveNo: makeReserveNo(),
+      type,
+      pickup,
+      createdAt: nowStr(),
+      status: "RESERVED",
+      waybillNo: "",
+      waybillIssuedAt: "",
+      storeName: "",
+      storeAcceptedAt: "",
+      courier: { code:"", name:"", phone:"" },
+      pickedAt: "",
+      sender: { name:sName, phone:sPhone },
+      receiver: { name: $("c_rName").value.trim(), phone: $("c_rPhone").value.trim() },
+      addr: $("c_addr").value.trim(),
+      memo: $("c_memo").value.trim(),
+    };
+    upsertRes(rec);
+
+    $("custReserveResult").style.display = "";
+    $("custReserveResult").innerHTML = `
+      <div class="ok">예약 완료</div>
+      <div class="sub">키오스크에서 예약접수/현장접수로 운송장 발급</div>
+      <div style="height:10px;"></div>
+      <div class="mono" style="white-space:pre-wrap; line-height:1.45;">
+예약번호: ${escapeHtml(rec.reserveNo)}
+유형: ${escapeHtml(TYPE_LABEL[rec.type])}
+상태: RESERVED
+      </div>
+      <div class="hint">• kiosk.html에서 “예약접수”로 운송장(18자리)을 발급해.</div>
+    `;
   };
 
-  c.$("courierLogout").onclick=()=>{
-    courierSession=null;
-    c.$("courierMsg").innerHTML="<span class='sub'>로그아웃됨</span>";
-    c.$("courierLogout").style.display="none";
-    c.$("courierRefresh").style.display="none";
-    c.$("courierList").innerHTML="";
+  // CUSTOMER: tracking (✅ 상세정보 표시)
+  $("t_search").onclick = () => {
+    const wb = $("t_waybill").value.trim();
+    if(!wb){
+      alert("운송장 번호를 입력해줘!");
+      return;
+    }
+    const rec = findByWaybill(wb);
+    $("t_result").style.display = "";
+    if(!rec){
+      $("t_result").innerHTML = `
+        <div class="err">등록된 운송장 번호가 아님</div>
+        <div class="hint">키오스크에서 발급된 운송장인지 확인해줘.</div>
+      `;
+      return;
+    }
+
+    const p = pkgSummary(rec);
+
+    const courierInfo =
+      rec.status === "PICKED_UP"
+        ? `\n기사: ${rec.courier?.name || "-"}\n전화: ${rec.courier?.phone || "-"}\n집화시각: ${rec.pickedAt || "-"}`
+        : "";
+
+    const storeInfo =
+      rec.storeName ? `\n접수점포: ${rec.storeName}\n접수시각: ${rec.storeAcceptedAt || "-"}` : "";
+
+    const pkgInfo =
+      `\n주소: ${p.addr}\n무게(kg): ${p.w}\n종류: ${p.kind}` + (rec.type === "INTERNATIONAL" ? `\n국가: ${p.country || "-"}` : "");
+
+    $("t_result").innerHTML = `
+      <div class="ok">조회 성공</div>
+      <div class="sub">현재 상태: ${escapeHtml(statusLabel(rec))}</div>
+      <div style="height:10px;"></div>
+      <div class="mono" style="white-space:pre-wrap; line-height:1.45;">
+운송장: ${escapeHtml(rec.waybillNo)}
+유형: ${escapeHtml(TYPE_LABEL[rec.type])}
+예약번호: ${escapeHtml(rec.reserveNo)}
+상태: ${escapeHtml(rec.status)}
+운송장발급: ${escapeHtml(rec.waybillIssuedAt || "-")}${storeInfo}${courierInfo}${pkgInfo}
+      </div>
+    `;
   };
-  c.$("courierRefresh").onclick=()=>renderCourierList();
-});
-</script>
-</body></html>
+
+  // ---------- STORE: register/login/session ----------
+  function getStores(){ return load(LS_STORES); }
+  function saveStores(arr){ save(LS_STORES, arr); }
+
+  function storeExists(name, code){
+    return getStores().find(s => s.name === name && s.code === code) || null;
+  }
+
+  function hydrateStoreSession(){
+    const sess = loadSession();
+    if(sess.store?.name && sess.store?.code && storeExists(sess.store.name, sess.store.code)){
+      $("storeAuth").style.display = "none";
+      $("storeDash").style.display = "";
+      $("storeListCard").style.display = "";
+      $("s_who").textContent = `로그인: ${sess.store.name} (${sess.store.code})`;
+      renderStoreLists();
+    }else{
+      $("storeAuth").style.display = "";
+      $("storeDash").style.display = "none";
+      $("storeListCard").style.display = "none";
+      $("s_authResult").style.display = "none";
+    }
+  }
+
+  $("s_register").onclick = () => {
+    const name = $("s_name").value.trim();
+    const code = $("s_code").value.trim();
+    if(!name || !code){
+      alert("점포명/점포코드를 입력해줘!");
+      return;
+    }
+    const stores = getStores();
+    const dup = stores.find(s => s.code === code);
+    if(dup){
+      $("s_authResult").style.display = "";
+      $("s_authResult").innerHTML = `<div class="err">이미 존재하는 점포코드야.</div>`;
+      return;
+    }
+    stores.push({ name, code, createdAt: nowStr() });
+    saveStores(stores);
+    $("s_authResult").style.display = "";
+    $("s_authResult").innerHTML = `<div class="ok">점포 등록 완료</div><div class="hint">이제 로그인 버튼을 눌러.</div>`;
+  };
+
+  $("s_login").onclick = () => {
+    const name = $("s_name").value.trim();
+    const code = $("s_code").value.trim();
+    if(!name || !code){
+      alert("점포명/점포코드를 입력해줘!");
+      return;
+    }
+    const store = storeExists(name, code);
+    $("s_authResult").style.display = "";
+    if(!store){
+      $("s_authResult").innerHTML = `<div class="err">없는 점포입니다.</div>`;
+      return;
+    }
+    const sess = loadSession();
+    sess.store = { name, code };
+    saveSession(sess);
+    $("s_authResult").innerHTML = `<div class="ok">로그인 성공</div>`;
+    hydrateStoreSession();
+  };
+
+  $("s_logout").onclick = () => {
+    const sess = loadSession();
+    delete sess.store;
+    saveSession(sess);
+    hydrateStoreSession();
+  };
+
+  // ✅ 목록에 상세정보 표시 + 클릭 시 바로 접수(전 확인)
+  function renderStoreLists(){
+    const sess = loadSession();
+    if(!sess.store) return;
+
+    const arr = load(LS_RES);
+    const waiting = arr.filter(x => x.status === "WAYBILL_ISSUED" && x.waybillNo).slice(0, 60);
+
+    const box = $("s_list");
+    box.innerHTML = "";
+    if(waiting.length === 0){
+      box.innerHTML = `<div class="item"><div style="color:var(--muted)">접수 대기 운송장이 없어.</div></div>`;
+    }else{
+      waiting.forEach(r => {
+        const p = pkgSummary(r);
+        const detailLine = `주소: ${p.addr} · 무게: ${p.w}kg · 종류: ${p.kind}` + (r.type==="INTERNATIONAL" ? ` · 국가: ${p.country || "-"}` : "");
+        box.innerHTML += `
+          <div class="item" data-wb="${escapeAttr(r.waybillNo)}">
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+              <span class="tag mono">${escapeHtml(r.waybillNo)}</span>
+              <span class="tag">${escapeHtml(TYPE_LABEL[r.type])} · ${escapeHtml(r.status)}</span>
+            </div>
+            <div style="margin-top:6px; color:var(--muted); font-size:12px;">
+              ${escapeHtml(detailLine)}
+            </div>
+            <div style="margin-top:6px; color:var(--muted); font-size:12px;">
+              예약번호: <span class="mono">${escapeHtml(r.reserveNo)}</span> · 발급: ${escapeHtml(r.waybillIssuedAt || "-")}
+            </div>
+            <div class="hint">클릭하면 이 운송장을 점포 접수(최종접수)함</div>
+          </div>
+        `;
+      });
+      box.querySelectorAll(".item").forEach(el => {
+        el.onclick = () => {
+          const wb = el.dataset.wb;
+          $("s_waybill").value = wb;
+          storeAcceptWaybill(true);
+        };
+      });
+    }
+  }
+
+  function storeAcceptWaybill(askConfirm=false){
+    const sess = loadSession();
+    if(!sess.store) return;
+
+    const wb = $("s_waybill").value.trim();
+    if(!wb){
+      alert("운송장 번호를 입력해줘!");
+      return;
+    }
+    const rec = findByWaybill(wb);
+    $("s_acceptResult").style.display = "";
+    if(!rec){
+      $("s_acceptResult").innerHTML = `<div class="err">등록된 운송장이 아님</div>`;
+      return;
+    }
+    if(rec.status !== "WAYBILL_ISSUED"){
+      $("s_acceptResult").innerHTML = `<div class="err">점포 접수 가능한 상태가 아님 (현재: ${escapeHtml(rec.status)})</div>`;
+      return;
+    }
+
+    if(askConfirm){
+      const msg =
+`점포 접수(최종접수) 할까?
+
+운송장: ${rec.waybillNo}
+유형: ${TYPE_LABEL[rec.type]}
+${detailText(rec)}
+`;
+      if(!confirm(msg)) return;
+    }
+
+    rec.status = "FINAL";
+    rec.storeName = sess.store.name;
+    rec.storeAcceptedAt = nowStr();
+    upsertRes(rec);
+
+    const p = pkgSummary(rec);
+
+    $("s_acceptResult").innerHTML = `
+      <div class="ok">점포 접수 완료</div>
+      <div class="mono" style="margin-top:8px; white-space:pre-wrap; line-height:1.45;">
+운송장: ${escapeHtml(rec.waybillNo)}
+점포: ${escapeHtml(rec.storeName)}
+주소: ${escapeHtml(p.addr)}
+무게(kg): ${escapeHtml(p.w)}
+종류: ${escapeHtml(p.kind)}
+${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}상태: FINAL
+      </div>
+      <div class="hint">• 이제 기사 화면에 이 건이 표시돼.</div>
+    `;
+    renderStoreLists();
+  }
+  $("s_accept").onclick = () => storeAcceptWaybill(false);
+  $("s_refresh").onclick = renderStoreLists;
+
+  // ---------- COURIER: register/login/session ----------
+  function getCouriers(){ return load(LS_COURIERS); }
+  function saveCouriers(arr){ save(LS_COURIERS, arr); }
+
+  function courierByCode(code){
+    return getCouriers().find(c => c.code === code) || null;
+  }
+
+  function hydrateCourierSession(){
+    const sess = loadSession();
+    if(sess.courier?.code && courierByCode(sess.courier.code)){
+      $("courierAuth").style.display = "none";
+      $("courierDash").style.display = "";
+      $("courierListCard").style.display = "";
+      const c = courierByCode(sess.courier.code);
+      $("c_who").textContent = `로그인: ${c.name} (${c.code})`;
+      renderCourierLists();
+    }else{
+      $("courierAuth").style.display = "";
+      $("courierDash").style.display = "none";
+      $("courierListCard").style.display = "none";
+      $("c_authResult").style.display = "none";
+    }
+  }
+
+  $("c_register").onclick = () => {
+    const name = $("c_name").value.trim();
+    const phone = $("c_phone").value.trim();
+    const code = $("c_code").value.trim();
+    if(!name || !phone || !code){
+      alert("기사명/전화/코드 다 입력해줘!");
+      return;
+    }
+    const list = getCouriers();
+    if(list.find(x => x.code === code)){
+      $("c_authResult").style.display = "";
+      $("c_authResult").innerHTML = `<div class="err">이미 존재하는 기사코드야.</div>`;
+      return;
+    }
+    list.push({ name, phone, code, createdAt: nowStr() });
+    saveCouriers(list);
+    $("c_authResult").style.display = "";
+    $("c_authResult").innerHTML = `<div class="ok">기사 등록 완료</div><div class="hint">이제 코드로 로그인해.</div>`;
+  };
+
+  $("c_login").onclick = () => {
+    const code = $("c_code").value.trim();
+    if(!code){
+      alert("기사코드를 입력해줘!");
+      return;
+    }
+    const c = courierByCode(code);
+    $("c_authResult").style.display = "";
+    if(!c){
+      $("c_authResult").innerHTML = `<div class="err">없는 기사입니다.</div>`;
+      return;
+    }
+    const sess = loadSession();
+    sess.courier = { code };
+    saveSession(sess);
+    $("c_authResult").innerHTML = `<div class="ok">로그인 성공</div>`;
+    hydrateCourierSession();
+  };
+
+  $("c_logout").onclick = () => {
+    const sess = loadSession();
+    delete sess.courier;
+    saveSession(sess);
+    hydrateCourierSession();
+  };
+
+  // ✅ FINAL 목록에 상세정보 표시 + 집화 확인창에 상세 표시
+  function renderCourierLists(){
+    const sess = loadSession();
+    if(!sess.courier) return;
+    const courier = courierByCode(sess.courier.code);
+    if(!courier) return;
+
+    const arr = load(LS_RES);
+    const finals = arr.filter(x => x.status === "FINAL" && x.waybillNo).slice(0, 80);
+
+    const box = $("c_list");
+    box.innerHTML = "";
+    if(finals.length === 0){
+      box.innerHTML = `<div class="item"><div style="color:var(--muted)">집화할 건이 없어.</div></div>`;
+      return;
+    }
+
+    finals.forEach(r => {
+      const p = pkgSummary(r);
+      const detailLine = `주소: ${p.addr} · 무게: ${p.w}kg · 종류: ${p.kind}` + (r.type==="INTERNATIONAL" ? ` · 국가: ${p.country || "-"}` : "");
+      box.innerHTML += `
+        <div class="item" data-wb="${escapeAttr(r.waybillNo)}">
+          <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+            <span class="tag mono">${escapeHtml(r.waybillNo)}</span>
+            <span class="tag">${escapeHtml(TYPE_LABEL[r.type])} · FINAL</span>
+          </div>
+          <div style="margin-top:6px; color:var(--muted); font-size:12px;">
+            점포: ${escapeHtml(r.storeName || "-")} · 접수: ${escapeHtml(r.storeAcceptedAt || "-")}
+          </div>
+          <div style="margin-top:6px; color:var(--muted); font-size:12px;">
+            ${escapeHtml(detailLine)}
+          </div>
+          <div class="hint">클릭하면 “집화” 처리됨</div>
+        </div>
+      `;
+    });
+
+    box.querySelectorAll(".item").forEach(el => {
+      el.onclick = () => {
+        const wb = el.dataset.wb;
+        const rec = findByWaybill(wb);
+        if(!rec){ alert("내역 없음"); return; }
+        if(rec.status !== "FINAL"){ alert("FINAL만 집화 가능"); return; }
+
+        const msg =
+`집화 처리할까?
+
+운송장: ${rec.waybillNo}
+유형: ${TYPE_LABEL[rec.type]}
+점포: ${rec.storeName || "-"}
+${detailText(rec)}
+`;
+        if(!confirm(msg)) return;
+
+        rec.status = "PICKED_UP";
+        rec.pickedAt = nowStr();
+        rec.courier = { code: courier.code, name: courier.name, phone: courier.phone };
+        upsertRes(rec);
+
+        alert(`집화 완료!\n운송장: ${wb}\n기사: ${courier.name} (${courier.phone})`);
+        renderCourierLists();
+      };
+    });
+  }
+
+  $("c_refresh").onclick = renderCourierLists;
+
+  // ---------- Utilities ----------
+  function escapeHtml(s){
+    return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+  }
+  function escapeAttr(s){
+    return escapeHtml(s).replaceAll("'","&#39;");
+  }
+
+  // wipe
+  $("wipeAll").onclick = () => {
+    if(!confirm("진짜 전체 데이터 삭제할까?")) return;
+    save(LS_RES, []);
+    save(LS_STORES, []);
+    save(LS_COURIERS, []);
+    sessionStorage.removeItem(LS_SESSION);
+    alert("삭제 완료");
+  };
+
+  // init
+  (async()=>{
+    try{ await preloadCloud(); }catch(e){ console.warn(e); }
+    show("home");
+    setCustTab("reserve");
+  })();</script>
+</body>
+</html>
