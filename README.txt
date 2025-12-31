@@ -1,11 +1,21 @@
-선우택배 (기기공용 저장 버전)
+# Sunwoo Takbae - Stable Pack
 
-- index.html / kiosk.html: UI는 그대로, 데이터는 Netlify Blobs(서버)로 저장되어 기기 바뀌어도 유지됨
-- tracking.html / label.html: /api/reservations 기반 조회
-
-배포(Netlify + GitHub):
-1) 이 폴더 내용을 그대로 레포 루트에 업로드/커밋
-2) Netlify에서 Build settings:
-   - Build command: (비움)
+## Deploy (GitHub -> Netlify)
+1) Put all files in repo root (same level).
+2) Netlify settings:
    - Publish directory: .
-3) /api/ping 접속해서 OK 뜨면 함수 연결 성공
+   - Functions directory: netlify/functions (from netlify.toml)
+3) Deploy, then test:
+   - /api/ping  -> {"ok":true,...}
+   - /api/kv/get?key=DELIVERY_STORES_V1
+   - /api/reservations
+
+## Notes
+- All data is stored in Netlify Blobs store: "sunwoo-takbae-v1"
+- Works across devices as long as you use the same deployed domain.
+
+
+## IMPORTANT (데이터가 기기마다 달라지는 문제)
+- 이제 localStorage 백업을 끄고(기본), Netlify Blobs(store: sunwoo-takbae-v1)에만 저장하도록 했어요.
+- GitHub에 올릴 때 반드시 netlify/functions 폴더도 같이 올라가야 /api/* 가 동작합니다.
+- 배포 후 테스트: /api/ping , /api/kv/get?key=DELIVERY_RESERVATIONS_V1 , /api/reservations
