@@ -1,22 +1,11 @@
-# Sunwoo Takbae (rebuild pack)
+선우택배 (기기공용 저장 버전)
 
-## Files
-- index.html (main)
-- kiosk.html
-- tracking.html
-- label.html
-- netlify/functions/*
-- netlify.toml
-- package.json
+- index.html / kiosk.html: UI는 그대로, 데이터는 Netlify Blobs(서버)로 저장되어 기기 바뀌어도 유지됨
+- tracking.html / label.html: /api/reservations 기반 조회
 
-## Deploy (Netlify + GitHub)
-1) Push this folder contents to repo root.
-2) In Netlify site settings:
-   - Build command: (empty)
+배포(Netlify + GitHub):
+1) 이 폴더 내용을 그대로 레포 루트에 업로드/커밋
+2) Netlify에서 Build settings:
+   - Build command: (비움)
    - Publish directory: .
-3) Deploy. Then test:
-   - /api/kv/get?key=TEST
-   - /api/reservations
-
-
-[V2] Added /api/ping and UI banner when API is offline to prevent '기기 바뀌면 데이터 사라짐' 착시(로컬/다른 origin 접속).
+3) /api/ping 접속해서 OK 뜨면 함수 연결 성공
