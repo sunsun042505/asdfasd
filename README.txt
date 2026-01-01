@@ -15,3 +15,6 @@
 
 중요:
 - netlify.toml 리다이렉트는 반드시 /api/* -> /.netlify/functions/data/:splat 로 써야 함.
+
+
+[FIX3] /ping 라우트 추가: GET /ping 및 GET /api/ping 지원 (2026-01-01T14:51:56.209870)
