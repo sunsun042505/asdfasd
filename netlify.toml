@@ -6,3 +6,7 @@ functions = "netlify/functions"
 from = "/api/*"
 to = "/.netlify/functions/data/:splat"
 status = 200
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

@@ -83,7 +83,13 @@ export default async (request) => {
 
     const store = getStore("sunwoo-takbae-v1");
 
-    // ---- KV API (used by patched index/kiosk) ----
+    
+    // ---- Ping (debug) ----
+    if (method === "GET" && (path === "/ping" || path === "/api/ping")) {
+      return j(200, { ok: true, time: nowStr() });
+    }
+
+// ---- KV API (used by patched index/kiosk) ----
     // GET /kv/get?key=...
     if (method === "GET" && path === "/kv/get") {
       const key = url.searchParams.get("key") || "";

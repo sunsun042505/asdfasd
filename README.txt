@@ -18,3 +18,6 @@
 
 
 [FIX3] /ping 라우트 추가: GET /ping 및 GET /api/ping 지원 (2026-01-01T14:51:56.209870)
+
+
+[FIX4] data.mjs와 data.js 둘 다 포함(어떤 확장자를 써도 /ping 동작). 기존에 netlify/functions/data.js가 남아있어도 OK.
