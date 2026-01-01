@@ -155,43 +155,23 @@
     @media (max-width: 520px){ .twoBtns{grid-template-columns: 1fr;} }
 
     .req{color: var(--warn); font-weight:900;}
-  
-    /* 점포 로그인 게이트 */
-    #storeGate{position:fixed; inset:0; background:rgba(0,0,0,.68); display:flex; align-items:center; justify-content:center; z-index:9999;}
-    #storeGate .panel{width:min(520px,92vw); border-radius:18px; padding:16px; background:rgba(0,0,0,.20); border:1px solid rgba(255,255,255,.10); box-shadow:0 18px 40px rgba(0,0,0,.35); backdrop-filter: blur(18px);}
-    #storeGate .row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
-    #storeGate input{width:100%; padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,.10); background:rgba(0,0,0,.22); color:#fff;}
-    #storeGate .btnRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px;}
-
-</style>
+  </style>
 </head>
 <body>
-
-  <div id="storeGate">
-    <div class="panel">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <b style="font-size:16px;">점포 로그인</b>
-        <span class="pill">키오스크</span>
-      </div>
-      <div class="sub" style="margin-top:6px;">점포명 + 점포코드 입력 후 접수/발급 가능</div>
-      <div class="row">
-        <div>
-          <div class="sub" style="margin-bottom:6px;">점포명</div>
-          <input id="gate_storeName" placeholder="예: 선우택배 의왕지점" />
-        </div>
-        <div>
-          <div class="sub" style="margin-bottom:6px;">점포코드</div>
-          <input id="gate_storeCode" placeholder="예: 605" />
-        </div>
-      </div>
-      <div class="btnRow">
-        <button class="btn primary" id="gate_login" type="button">로그인</button>
-        <span class="sub" id="gate_msg"></span>
-      </div>
+  <div id="storeGate" style="position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:9999;">
+    <div class="card" style="max-width:520px; width:100%;">
+      <div style="font-weight:900; font-size:16px;">점포코드 입력</div>
+      <div class="sub">이 키오스크는 점포코드 확인 후 사용 가능</div>
+      <div style="height:12px;"></div>
+      <label>점포코드</label>
+      <input id="kg_storeCode" class="mono" placeholder="예: STORE-001" />
+      <div style="height:10px;"></div>
+      <button class="btn primary" id="kg_enter">입장</button>
+      <div class="card" id="kg_err" style="display:none; margin-top:12px;"></div>
     </div>
   </div>
 
-<div class="panel">
+  <div class="panel">
     <header>
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
@@ -246,6 +226,7 @@
       <div id="view_walkin" style="display:none;">
         <div class="card" style="margin-top:0;">
           <div style="font-weight:900; font-size:16px;" id="walkinTitle">현장접수</div>
+          <div class="sub" id="k_storeBadge" style="font-weight:700;"></div>
           <div class="sub" id="walkinSub">회원/비회원 선택 → 필수 입력 → 운송장 즉시 발급</div>
 
           <div class="twoBtns">
@@ -308,7 +289,11 @@
             <div id="intlBlock" style="grid-column:1/-1; display:none;">
               <label>국가/지역(국제택배) <span class="req">*</span></label>
               <input id="w_country" placeholder="예: Japan / USA" />
-            </div>
+            
+              <div style="height:8px;"></div>
+              <label>해외주소 <span class="req">*</span></label>
+              <textarea id="w_overseas" placeholder="예: 123 Main St, City, State/Province, Postal Code"></textarea>
+</div>
 
             <div style="grid-column:1/-1">
               <label>메모(선택)</label>
@@ -365,61 +350,155 @@
   </div>
 
 <script>
+const APP_VERSION = "1.0";
 
-  async function loadReservations(){
-    const v = await kvGet(STORAGE_KEYS.RES, []);
-    return Array.isArray(v) ? v : [];
-  }
-  async function saveReservations(arr){
-    await kvSet(STORAGE_KEYS.RES, arr);
-  }
+(async()=>{
 
-const APP_VERSION="1.0";
-
-  const $ = (id) => document.getElementById(id);
-
-  const API_BASE = "/api";
-  const STORAGE_KEYS = {
-    RES: "DELIVERY_RESERVATIONS_V1",
-    STORES: "DELIVERY_STORES_V1"
-  };
-
-  async function apiGet(path){
-    const r = await fetch(path, { cache:"no-store" });
-    const t = await r.text();
-    let o; try{ o = JSON.parse(t); }catch{ o = { raw:t }; }
-    if(!r.ok) throw new Error(o?.error || ("HTTP_"+r.status));
-    return o;
-  }
-  async function apiPost(path, body, method="POST"){
-    const r = await fetch(path, {
-      method,
-      headers:{ "Content-Type":"application/json" },
-      body: body===undefined ? undefined : JSON.stringify(body),
-      cache:"no-store"
+    // ===== SAFE DOM GETTER (missing element won't crash the whole app) =====
+  const $ = (id) => {
+    const el = document.getElementById(id);
+    if(el) return el;
+    return new Proxy({ __missing:true }, {
+      get(t, p){
+        if(p === "__missing") return true;
+        if(p === "style") return {};
+        if(p === "classList") return { add(){}, remove(){}, toggle(){}, contains(){ return false; } };
+        if(p === "dataset") return {};
+        if(p === "value") return "";
+        if(p === "checked") return false;
+        if(p === "innerHTML") return "";
+        if(p === "textContent") return "";
+        if(p === "appendChild") return ()=>{};
+        if(p === "removeChild") return ()=>{};
+        if(p === "insertAdjacentHTML") return ()=>{};
+        if(p === "querySelector") return ()=>null;
+        if(p === "querySelectorAll") return ()=>[];
+        if(p === "addEventListener") return ()=>{};
+        if(p === "removeEventListener") return ()=>{};
+        if(p === "focus") return ()=>{};
+        if(p === "click") return ()=>{};
+        return t[p];
+      },
+      set(t, p, v){ t[p] = v; return true; }
     });
-    const t = await r.text();
-    let o; try{ o = JSON.parse(t); }catch{ o = { raw:t }; }
-    if(!r.ok) throw new Error(o?.error || ("HTTP_"+r.status));
-    return o;
+  };
+function openLabel(arg){
+    // arg can be waybill string/number OR a record object
+    const wb = (typeof arg === "string" || typeof arg === "number") ? String(arg).trim() : String(arg?.waybillNo || "").trim();
+    if(!wb){ alert("운송장 번호가 없어!"); return; }
+
+    let url = `label.html?waybill=${encodeURIComponent(wb)}`;
+
+    // Build small payload so label works even when API isn't reachable
+    let payloadObj = null;
+    if(arg && typeof arg === "object"){
+      payloadObj = {
+        waybillNo: wb,
+        type: arg.type || "",
+        storeName: arg.storeName || "",
+        destStoreName: arg.destStoreName || "",
+        addr: (arg.addr || arg.package?.addr || ""),
+        weightKg: (arg.package?.weightKg ?? arg.weightKg ?? arg.weight ?? ""),
+        kind: (arg.package?.kind ?? arg.kind ?? "")
+      };
+
+      // Save to localStorage too (same device fallback)
+      try{
+        localStorage.setItem(`SW_LABEL_PAYLOAD_${wb}`, JSON.stringify(payloadObj));
+      }catch(e){}
+    }
+
+    // Also attach payload in URL (works cross-tab)
+    if(payloadObj){
+      try{
+        const jsonStr = JSON.stringify(payloadObj);
+        const bytes = new TextEncoder().encode(jsonStr);
+        let bin = "";
+        bytes.forEach(b => bin += String.fromCharCode(b));
+        const b64 = btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+        url += `&payload=${b64}`;
+      }catch(e){}
+    }
+
+    window.open(url, "_blank");
   }
-  async function kvGet(key, defVal){
+
+
+  // ==== Persistent storage (Netlify Functions + Blobs) ====
+  // Must match index.html keys
+  const STORAGE_KEYS = { RES: "DELIVERY_RESERVATIONS_V1", STORES: "DELIVERY_STORES_V1" };
+
+  // KIOSK store gate
+  let kioskStore = null; // {name, code}
+  async function loadStores(){ return await apiGet(STORAGE_KEYS.STORES, []); }
+
+  async function initStoreGate(){
+    const gate = document.getElementById("storeGate");
+    const err = document.getElementById("kg_err");
+    const input = document.getElementById("kg_storeCode");
+    const btn = document.getElementById("kg_enter");
+
+    btn.onclick = async () => {
+      const code = input.value.trim();
+      err.style.display = "none";
+      if(!code){ err.style.display=""; err.innerHTML='<div class="err">점포코드를 입력해줘!</div>'; return; }
+      const stores = await loadStores();
+      const s = stores.find(x => x.code === code);
+      if(!s){
+        err.style.display=""; err.innerHTML='<div class="err">없는 점포코드야. 점포 등록을 먼저 해줘!</div>';
+        return;
+      }
+      kioskStore = s;
+      const badge = document.getElementById("k_storeBadge");
+      if(badge) badge.textContent = `점포: ${s.name} (${s.code})`;
+      gate.style.display = "none";
+    };
+  }
+  const API_BASE = "/api";
+  const useLocalFallback = false;
+  const mem = {};
+
+  async function apiGet(key, fallback){
+    if(useLocalFallback){
+      try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+      catch{ return fallback; }
+    }
+    if(key in mem) return mem[key];
     try{
-      const o = await apiGet(`${API_BASE}/kv/get?key=${encodeURIComponent(key)}`);
-      return (o && o.value !== undefined && o.value !== null) ? o.value : defVal;
+      const res = await fetch(`${API_BASE}/kv/get?key=${encodeURIComponent(key)}`, { cache:"no-store" });
+      if(!res.ok) throw new Error("GET failed");
+      const json = await res.json();
+      mem[key] = json.value ?? fallback;
+      return mem[key];
     }catch(e){
-      return defVal;
+      try{
+        const v = JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+        mem[key] = v;
+        return v;
+      }catch{
+        return fallback;
+      }
     }
   }
-  async function kvSet(key, value){
-    return apiPost(`${API_BASE}/kv/set`, { key, value });
+
+  async function apiSet(key, value){
+    mem[key] = value;
+    if(useLocalFallback){
+      localStorage.setItem(key, JSON.stringify(value));
+      return;
+    }
+    try{
+      const res = await fetch(`${API_BASE}/kv/set`, {
+        method:"POST",
+        headers:{ "content-type":"application/json" },
+        body: JSON.stringify({ key, value })
+      });
+      if(!res.ok) throw new Error("POST failed");
+    }
+    catch(e){
+      throw e;
+    }
   }
-
-
-
-
-  // Must match index.html
-  const LS_RES = "DELIVERY_RESERVATIONS_V1";
 
   const TYPE_LABEL = {
     DOMESTIC: "국내",
@@ -448,22 +527,24 @@ const APP_VERSION="1.0";
   }
   setInterval(tick, 1000); tick();
 
-  function loadAll(){
-    try{ return JSON.parse(localStorage.getItem(LS_RES) || "[]"); }
-    catch{ return []; }
+  async function loadAll(){
+    return await apiGet(STORAGE_KEYS.RES, []);
   }
-  function saveAll(arr){
-    localStorage.setItem(LS_RES, JSON.stringify(arr));
+  async function saveAll(arr){
+    await apiSet(STORAGE_KEYS.RES, arr);
   }
-  function upsert(rec){
-    const arr = loadAll();
+
+  async function upsert(rec){
+    const arr = await loadAll();
     const idx = arr.findIndex(x => x.reserveNo === rec.reserveNo);
     if(idx >= 0) arr[idx] = rec;
     else arr.unshift(rec);
-    saveAll(arr);
+    await saveAll(arr);
   }
-  function findByReserveNo(resNo){
-    return loadAll().find(x => x.reserveNo === resNo) || null;
+
+  async function findByReserveNo(resNo){
+    const arr = await loadAll();
+    return arr.find(x => x.reserveNo === resNo) || null;
   }
 
   // 18 digits: 2-digit prefix + 16 digits
@@ -485,6 +566,8 @@ const APP_VERSION="1.0";
     return `WALKIN-${y}${m}${day}-${rand}`;
   }
 
+  function escapeAttr(s){ return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
   function escapeHtml(s){
     return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
   }
@@ -496,7 +579,7 @@ const APP_VERSION="1.0";
 
   // NAV
   $("goBack").onclick = () => window.location.href = "./index.html";
-  $("goReserve").onclick = () => { show("view_reserve"); renderReserveList(); $("reserveResult").style.display="none"; };
+  $("goReserve").onclick = async () => { show("view_reserve"); await renderReserveList(); $("reserveResult").style.display="none"; };
 
   // Home type buttons -> walk-in flow
   let currentType = null;
@@ -534,10 +617,12 @@ const APP_VERSION="1.0";
       // reset
       $("walkinFormCard").style.display = "none";
       $("walkinResult").style.display = "none";
-      ["w_sName","w_sPhone","w_rName","w_rPhone","w_addr","w_weight","w_country"].forEach(id => $(id).value = "");
-      $("w_kind").value = "";
-      configureWalkinForType();
 
+      // clear fields
+      ["w_sName","w_sPhone","w_rName","w_rPhone","w_addr","w_weight","w_country","w_memo"].forEach(id => $(id).value = "");
+      $("w_kind").value = "";
+
+      configureWalkinForType();
       show("view_walkin");
       renderWalkinList();
     });
@@ -546,30 +631,32 @@ const APP_VERSION="1.0";
   $("walkinHome").onclick = () => show("view_home");
   $("walkinRefresh").onclick = renderWalkinList;
 
-  $("btnMember").onclick = () => { currentCustomerKind = "MEMBER"; $("walkinFormCard").style.display = ""; };
-  $("btnGuest").onclick = () => { currentCustomerKind = "GUEST"; $("walkinFormCard").style.display = ""; };
+  $("btnMember").onclick = () => {
+    currentCustomerKind = "MEMBER";
+    $("walkinFormCard").style.display = "";
+  };
+  $("btnGuest").onclick = () => {
+    currentCustomerKind = "GUEST";
+    $("walkinFormCard").style.display = "";
+  };
 
   $("w_cancel").onclick = () => {
     $("walkinFormCard").style.display = "none";
-    $("walkinResult").style.display = "none";
     currentCustomerKind = null;
   };
 
-  function requireField(val){ return String(val || "").trim().length > 0; }
+  function requireField(v){ return !!String(v || "").trim(); }
 
-  $("w_issue").onclick = () => {{
-    if(!requireStore()) return;
-    if(!currentType){
-      alert("유형이 없어. 홈에서 다시 들어와!");
-      show("view_home");
+  $("w_issue").onclick = async () => {
+    if(!currentType || !currentCustomerKind){
+      alert("회원/비회원부터 선택해줘!");
       return;
     }
-    if(!currentCustomerKind){
-      alert("회원/비회원 선택부터 해줘!");
+    if(!kioskStore){
+      alert("점포코드 확인이 필요해!");
       return;
     }
 
-    // Required validations
     const sName = $("w_sName").value.trim();
     const sPhone = $("w_sPhone").value.trim();
     const rName = $("w_rName").value.trim();
@@ -578,9 +665,10 @@ const APP_VERSION="1.0";
     const weight = $("w_weight").value.trim();
     const kind = $("w_kind").value;
     const country = $("w_country").value.trim();
+    const overseas = ($("w_overseas")?.value || "").trim();
 
     if(!requireField(sName) || !requireField(sPhone) || !requireField(rName) || !requireField(rPhone)){
-      alert("보내는/받는 사람 이름/연락처는 필수야!");
+      alert("보내는/받는 사람 이름/연락처는 다 필수야!");
       return;
     }
     if(!requireField(addr)){
@@ -599,6 +687,10 @@ const APP_VERSION="1.0";
       alert("국제택배는 국가/지역이 필수야!");
       return;
     }
+    if(currentType === "INTERNATIONAL" && !requireField(overseas)){
+      alert("국제택배는 해외주소가 필수야!");
+      return;
+    }
 
     const prefix2 = PREFIX[currentType];
     const waybill = makeWaybill(prefix2);
@@ -612,20 +704,25 @@ const APP_VERSION="1.0";
       waybillNo: waybill,
       waybillIssuedAt: nowStr(),
 
-      storeName: "",
+      issuedStore: { code: kioskStore.code, name: kioskStore.name },
+      storeCode: kioskStore.code,
+      storeName: kioskStore.name,
+
       storeAcceptedAt: "",
       courier: { code:"", name:"", phone:"" },
       pickedAt: "",
+      arrivedAt: "",
+      pickupCode: "",
+      deliveredAt: "",
 
       kiosk: { kind: "WALKIN", customerKind: currentCustomerKind },
 
       sender: { name: sName, phone: sPhone },
       receiver: { name: rName, phone: rPhone },
 
-      // ✅ 주소 저장
       addr: addr,
+      overseasAddr: (currentType === "INTERNATIONAL") ? overseas : "",
 
-      // ✅ 접수 필수 정보 저장
       package: {
         weightKg: Number(weight),
         kind: kind,
@@ -635,7 +732,7 @@ const APP_VERSION="1.0";
       memo: $("w_memo").value.trim()
     };
 
-    upsert(rec);
+    await upsert(rec);
 
     $("walkinResult").style.display = "";
     $("walkinResult").innerHTML = `
@@ -652,17 +749,21 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
 발급시각: ${rec.waybillIssuedAt}
       </div>
       ${rec.type === "ECONOMY_CVS" ? `<div class="hint">※ 반값택배 안내: 최대 소요기간 6일(상황에 따라 변동 가능)</div>` : ""}
+      <div style="height:10px;"></div>
+      <button class="btn primary" id="w_print" type="button">운송장 출력</button>
     `;
+
+    $("w_print").onclick = () => openLabel(rec);
 
     // next customer
     $("walkinFormCard").style.display = "none";
     currentCustomerKind = null;
-    renderWalkinList();
+    await renderWalkinList();
   };
 
   // Recent waybill list
-  function renderWalkinList(){
-    const arr = loadAll()
+  async function renderWalkinList(){
+    const arr = (await loadAll())
       .filter(x => x.waybillNo && (x.status === "WAYBILL_ISSUED" || x.status === "FINAL" || x.status === "PICKED_UP"))
       .slice(0, 20);
 
@@ -686,18 +787,34 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
         </div>
       `;
     });
+
+    // 클릭하면 라벨 페이지 열기
+    box.querySelectorAll(".item").forEach(el => {
+      el.style.cursor = "pointer";
+      el.onclick = async () => {
+        const wb = (el.querySelector(".mono")?.textContent || "").trim();
+        if(!wb) return;
+        // try to find full record for payload
+        try{
+          const all = await apiGetReservations();
+          const rec = (all||[]).find(x => String(x.waybillNo||"") === wb);
+          if(rec) return openLabel(rec);
+        }catch(e){}
+        openLabel(wb);
+      };
+    });
   }
 
   // Reservation view
   $("reserveHome").onclick = () => show("view_home");
   $("reserveRefresh").onclick = renderReserveList;
 
-  $("r_issue").onclick = () => {{
-    if(!requireStore()) return;
+  $("r_issue").onclick = async () => {
     const resNo = $("reserveNo").value.trim();
     if(!resNo){ alert("예약번호를 입력해줘!"); return; }
+    if(!kioskStore){ alert("점포코드 확인이 필요해!"); return; }
 
-    const rec = findByReserveNo(resNo);
+    const rec = await findByReserveNo(resNo);
     $("reserveResult").style.display = "";
     if(!rec){
       $("reserveResult").innerHTML = `<div class="err">없는 예약번호야. 발급 불가!</div>`;
@@ -710,13 +827,13 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
     const prefix2 = PREFIX[rec.type];
     const wb = makeWaybill(prefix2);
     rec.waybillNo = wb;
-    
-    rec.storeName = (__STORE__ ? __STORE__.name : (rec.storeName||""));
-    rec.storeCode = (__STORE__ ? __STORE__.code : (rec.storeCode||""));
-    try{ await upsertReservation(rec); }catch(e){ console.warn("upsert failed", e); }
-rec.status = "WAYBILL_ISSUED";
+    rec.status = "WAYBILL_ISSUED";
     rec.waybillIssuedAt = nowStr();
-    upsert(rec);
+    rec.issuedStore = { code: kioskStore.code, name: kioskStore.name };
+    rec.storeCode = kioskStore.code;
+    // storeName은 점포 최종접수에서도 다시 저장 가능
+    rec.storeName = rec.storeName || kioskStore.name;
+    await upsert(rec);
 
     $("reserveResult").innerHTML = `
       <div class="ok">운송장 발급 완료</div>
@@ -725,16 +842,20 @@ rec.status = "WAYBILL_ISSUED";
 유형: ${TYPE_LABEL[rec.type]}
 운송장: ${rec.waybillNo}
       </div>
+      <div style="height:10px;"></div>
+      <button class="btn primary" id="r_print" type="button">운송장 출력</button>
     `;
-    renderReserveList();
+
+    $("r_print").onclick = () => openLabel(rec);
+    await renderReserveList();
   };
 
-  function renderReserveList(){
-    const arr = loadAll().slice(0, 20);
+  async function renderReserveList(){
+    const arr = (await loadAll()).slice(0, 20);
     const box = $("reserveList");
     box.innerHTML = "";
     if(arr.length === 0){
-      box.innerHTML = `<div class="item"><div style="color:var(--muted)">예약이 없어. index.html에서 먼저 예약해줘.</div></div>`;
+      box.innerHTML = `<div class="item"><div style="color:var(--muted)">예약이 없어.</div></div>`;
       return;
     }
     arr.forEach(r => {
@@ -742,7 +863,7 @@ rec.status = "WAYBILL_ISSUED";
         <div class="item">
           <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
             <span class="tag mono">${escapeHtml(r.reserveNo)}</span>
-            <span class="tag">${escapeHtml(TYPE_LABEL[r.type] || r.type)} · ${escapeHtml(r.status || "RESERVED")}</span>
+            <span class="tag">${escapeHtml(TYPE_LABEL[r.type] || r.type)} · ${escapeHtml(r.status || "-")}</span>
           </div>
           <div style="margin-top:6px; color:var(--muted); font-size:12px;">
             생성: ${escapeHtml(r.createdAt || "-")}
@@ -754,69 +875,12 @@ rec.status = "WAYBILL_ISSUED";
   }
 
   // init
+  initStoreGate();
   show("view_home");
 
+})();
 
-  let __STORE__ = null;
-
-  async function storeLogin(name, code){
-    const r = await apiPost(`${API_BASE}/stores/login`, { name, code });
-    return r.store;
-  }
-  function requireStore(){
-    if(!__STORE__){
-      const g = document.getElementById("storeGate");
-      if(g) g.style.display = "flex";
-      return false;
-    }
-    return true;
-  }
-
-  // gate UI
-  const gateBtn = document.getElementById("gate_login");
-  const gateMsg = document.getElementById("gate_msg");
-  if(gateBtn){
-    gateBtn.onclick = async()=>{
-      gateMsg.textContent = "";
-      const name = document.getElementById("gate_storeName")?.value?.trim() || "";
-      const code = document.getElementById("gate_storeCode")?.value?.trim() || "";
-      if(!name || !code){ gateMsg.textContent = "점포명/코드 입력"; return; }
-      try{
-        __STORE__ = await storeLogin(name, code);
-        const g = document.getElementById("storeGate");
-        if(g) g.style.display = "none";
-        gateMsg.textContent = "";
-      }catch(e){
-        gateMsg.textContent = "없는 점포";
-      }
-    };
-  }
-
-
-  async function upsertReservation(rec){
-    return apiPost(`${API_BASE}/reservations/upsert`, { rec });
-  }
-
-  function attachPrintButtons(waybillNo){
-    // try common containers
-    const containers = ["resultBox","result","outBox","issuedBox","printArea","receipt","successBox"];
-    let box = null;
-    for(const id of containers){
-      const el = document.getElementById(id);
-      if(el){ box = el; break; }
-    }
-    if(!box) return;
-    const wrap = document.createElement("div");
-    wrap.style.cssText = "margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;";
-    const b1 = document.createElement("button"); b1.className="btn primary"; b1.type="button"; b1.textContent="라벨 출력";
-    const b2 = document.createElement("button"); b2.className="btn"; b2.type="button"; b2.textContent="배송조회";
-    b1.onclick = ()=> location.href = "./label.html?invoice_no=" + encodeURIComponent(waybillNo);
-    b2.onclick = ()=> location.href = "./tracking.html?invoice_no=" + encodeURIComponent(waybillNo);
-    wrap.appendChild(b1); wrap.appendChild(b2);
-    box.appendChild(wrap);
-  }
-
-try{ const p=document.getElementById("appVersion"); if(p) p.textContent="v"+APP_VERSION; }catch{}
+try{ const p=document.getElementById("appVersion"); if(p) p.textContent="v"+APP_VERSION; }catch(e){}
 
 </script>
 </body>

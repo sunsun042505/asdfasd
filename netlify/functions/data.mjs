@@ -83,11 +83,15 @@ export default async (request) => {
 
     const store = getStore("sunwoo-takbae-v1");
 
-    // ---- KV API (used by patched index/kiosk) ----
-    // GET /kv/get?key=...
-      if (method === "GET" && path === "/ping") return j(200, { ok: true });
+    
+    // ---- Ping (debug) ----
+    if (method === "GET" && (path === "/ping" || path === "/api/ping")) {
+      return j(200, { ok: true, time: nowStr() });
+    }
 
-if (method === "GET" && path === "/kv/get") {
+// ---- KV API (used by patched index/kiosk) ----
+    // GET /kv/get?key=...
+    if (method === "GET" && path === "/kv/get") {
       const key = url.searchParams.get("key") || "";
       if (!key) return j(400, { error: "key required" });
       const value = await kvGet(store, key);
@@ -104,16 +108,7 @@ if (method === "GET" && path === "/kv/get") {
     }
 
     // ---- Reservations (structured API) ----
-    
-  if (method === "DELETE" && path === "/kv/set") {
-    const body = await readJson(event);
-    const key = String(body?.key || "");
-    if (!key) return j(400, { error: "MISSING_KEY" });
-    await store.delete(key);
-    return j(200, { ok: true, key });
-  }
-
-if (method === "GET" && path === "/reservations") {
+    if (method === "GET" && path === "/reservations") {
       return j(200, await listReservations(store));
     }
 
