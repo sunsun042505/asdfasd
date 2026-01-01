@@ -1,424 +1,354 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>선우택배 배송조회</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>배송조회</title>
   <style>
     :root{
-      --bg1:#060a16; --bg2:#0b1530;
-      --card: rgba(255,255,255,.07);
-      --card2: rgba(255,255,255,.06);
-      --stroke: rgba(255,255,255,.12);
-      --txt:#eaf0ff; --muted:rgba(234,240,255,.72);
-      --ok:#40ffb3; --err:#ff5b7a; --warn:#ffd36a;
+      --bg:#0b141a;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.04);
+      --text:#e8f0ff;
+      --muted:rgba(255,255,255,.70);
+      --border:rgba(255,255,255,.12);
+      --accent:#2eff90;
+      --danger:#ff5b6a;
     }
-    *{box-sizing:border-box}
+    *{ box-sizing:border-box; }
     body{
-      margin:0; min-height:100vh;
-      color:var(--txt);
-      font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 600px at 20% 10%, #1a2a6c55, transparent 60%),
-                  radial-gradient(900px 500px at 80% 30%, #0bd1ff33, transparent 55%),
-                  radial-gradient(700px 500px at 50% 90%, #7c3aed33, transparent 60%),
-                  linear-gradient(180deg, var(--bg1), var(--bg2));
-      display:flex; align-items:center; justify-content:center; padding:22px;
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,Apple SD Gothic Neo,sans-serif;
+      background: radial-gradient(1100px 700px at 30% -10%, rgba(46,255,144,.18), transparent 60%),
+                  radial-gradient(900px 600px at 110% 10%, rgba(110,168,255,.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
     }
-    .wrap{ width:min(980px, 100%); }
+    .wrap{ max-width:980px; margin:0 auto; padding:18px; }
     .topbar{
-      display:flex; gap:12px; align-items:center; justify-content:space-between;
-      padding:14px 16px;
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-      border-radius:16px;
-      box-shadow: 0 12px 50px rgba(0,0,0,.35);
-      backdrop-filter: blur(12px);
+      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      padding:14px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(180deg,var(--card),var(--card2));
     }
-    .brand{ display:flex; gap:10px; align-items:center; }
-    .logo{
-      width:34px; height:34px; border-radius:10px;
-      background: radial-gradient(circle at 30% 30%, #44ffb3, #2b5cff);
-      box-shadow: 0 6px 22px rgba(0,0,0,.35);
+    .title{ font-weight:900; font-size:18px; }
+    .sub{ color:var(--muted); font-size:12px; margin-top:4px; }
+    .btn{
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:900;
+      cursor:pointer;
     }
-    .title{ font-weight:800; letter-spacing:.2px; }
-    .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
-    .pill{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--stroke); background:rgba(0,0,0,.18); color:var(--muted); }
-    .grid{ display:grid; gap:14px; margin-top:14px; grid-template-columns: 1fr; }
-    @media (min-width: 880px){ .grid{ grid-template-columns: 1.05fr .95fr; } }
+    .btn.primary{ border-color:rgba(46,255,144,.35); }
+    .btn:active{ transform:translateY(1px); }
     .card{
-      border:1px solid var(--stroke);
-      background: var(--card);
-      border-radius:16px;
-      box-shadow: 0 12px 50px rgba(0,0,0,.30);
-      backdrop-filter: blur(10px);
-      overflow:hidden;
+      margin-top:14px;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:linear-gradient(180deg,var(--card),var(--card2));
     }
-    .card .hd{
-      padding:14px 16px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      background: rgba(255,255,255,.03);
-    }
-    .card .bd{ padding:16px; }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
     input{
-      flex:1;
-      min-width:220px;
+      width:100%;
       padding:12px 12px;
       border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.20);
-      color: var(--txt);
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
       outline:none;
+      font-size:14px;
     }
-    input::placeholder{ color: rgba(234,240,255,.45); }
-    button{
-      padding:12px 14px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.22);
-      color: var(--txt);
-      cursor:pointer;
-      font-weight:700;
-    }
-    button.primary{
-      background: linear-gradient(180deg, rgba(64,255,179,.25), rgba(43,92,255,.18));
-      border-color: rgba(64,255,179,.35);
-    }
-    button:disabled{ opacity:.55; cursor:not-allowed; }
-    .msg{ font-size:13px; color:var(--muted); margin-top:10px; line-height:1.45; }
-    .ok{ color:var(--ok); font-weight:800;}
-    .err{ color:var(--err); font-weight:800;}
-    .warn{ color:var(--warn); font-weight:800;}
-    .kv{
-      display:grid;
-      grid-template-columns: 150px 1fr;
-      gap:8px 12px;
-      font-size:13px;
+    .row{ display:grid; grid-template-columns: 2fr 1fr; gap:10px; align-items:end; }
+    .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media (max-width:720px){ .row{ grid-template-columns: 1fr; } .grid2{ grid-template-columns:1fr; } }
+
+    .kv{ display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--border); border-radius:14px; background:rgba(0,0,0,.18); }
+    .kv .k{ color:var(--muted); font-size:12px; }
+    .kv .v{ font-weight:900; }
+    .pill{ display:inline-block; padding:3px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); font-size:11px; }
+    .err{ color:var(--danger); font-weight:900; }
+    .ok{ color:var(--accent); font-weight:900; }
+
+    .timeline{ margin-top:10px; }
+    .item{
       padding:12px;
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:14px;
-      background: var(--card2);
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:rgba(0,0,0,.18);
+      margin-top:10px;
     }
-    .k{ color:var(--muted); }
-    .v{ color:var(--txt); word-break:break-word; }
-    .timeline{ display:flex; flex-direction:column; gap:10px; }
-    .ev{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.20);
-      border-radius:14px;
-      padding:12px;
-      display:flex; gap:12px;
-    }
-    .dot{
-      width:10px; height:10px; border-radius:50%;
-      background: rgba(64,255,179,.85);
-      margin-top:4px;
-      box-shadow: 0 0 0 4px rgba(64,255,179,.12);
-    }
-    .ev .meta{ font-size:12px; color:var(--muted); }
-    .ev .txt{ font-size:13px; margin-top:3px; line-height:1.35; }
-    .small{ font-size:12px; color:var(--muted); }
+    .t1{ font-weight:900; }
+    .t2{ color:var(--muted); font-size:12px; margin-top:6px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>
-          <div class="title">배송조회</div>
-          <div class="sub">운송장 번호로 조회 · 서버 저장 데이터 기준</div>
-        </div>
+      <div>
+        <div class="title">배송조회</div>
+        <div class="sub">운송장 번호로 조회하면 tracking.html?invoice_no=... 형태로 표시돼.</div>
       </div>
-      <div class="row">
-        <span class="pill" id="clock">--:--:--</span>
-        <span class="pill" id="ver">v1.0</span>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="btn" id="goHome">메인으로</button>
       </div>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <div class="hd">
-          <b>조회</b>
-          <span class="small" id="apiStatus">API: -</span>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>운송장 번호(18자리)</label>
+          <input id="invoice" class="mono" placeholder="예: 81xxxxxxxxxxxxxxxx" />
         </div>
-        <div class="bd">
-          <div class="row">
-            <input id="inv" placeholder="운송장 번호 (숫자만) 예: 81xxxxxxxxxxxxxxxx" inputmode="numeric" />
-            <button class="primary" id="btn">조회</button>
-          </div>
-          <div class="msg" id="status"></div>
+        <div>
+          <button class="btn primary" id="btnSearch" type="button">조회</button>
         </div>
+      </div>
+      <div class="sub" style="margin-top:10px;">• 조회 버튼을 누르면 주소창이 invoice_no 파라미터로 바뀌고, 결과가 아래에 표시돼.</div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div style="font-weight:900; font-size:16px;">조회 결과</div>
+        <span class="pill" id="wbPill">-</span>
       </div>
 
-      <div class="card">
-        <div class="hd">
-          <b>기본 정보</b>
-          <span class="small" id="wbPill">-</span>
-        </div>
-        <div class="bd">
-          <div class="kv" id="info">
-            <div class="k">서비스</div><div class="v">-</div>
-            <div class="k">배송사</div><div class="v">-</div>
-            <div class="k">보내는분</div><div class="v">-</div>
-            <div class="k">받는분</div><div class="v">-</div>
-            <div class="k">상품종류</div><div class="v">-</div>
-          </div>
-          <div class="msg small" style="margin-top:10px;">
-            팁) 새로 발급한 운송장은 서버 반영에 몇 초 걸릴 수 있어. 못 찾으면 자동으로 10초 정도 재시도해.
-          </div>
-        </div>
+      <div style="height:10px;"></div>
+      <div class="grid2">
+        <div class="kv"><div class="k">서비스</div><div class="v" id="svc">-</div></div>
+        <div class="kv"><div class="k">배송사</div><div class="v" id="carrier">-</div></div>
+        <div class="kv"><div class="k">보내는분</div><div class="v" id="sender">-</div></div>
+        <div class="kv"><div class="k">받는분</div><div class="v" id="receiver">-</div></div>
+        <div class="kv"><div class="k">상품종류</div><div class="v" id="kind">-</div></div>
+        <div class="kv"><div class="k">상태</div><div class="v" id="status">-</div></div>
       </div>
 
-      <div class="card" style="grid-column:1/-1;">
-        <div class="hd">
-          <b>배송 흐름</b>
-          <span class="small" id="flowHint">-</span>
-        </div>
-        <div class="bd">
-          <div class="timeline" id="tl"></div>
-        </div>
-      </div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <div class="card" id="errCard" style="display:none;">
+      <div class="err" id="errText">-</div>
     </div>
   </div>
 
-<script>
-(function(){
-  // clock
-  const clockEl = document.getElementById("clock");
-  function tick(){
-    const d = new Date();
-    const hh = String(d.getHours()).padStart(2,"0");
-    const mm = String(d.getMinutes()).padStart(2,"0");
-    const ss = String(d.getSeconds()).padStart(2,"0");
-    clockEl.textContent = hh+":"+mm+":"+ss;
-  }
-  setInterval(tick,1000); tick();
+  <script>
+const APP_VERSION = "1.0";
 
-  const invEl = document.getElementById("inv");
-  const btn = document.getElementById("btn");
-  const status = document.getElementById("status");
-  const apiStatus = document.getElementById("apiStatus");
-  const wbPill = document.getElementById("wbPill");
-  const info = document.getElementById("info");
-  const tl = document.getElementById("tl");
-  const flowHint = document.getElementById("flowHint");
+      // ===== SAFE DOM GETTER (missing element won't crash the whole app) =====
+  const $ = (id) => {
+    const el = document.getElementById(id);
+    if(el) return el;
+    return new Proxy({ __missing:true }, {
+      get(t, p){
+        if(p === "__missing") return true;
+        if(p === "style") return {};
+        if(p === "classList") return { add(){}, remove(){}, toggle(){}, contains(){ return false; } };
+        if(p === "dataset") return {};
+        if(p === "value") return "";
+        if(p === "checked") return false;
+        if(p === "innerHTML") return "";
+        if(p === "textContent") return "";
+        if(p === "appendChild") return ()=>{};
+        if(p === "removeChild") return ()=>{};
+        if(p === "insertAdjacentHTML") return ()=>{};
+        if(p === "querySelector") return ()=>null;
+        if(p === "querySelectorAll") return ()=>[];
+        if(p === "addEventListener") return ()=>{};
+        if(p === "removeEventListener") return ()=>{};
+        if(p === "focus") return ()=>{};
+        if(p === "click") return ()=>{};
+        return t[p];
+      },
+      set(t, p, v){ t[p] = v; return true; }
+    });
+  };
+function qp(name){
+      const u = new URL(location.href);
+      return u.searchParams.get(name) || "";
+    }
 
-  function normNo(v){ return String(v||"").trim().replace(/[^\d]/g,""); }
+    function escapeHtml(s){
+      return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
 
-  function serviceLabel(rec){
-    const t = String(rec?.type||"").toUpperCase();
-    if(t.includes("INTERNATIONAL")) return "국제택배";
-    if(t.includes("ECONOMY") || t.includes("CVS")) return "반값택배";
-    if(t.includes("RETURN")) return "반품택배";
-    return "국내택배";
-  }
-  function carrierLabel(rec){
-    const t = String(rec?.type||"").toUpperCase();
-    if(t.includes("INTERNATIONAL")) return "네버랩인터내셔널에어포트(주)(인천국제공항)";
-    if(t.includes("ECONOMY") || t.includes("CVS")) return "선우네트웍스";
-    return "선우택배";
-  }
-  function pkgLabel(rec){
-    const k = rec?.package?.kind || rec?.package?.type || "";
-    const w = rec?.package?.weightKg;
-    const kk = k ? String(k) : "-";
-    const ww = (w!==undefined && w!==null && String(w)!=="") ? String(w)+"kg" : "-";
-    return kk + " / " + ww;
-  }
-  function personLabel(p){
-    if(!p) return "-";
-    const name = p.name || "-";
-    const phone = p.phone || p.tel || "-";
-    const addr = p.address || p.addr || "";
-    return addr ? `${name} (${phone}) · ${addr}` : `${name} (${phone})`;
-  }
+    function typeLabel(t){
+      const m = { DOMESTIC:"국내택배", INTERNATIONAL:"국제택배", ECONOMY_CVS:"반값택배", RETURN:"반품택배" };
+      return m[t] || t || "-";
+    }
 
-  function setInfo(rec){
-    const rows = info.querySelectorAll(".v");
-    // order: 서비스, 배송사, 보내는분, 받는분, 상품종류
-    rows[0].textContent = serviceLabel(rec);
-    rows[1].textContent = carrierLabel(rec);
-    rows[2].textContent = personLabel(rec.sender);
-    rows[3].textContent = personLabel(rec.receiver);
-    rows[4].textContent = pkgLabel(rec);
-    wbPill.textContent = rec?.waybillNo ? ("운송장: "+rec.waybillNo) : "-";
-  }
+    function carrierLabel(t){
+      if(t==="ECONOMY_CVS") return "선우네트웍스";
+      if(t==="INTERNATIONAL") return "네버랩인터내셔널에어포트(주)(인천국제공항)";
+      // DOMESTIC + RETURN default
+      return "선우택배";
+    }
 
-  function parseTime(x){
-    if(!x) return null;
-    // accept ISO or "YYYY-MM-DD HH:mm:ss"
-    const s = String(x);
-    const d1 = new Date(s);
-    if(!isNaN(d1.getTime())) return d1;
-    // try replace space with T
-    const d2 = new Date(s.replace(" ","T")+"Z");
-    if(!isNaN(d2.getTime())) return d2;
-    return null;
-  }
-  function fmtTime(d){
-    if(!d) return "-";
-    const yyyy = d.getFullYear();
-    const MM = String(d.getMonth()+1).padStart(2,"0");
-    const dd = String(d.getDate()).padStart(2,"0");
-    const hh = String(d.getHours()).padStart(2,"0");
-    const mm = String(d.getMinutes()).padStart(2,"0");
-    return `${yyyy}-${MM}-${dd} ${hh}:${mm}`;
-  }
+    const KIND_LABEL = {
+      DOCUMENT:"서류",
+      SMALL_BOX:"소형 박스",
+      MEDIUM_BOX:"중형 박스",
+      LARGE_BOX:"대형 박스",
+      FRAGILE:"파손주의",
+      ETC:"기타"
+    };
+    function kindLabel(k){
+      const key = (k || "").trim();
+      return key ? (KIND_LABEL[key] || key) : "-";
+    }
 
-  function renderTimeline(rec){
-    tl.innerHTML = "";
-    const evs = [];
-    // standard events array
-    if(Array.isArray(rec?.events)){
-      for(const e of rec.events){
-        const t = parseTime(e.time || e.at || e.createdAt);
-        evs.push({ time:t, place:e.place||e.location||"-", message:e.message||e.msg||"-" });
+    function statusLabel(s){
+      const m = {
+        RESERVED:"예약",
+        WAYBILL_ISSUED:"운송장발급",
+        FINAL:"점포접수",
+        PICKED_UP:"기사수거",
+        ARRIVED_COLLECTION_CENTER:"집화센터도착",
+        ARRIVED_HUB:"허브센터도착",
+        OUTBOUND_PREP:"출고준비",
+        STORE_DEPARTED:"점포출발",
+        ARRIVED_STORE:"점포도착",
+        DELIVERED_TO_CUSTOMER:"고객전달완료",
+
+        ARRIVED_SUB_TERMINAL:"서브터미널도착",
+        DEPARTED_SUB_TERMINAL:"서브터미널출발",
+        ARRIVED_HUB_TERMINAL:"허브터미널도착",
+        DEPARTED_HUB_TERMINAL:"허브터미널출발",
+        ARRIVED_DEST_TERMINAL:"배송지터미널도착",
+        DELIVERY_STARTED:"배송출발",
+        DELIVERED:"배송완료",
+
+        AIR_READY:"비행기 이륙 준비",
+        AIR_DEPARTED:"항공 출발",
+        ARRIVED_COUNTRY:"국가 도착",
+        DELIVERED_ADDRESS:"주소지 배송완료"
+      };
+      return m[s] || s || "-";
+    }
+
+    async function apiGetReservations(){
+      const r = await fetch("/api/reservations", { cache:"no-store" });
+      if(!r.ok) throw new Error("API error");
+      return await r.json();
+    }
+
+    function ensureEvents(rec){
+      if(!rec.events || !Array.isArray(rec.events)) rec.events = [];
+      return rec.events;
+    }
+
+    function renderEvents(rec){
+      const events = (rec.events && Array.isArray(rec.events)) ? rec.events.slice() : [];
+      // fallback for older fields
+      if(events.length === 0){
+        if(rec.storeAcceptedAt && rec.storeName) events.push({ at: rec.storeAcceptedAt, place: rec.storeName, message:"점포접수 하였습니다" });
+        if(rec.pickedAt && rec.storeName) events.push({ at: rec.pickedAt, place: rec.storeName, message:"기사수거 하였습니다" });
       }
-    }
-    // fallback from known timestamps
-    const st = parseTime(rec?.createdAt);
-    if(st && !evs.some(x=>x.time && x.time.getTime()===st.getTime() && x.message.includes("생성"))){
-      evs.push({ time:st, place:"접수", message:"접수/예약 정보가 생성되었습니다" });
-    }
-    const wb = parseTime(rec?.waybillIssuedAt);
-    if(wb) evs.push({ time:wb, place: rec?.storeName || "키오스크", message:"운송장 발급(접수) 완료" });
-
-    // sort
-    evs.sort((a,b)=> (a.time?.getTime()||0) - (b.time?.getTime()||0));
-
-    if(evs.length===0){
-      tl.innerHTML = `<div class="msg"><span class="warn">배송흐름 데이터가 아직 없어.</span> (점포/기사에서 처리하면 이력이 쌓여)</div>`;
-      flowHint.textContent = "-";
-      return;
-    }
-    flowHint.textContent = evs.length+"건";
-
-    for(const e of evs){
-      const div = document.createElement("div");
-      div.className = "ev";
-      div.innerHTML = `
-        <div class="dot"></div>
-        <div>
-          <div class="meta">${fmtTime(e.time)} · ${escapeHtml(e.place)}</div>
-          <div class="txt">${escapeHtml(e.message)}</div>
-        </div>`;
-      tl.appendChild(div);
-    }
-  }
-
-  function escapeHtml(s){
-    return String(s??"").replace(/[&<>"']/g, ch => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[ch]));
-  }
-
-  async function apiGet(path){
-    const r = await fetch(path, { cache:"no-store" });
-    apiStatus.textContent = "API: " + r.status;
-    const t = await r.text();
-    let o=null;
-    try{ o = JSON.parse(t); }catch{ o = null; }
-    if(!r.ok) return { ok:false, status:r.status, data:o, raw:t };
-    return { ok:true, status:r.status, data:o, raw:t };
-  }
-
-  function extractCandidates(rec){
-    const keys = ["waybillNo","invoiceNo","invoice_no","waybill","wb","reserveNo"];
-    const out = [];
-    for(const k of keys){
-      const v = rec && rec[k];
-      if(v) out.push(normNo(v));
-    }
-    return out.filter(Boolean);
-  }
-
-  function findInList(list, inv){
-    const x = normNo(inv);
-    for(const rec of list){
-      const cands = extractCandidates(rec);
-      if(cands.includes(x)) return rec;
-    }
-    return null;
-  }
-
-  async function lookup(invRaw, retryMs){
-    const inv = normNo(invRaw);
-    if(!inv){ status.innerHTML = `<span class="err">운송장 번호를 입력해줘.</span>`; return; }
-
-    // 1) direct
-    let res = await apiGet("/api/reservations/byWaybill/" + encodeURIComponent(inv));
-    if(res.ok && res.data){
-      status.innerHTML = `<span class="ok">조회 성공</span> (단건 조회)`;
-      setInfo(res.data);
-      renderTimeline(res.data);
-      return;
+      // sort by at asc
+      events.sort((a,b)=>String(a.at||"").localeCompare(String(b.at||"")));
+      return events;
     }
 
-    // 2) list fallback
-    const listRes = await apiGet("/api/reservations");
-    const list = (listRes.ok && Array.isArray(listRes.data)) ? listRes.data : [];
-    const rec = findInList(list, inv);
-    if(rec){
-      status.innerHTML = `<span class="ok">조회 성공</span> (리스트 매칭)`;
-      setInfo(rec);
-      renderTimeline(rec);
-      return;
+    function showErr(msg){
+      $("resultCard").style.display = "none";
+      $("errCard").style.display = "";
+      $("errText").textContent = msg;
     }
 
-    // 3) retry (eventual consistency)
-    if(retryMs > 0){
-      status.innerHTML = `<span class="warn">서버 반영 대기중…</span> (${Math.ceil(retryMs/1000)}초 후 재시도)`;
-      await new Promise(r=>setTimeout(r, retryMs));
-      return await lookup(inv, 0);
+    function showResult(){
+      $("errCard").style.display = "none";
+      $("resultCard").style.display = "";
     }
 
-    status.innerHTML = `<span class="err">등록된 운송장이 아님.</span> (입력: ${inv} / 서버 ${list.length}건 중 일치 없음)`;
-    wbPill.textContent = "-";
-    // keep info skeleton, clear timeline
-    setInfo({});
-    tl.innerHTML = "";
-    flowHint.textContent = "-";
-  }
+    function fill(rec){
+      $("wbPill").textContent = rec.waybillNo || "-";
+      $("svc").textContent = typeLabel(rec.type);
+      $("carrier").textContent = carrierLabel(rec.type);
+      $("sender").textContent = (rec.sender?.name ? `${rec.sender.name} (${rec.sender.phone||"-"})` : "-");
+      $("receiver").textContent = (rec.receiver?.name ? `${rec.receiver.name} (${rec.receiver.phone||"-"})` : "-");
+      const k = rec.package?.kind ?? rec.kind ?? "";
+      $("kind").textContent = kindLabel(k);
+      $("status").textContent = statusLabel(rec.status);
 
-  async function searchWithRetries(inv){
-    btn.disabled = true;
-    try{
-      // immediate try
-      await lookup(inv, 0);
+      const events = renderEvents(rec);
+      const tl = $("timeline");
+      tl.innerHTML = `<div style="margin-top:14px; font-weight:900;">배송흐름</div>` + (events.length? "" : `<div class="sub">아직 기록된 배송 단계가 없어.</div>`);
+      events.forEach(e=>{
+        const place = escapeHtml(e.place || "-");
+        const msg = escapeHtml(e.message || "-");
+        const at = escapeHtml(e.at || "-");
+        tl.innerHTML += `
+          <div class="item">
+            <div class="t1">${place} ${msg}</div>
+            <div class="t2">${at}</div>
+          </div>
+        `;
+      });
+    }
 
-      // if still not found, retry schedule (total about 10s)
-      if(status.textContent.includes("등록된 운송장이 아님") || status.textContent.includes("일치 없음")){
-        const waits = [1200, 2000, 3000, 4000];
-        for(const w of waits){
-          await lookup(inv, w);
-          if(status.textContent.includes("조회 성공")) break;
-        }
+    function normalizeWb(s){
+      return String(s||"").replace(/\D/g,"").trim();
+    }
+
+    function extractList(json){
+      if(Array.isArray(json)) return json;
+      if(json && Array.isArray(json.items)) return json.items;
+      if(json && Array.isArray(json.reservations)) return json.reservations;
+      if(json && Array.isArray(json.data)) return json.data;
+      return [];
+    }
+
+    async function doSearch(wb, pushUrl){
+      const invoiceRaw = String(wb || "").trim();
+      const invoice = normalizeWb(invoiceRaw);
+
+      if(!invoice){ showErr("운송장 번호를 입력해줘!"); return; }
+      if(invoice.length !== 18){ showErr("운송장 번호는 숫자 18자리여야 해!"); return; }
+
+      if(pushUrl){
+        const u = new URL(location.href);
+        u.searchParams.set("invoice_no", invoice);
+        history.replaceState(null, "", u.toString());
       }
-    }catch(e){
-      status.innerHTML = `<span class="err">조회 실패</span> (${escapeHtml(e.message||String(e))})`;
-      console.warn(e);
-    }finally{
-      btn.disabled = false;
+
+      $("invoice").value = invoice;
+
+      let json;
+      try{
+        const r = await fetch("/api/reservations", { cache:"no-store" });
+        if(!r.ok) throw new Error("API error");
+        json = await r.json();
+      }catch(e){
+        showErr("서버에서 조회를 못 했어. 잠깐 후 다시 해줘!");
+        return;
+      }
+
+      const all = extractList(json);
+      const rec = all.find(x => normalizeWb(x.waybillNo || x.waybill || x.invoice_no || x.invoiceNo || "") === invoice);
+
+      if(!rec){
+        // 도움 메시지: 서버에 데이터는 있지만 해당 번호가 없을 수 있음
+        const hint = all.length ? `서버에는 ${all.length}건이 있지만, 이 번호는 못 찾았어.` : "서버에 저장된 접수 내역이 아직 없어.";
+        showErr(`등록된 운송장이 아님. (${hint})`);
+        return;
+      }
+
+      showResult();
+      fill(rec);
     }
-  }
 
-  btn.onclick = ()=> searchWithRetries(invEl.value);
-  invEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") searchWithRetries(invEl.value); });
+    $("btnSearch").onclick = () => doSearch($("invoice").value, true);
+    $("goHome").onclick = () => { window.location.href = "./index.html"; };
 
-  // auto query by ?invoice_no=
-  const qs = new URLSearchParams(location.search);
-  const fromQ = qs.get("invoice_no") || qs.get("waybill_no") || qs.get("waybillNo") || qs.get("wb") || "";
-  if(fromQ){
-    invEl.value = normNo(fromQ);
-    searchWithRetries(invEl.value);
-  }else{
-    status.innerHTML = `운송장 번호를 입력하고 조회를 눌러줘.`;
-    setInfo({});
-  }
+    // auto-run if invoice_no exists
+    const inv = qp("invoice_no");
+    if(inv){
+      doSearch(inv, false);
+    }
+  
+try{ const p=document.getElementById("appVersion"); if(p) p.textContent="v"+APP_VERSION; }catch(e){}
 
-})();
 </script>
 </body>
 </html>

@@ -174,6 +174,16 @@
   .modalHeader{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
   .modalTitle{ font-weight:900; font-size:15px; }
 
+
+    /* Toast 알림 */
+    .toast{position:fixed; right:18px; bottom:18px; z-index:9999; min-width:240px; max-width:420px; padding:12px 14px; border:1px solid rgba(255,255,255,.14); border-radius:14px; background:rgba(0,0,0,.55); color:var(--text); box-shadow: 0 16px 40px rgba(0,0,0,.45); display:none;}
+    .toast.show{display:block; animation: toastIn .18s ease-out;}
+    @keyframes toastIn{from{transform:translateY(8px); opacity:0}to{transform:translateY(0); opacity:1}}
+    .toast .t_title{font-weight:900; font-size:13px;}
+    .toast .t_msg{font-size:12px; color:var(--muted); margin-top:4px; line-height:1.35;}
+    .toast.good{border-color: rgba(53,208,127,.35);}
+    .toast.warn{border-color: rgba(255,204,102,.45);}
+    .toast.bad{border-color: rgba(255,107,107,.55);}
 </style>
 </head>
 <body>
@@ -470,6 +480,15 @@
         <div class="card" id="storeListCard" style="display:none;">
           <div style="font-weight:900; font-size:14px;">접수대기(운송장 발급됨) 목록</div>
           <div class="sub">상태: WAYBILL_ISSUED (점포 접수 전)</div>
+          <div class="row" style="margin-top:10px;">
+            <div style="flex:1;">
+              <label>예약/운송장/이름 검색</label>
+              <input id="s_search" placeholder="예: 81... 또는 RSV... 또는 이름" />
+            </div>
+            <div style="align-self:flex-end; display:flex; gap:8px;">
+              <button class="btn" id="s_search_clear" type="button">지우기</button>
+            </div>
+          </div>
           <div class="list" id="s_list"></div>
         </div>
       </div>
@@ -545,6 +564,9 @@
           <div class="actions">
             <button class="btn" id="c_logout">로그아웃</button>
             <button class="btn" id="c_refresh">목록 새로고침</button>
+            <button class="btn" id="c_manage_terminal" style="display:none;">터미널 관리</button>
+            <button class="btn" id="c_manage_center" style="display:none;">센터 관리</button>
+            <button class="btn" id="c_manage_airline" style="display:none;">항공사 관리</button>
           </div>
         </div>
 
@@ -663,15 +685,56 @@
             <div class="hint">• 순서: 기사수거 → 집화센터도착 → 허브센터도착 → 출고준비 → 점포출발</div>
           </div>
 
+          <div class="row" style="grid-template-columns: 1fr auto auto; margin-top:12px;">
+            <div>
+              <label>예약/운송장 검색</label>
+              <input id="c_search" placeholder="예: 81... 또는 RSV... 또는 이름" />
+            </div>
+            <div style="align-self:end;"><button class="btn" id="c_search_btn" type="button">검색</button></div>
+            <div style="align-self:end;"><button class="btn" id="c_search_clear" type="button">지우기</button></div>
+          </div>
+
           <div class="list" id="c_list" style="margin-top:10px;"></div>
         </div>
       </div>
     </div>
   </div>
 
+  <div id="toast" class="toast"><div class="t_title" id="toastTitle">알림</div><div class="t_msg" id="toastMsg">-</div></div>
+
 <script>
 
-const APP_VERSION = "1.0";
+const APP_VERSION = "1.1";
+
+  // ----- UI: Toast 알림 -----
+  let __toastTimer = null;
+  function showToast(message, title="알림", kind="info"){
+    const box = document.getElementById("toast");
+    if(!box) return;
+    const t = document.getElementById("toastTitle");
+    const m = document.getElementById("toastMsg");
+    if(t) t.textContent = title;
+    if(m) m.textContent = message;
+    box.classList.remove("good","warn","bad","info");
+    box.classList.add(kind);
+    box.classList.add("show");
+    clearTimeout(__toastTimer);
+    __toastTimer = setTimeout(() => { box.classList.remove("show"); }, 2600);
+  }
+
+  // ----- Search state -----
+  let __storeSearchQ = "";
+  let __courierSearchQ = "";
+  function matchRec(rec, q){
+    q = (q||"").trim();
+    if(!q) return true;
+    const t = q.toLowerCase();
+    const sName = (rec.sender && rec.sender.name) ? rec.sender.name : "";
+    const rName = (rec.receiver && rec.receiver.name) ? rec.receiver.name : "";
+    const hay = [rec.waybillNo, rec.reserveNo, sName, rName, rec.storeName, rec.destStoreName].filter(Boolean).join(" ").toLowerCase();
+    return hay.includes(t);
+  }
+
 
     // ===== SAFE DOM GETTER (missing element won't crash the whole app) =====
   const $ = (id) => {
@@ -1238,6 +1301,7 @@ const APP_VERSION = "1.0";
 
     const arr = (await getReservations())
       .filter(x => x.waybillNo && x.status === "WAYBILL_ISSUED")
+      .filter(x => matchRec(x, __storeSearchQ))
       .slice(0, 50);
 
     const box = $("s_list");
@@ -1309,6 +1373,7 @@ ${detailText(rec)}
     rec.storeName = sess.store.name;
     rec.storeAcceptedAt = nowStr();
     pushEvent(rec, sess.store.name, "점포접수 하였습니다", rec.storeAcceptedAt);
+    showToast(`${rec.waybillNo} 점포접수 완료`, "점포", "good");
     await upsertRes(rec);
 
     const p = pkgSummary(rec);
@@ -1361,6 +1426,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     rec.pickupCode = rec.pickupCode || makePickupCode();
     pushEvent(rec, sess.store.name, "점포도착하였습니다", rec.arrivedAt);
     await upsertRes(rec);
+    showToast(`${rec.waybillNo} 입고 완료`, "점포", "good");
     $("s_inboundResult").innerHTML = `<div class="ok">입고 완료</div><div class="mono" style="margin-top:8px;">운송장: ${escapeHtml(rec.waybillNo)}\n고유번호: ${escapeHtml(rec.pickupCode)}</div>`;
   }
 
@@ -1383,6 +1449,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     pushEvent(rec, sess.store.name, "고객에게 전달하였습니다", rec.deliveredAt);
     await upsertRes(rec);
 
+    showToast(`${rec.waybillNo} 고객전달 완료`, "점포", "good");
     $("s_handoverResult").innerHTML = `<div class="ok">고객전달 완료</div><div class="mono" style="margin-top:8px;">운송장: ${escapeHtml(rec.waybillNo)}\n완료: ${escapeHtml(rec.deliveredAt)}</div>`;
   }
 
@@ -1391,6 +1458,10 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
 
   $("s_accept").onclick = () => storeAcceptWaybill(false);
   $("s_refresh").onclick = renderStoreLists;
+  $("s_search_btn").onclick = () => { __storeSearchQ = $("s_search").value.trim(); renderStoreLists(); };
+  $("s_search_clear").onclick = () => { $("s_search").value = ""; __storeSearchQ = ""; renderStoreLists(); };
+  try{ $("s_search").addEventListener("keydown", (e)=>{ if(e.key==="Enter") $("s_search_btn").click(); }); }catch(e){}
+
 
 
   // courier mode (DOMESTIC / ECONOMY_CVS)
@@ -1406,6 +1477,10 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
     const showDomestic = (courierMode==="DOMESTIC" || courierMode==="INTERNATIONAL");
     if($("c_domesticOps")) $("c_domesticOps").style.display = showDomestic ? "" : "none";
     if($("c_intlOps")) $("c_intlOps").style.display = (courierMode==="INTERNATIONAL") ? "" : "none";
+    // 관리 버튼 표시(요청: 국내=터미널, 반값=센터, 국제=터미널+항공사)
+    if($("c_manage_terminal")) $("c_manage_terminal").style.display = ((courierMode==="DOMESTIC" || courierMode==="INTERNATIONAL") ? "" : "none");
+    if($("c_manage_center")) $("c_manage_center").style.display = (courierMode==="ECONOMY_CVS" ? "" : "none");
+    if($("c_manage_airline")) $("c_manage_airline").style.display = (courierMode==="INTERNATIONAL" ? "" : "none");
     if($("c_economyOps")) $("c_economyOps").style.display = (courierMode==="ECONOMY_CVS") ? "" : "none";
   }
   $("c_mode_domestic").onclick = () => { courierMode="DOMESTIC"; updateCourierModeUI(); void renderCourierLists(); };
@@ -1853,6 +1928,7 @@ ${rec.type==="INTERNATIONAL" ? `국가: ${escapeHtml(p.country || "-")}\n` : ""}
 
     const arr = all
       .filter(x => x.waybillNo && (statusAllow.includes(x.status) || x.status==="DELIVERED" || x.status==="DELIVERED_ADDRESS" || x.status==="DELIVERED_TO_CUSTOMER"))
+      .filter(x => matchRec(x, __courierSearchQ))
       .filter(x => {
         if(courierMode === "ECONOMY_CVS") return x.type === "ECONOMY_CVS";
         if(courierMode === "INTERNATIONAL") return x.type === "INTERNATIONAL";
@@ -1916,6 +1992,7 @@ ${detailText(rec)}
           rec.courier = { code: courier.code, name: courier.name, phone: courier.phone };
           pushEvent(rec, rec.storeName || "-", "기사수거 하였습니다", rec.pickedAt);
           await upsertRes(rec);
+          showToast(`${wb} 기사수거 완료`, "기사", "good");
 
           alert(`기사수거 완료!\n운송장: ${wb}\n기사: ${courier.name} (${courier.phone || "-"})`);
           await renderCourierLists();
@@ -1929,6 +2006,17 @@ ${detailText(rec)}
   }
 
   $("c_refresh").onclick = renderCourierLists;
+
+  // 관리 페이지 이동
+  $("c_manage_terminal").onclick = () => { window.location.href = "terminal.html"; };
+  $("c_manage_center").onclick = () => { window.location.href = "center.html"; };
+  $("c_manage_airline").onclick = () => { window.location.href = "airline.html"; };
+
+  $("c_search_btn").onclick = () => { __courierSearchQ = $("c_search").value.trim(); renderCourierLists(); };
+  $("c_search").addEventListener("keydown", (e) => { if(e.key==="Enter"){ __courierSearchQ = $("c_search").value.trim(); renderCourierLists(); } });
+  $("c_search_clear").onclick = () => { $("c_search").value = ""; __courierSearchQ = ""; renderCourierLists(); };
+
+
 
   // ---------- Utilities ----------
   function escapeHtml(s){

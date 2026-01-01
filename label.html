@@ -111,6 +111,7 @@
           </div>
 
           <div class="barcodeBox">
+            <canvas id="qrCanvas" width="180" height="180" style="width:26mm;height:26mm; border:1px solid #0000; margin-bottom:2mm;"></canvas>
             <svg id="barcode"></svg>
             <div class="mono" id="wbMono" style="font-size:11pt; font-weight:900;"></div>
           </div>
@@ -127,6 +128,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
   <script>
 const APP_VERSION = "1.0";
@@ -278,6 +280,14 @@ function statusLabel(s){
       $("wbText").textContent = waybill;
       $("wbMono").textContent = waybill;
       try{ JsBarcode("#barcode", waybill, { format:"CODE128", displayValue:false, margin:0, height:60 }); }catch(e){}
+      // QR (tracking link)
+      try{
+        const link = `${location.origin}/tracking.html?invoice_no=${encodeURIComponent(waybill)}`;
+        const c = document.getElementById('qrCanvas');
+        if(c && window.QRCode){
+          QRCode.toCanvas(c, link, { margin: 1, width: 180 }, ()=>{});
+        }
+      }catch(e){}
 
       // 0) payload-first (works even without server)
       const payload = parsePayload(waybill);

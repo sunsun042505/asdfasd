@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>센터 관리</title>
+  <style>
+    :root{
+      --bg:#0b1020; --text:#eaf0ff; --muted:#a9b3d7; --accent:#7aa2ff;
+      --good:#35d07f; --warn:#ffcc66; --bad:#ff6b6b;
+      --card: rgba(0,0,0,.18); --line: rgba(255,255,255,.10);
+      --shadow: 0 18px 40px rgba(0,0,0,.35); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(122,162,255,.18), transparent 55%),
+        radial-gradient(900px 500px at 80% 0%, rgba(53,208,127,.12), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+    }
+    .panel{
+      width:min(960px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding:18px 20px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      background: linear-gradient(180deg, rgba(122,162,255,.12), rgba(0,0,0,0));
+    }
+    .brand{display:flex; align-items:center; gap:12px;}
+    .logo{width:38px; height:38px; border-radius:12px; background: linear-gradient(135deg, rgba(122,162,255,.65), rgba(53,208,127,.55)); box-shadow: 0 10px 20px rgba(0,0,0,.28);}
+    h1{margin:0; font-size:16px;}
+    .sub{font-size:12px; color:var(--muted); margin-top:2px;}
+    .badge{font-size:12px; padding:7px 10px; border:1px solid rgba(255,255,255,.12); border-radius:999px; color:var(--muted); background: rgba(0,0,0,.18); user-select:none; white-space:nowrap;}
+    .content{padding:16px;}
+    .card{background: rgba(0,0,0,.14); border:1px solid rgba(255,255,255,.08); border-radius: 16px; padding:14px; margin-top:12px;}
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px;}
+    input{width:100%; padding:12px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.22); color:var(--text); outline:none;}
+    .row{display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:end;}
+    .btn{border:1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.18); color:var(--text); padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer;}
+    .btn.primary{border-color: rgba(122,162,255,.45);}
+    .btn.good{border-color: rgba(53,208,127,.45);}
+    .btn.bad{border-color: rgba(255,107,107,.45);}
+    .btn:active{transform: translateY(1px);}
+    .list{display:flex; flex-direction:column; gap:10px; margin-top:10px;}
+    .item{padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.15); display:flex; justify-content:space-between; align-items:center; gap:10px;}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .muted{color:var(--muted); font-size:12px;}
+    .toast{position:fixed; right:16px; top:16px; background: rgba(0,0,0,.75); border:1px solid rgba(255,255,255,.18); color:var(--text); padding:12px 14px; border-radius:14px; box-shadow: 0 16px 35px rgba(0,0,0,.45); display:none; max-width:min(520px, calc(100% - 32px)); z-index:9999;}
+    .toast.show{display:block;}
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div class="panel">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>센터 관리</h1>
+          <div class="sub">반값택배 기사에서 사용하는 센터 목록</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span class="badge" id="apiBadge">API 확인중…</span>
+        <button class="btn" id="backBtn">뒤로</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="card">
+        <div class="row">
+          <div>
+            <label>이름 추가</label>
+            <input id="name" placeholder="예: 강남집화센터" />
+          </div>
+          <button class="btn good" id="addBtn">추가</button>
+        </div>
+        <div class="muted" style="margin-top:10px;">저장 키: <span class="mono">DELIVERY_CENTERS_V1</span></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+          <div style="font-weight:900;">목록</div>
+          <button class="btn" id="reloadBtn">새로고침</button>
+        </div>
+        <div class="list" id="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const KEY = "DELIVERY_CENTERS_V1";
+    const $ = (id)=>document.getElementById(id);
+
+    function toast(msg){
+      const t = $("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(window.__tmo);
+      window.__tmo = setTimeout(()=>t.classList.remove("show"), 2200);
+    }
+
+    async function apiPing(){
+      try{
+        const r = await fetch("/api/ping", { cache:"no-store" });
+        if(!r.ok) throw 0;
+        const j = await r.json();
+        $("apiBadge").textContent = `API OK · v${j.version||"?"}`;
+      }catch{
+        $("apiBadge").textContent = "API 오류";
+        $("apiBadge").style.borderColor = "rgba(255,107,107,.45)";
+      }
+    }
+
+    async function apiGet(key, fallback){
+      const r = await fetch(`/api/kv/get?key=${encodeURIComponent(key)}`, { cache:"no-store" });
+      if(!r.ok) return fallback;
+      const j = await r.json();
+      return (j && j.value != null) ? j.value : fallback;
+    }
+    async function apiSet(key, value){
+      const r = await fetch("/api/kv/set", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body: JSON.stringify({ key, value })
+      });
+      if(!r.ok) throw new Error("SAVE_FAIL");
+      return await r.json();
+    }
+
+    function escapeHtml(s){
+      return String(s||"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+    }
+
+    async function loadList(){
+      const arr = (await apiGet(KEY, [])) || [];
+      const safe = arr.filter(x => typeof x === "string" && x.trim());
+      const box = $("list");
+      box.innerHTML = "";
+      if(safe.length === 0){
+        box.innerHTML = `<div class="item"><div class="muted">아직 없음</div></div>`;
+        return;
+      }
+      safe.forEach(name => {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div style="font-weight:900;">${escapeHtml(name)}</div>
+          <button class="btn bad">삭제</button>
+        `;
+        el.querySelector("button").onclick = async () => {
+          if(!confirm("삭제할까?")) return;
+          const now = (await apiGet(KEY, [])) || [];
+          const next = now.filter(x => x !== name);
+          await apiSet(KEY, next);
+          toast("삭제 완료");
+          await loadList();
+        };
+        box.appendChild(el);
+      });
+    }
+
+    $("addBtn").onclick = async () => {
+      const name = $("name").value.trim();
+      if(!name){ toast("이름을 입력해줘"); return; }
+      const now = (await apiGet(KEY, [])) || [];
+      if(now.includes(name)){ toast("이미 있어"); $("name").value=""; return; }
+      now.push(name);
+      await apiSet(KEY, now);
+      $("name").value = "";
+      toast("추가 완료");
+      await loadList();
+    };
+
+    $("reloadBtn").onclick = loadList;
+    $("backBtn").onclick = () => history.length > 1 ? history.back() : (location.href = "index.html");
+
+    apiPing();
+    loadList();
+  </script>
+</body>
+</html>
