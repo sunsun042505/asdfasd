@@ -1,17 +1,15 @@
-기존 UI + 서버저장(기기공용) 패치팩 v1
-build: 2025-12-31 16:04:25 KST
+선우택배 시스템 패치팩 v1.0
+build: 2026-01-01 13:34:51 KST
 
-✅ 바뀐 점
-- 기존 index.html / kiosk.html UI는 그대로 두고, 데이터 저장만 서버(/api, Netlify Blobs)로 전환
-- 점포/기사/접수 데이터: 기기 공용 (서버 저장)
-- 로그인(세션): 기기별(세션스토리지)로만 유지(로그인 유지 X)
-- 키오스크: 점포명+점포코드 로그인 게이트 복구
-- 키오스크: 운송장 발급 후 '운송장 출력(라벨)' + '배송조회' 버튼 추가
+포함:
+- 기존 UI 유지(index/kiosk/tracking/label)
+- 클릭/시간 먹통 방지: 안전한 $() 적용(없는 요소여도 크래시 X)
+- 서버 저장(기기 공용): /api/kv + reservations(upsert/byWaybill)
+- 메인 홈: 배송조회 버튼(goTracking) 추가
+- 배송조회(tracking): /api/reservations/byWaybill/<운송장> 단건 조회로 변경([] 문제 감소)
+- 키오스크: 점포명+점포코드 로그인 게이트 추가(/api/stores/login)
+- 키오스크: 발급 시 점포접수 이벤트 기록 + 라벨 출력/배송조회 버튼(라벨 출력) 제공
+- 버전 표시: 상단 v1.0 (서버 키 sunwoo_app_version 갱신)
 
-중요
-- Netlify 배포가 반드시 되어야 /api 가 동작함 (GitHub → Netlify 자동배포 OK)
-- netlify.toml / package.json / netlify/functions/data.mjs 가 레포에 있어야 함
-
-테스트
-1) index.html 에서 /api 테스트 OK 확인
-2) 점포 등록 → 키오스크 점포 로그인 → 현장접수 발급 → tracking/label 확인
+업그레이드(1.1, 1.2 ...):
+- index/kiosk/tracking/label 안의 APP_VERSION 값만 올리면 자동으로 서버 버전도 갱신되게 되어 있음.
