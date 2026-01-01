@@ -134,199 +134,161 @@
   </div>
 
   <script>
-
+    // ===== tracking.html (robust) =====
     const $ = (id)=>document.getElementById(id);
 
-    function qp(name){
-      const u = new URL(location.href);
-      return u.searchParams.get(name) || "";
-    }
-
-    function escapeHtml(s){
-      return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
+    function normNo(v){ return String(v||"").trim().replace(/[^\d]/g,""); }
 
     function typeLabel(t){
-      const m = { DOMESTIC:"국내택배", INTERNATIONAL:"국제택배", ECONOMY_CVS:"반값택배", RETURN:"반품택배" };
-      return m[t] || t || "-";
+      const m = { DOMESTIC:"국내택배", INTERNATIONAL:"국제택배", HALF:"반값택배", RETURN:"반품택배" };
+      return m[t] || (t||"-");
     }
-
     function carrierLabel(t){
-      if(t==="ECONOMY_CVS") return "선우네트웍스";
+      if(t==="HALF") return "선우네트웍스";
       if(t==="INTERNATIONAL") return "네버랩인터내셔널에어포트(주)(인천국제공항)";
       // DOMESTIC + RETURN default
       return "선우택배";
     }
 
-    const KIND_LABEL = {
-      DOCUMENT:"서류",
-      SMALL_BOX:"소형 박스",
-      MEDIUM_BOX:"중형 박스",
-      LARGE_BOX:"대형 박스",
-      FRAGILE:"파손주의",
-      ETC:"기타"
-    };
-    function kindLabel(k){
-      const key = (k || "").trim();
-      return key ? (KIND_LABEL[key] || key) : "-";
+    async function apiGet(url){
+      const r = await fetch(url, { cache:"no-store" });
+      const t = await r.text();
+      let o;
+      try{ o = JSON.parse(t); } catch { o = { raw:t }; }
+      if(!r.ok) throw new Error(o?.error || ("HTTP_"+r.status));
+      return o;
     }
 
-    function statusLabel(s){
-      const m = {
-        RESERVED:"예약",
-        WAYBILL_ISSUED:"운송장발급",
-        FINAL:"점포접수",
-        PICKED_UP:"기사수거",
-        ARRIVED_COLLECTION_CENTER:"집화센터도착",
-        ARRIVED_HUB:"허브센터도착",
-        OUTBOUND_PREP:"출고준비",
-        STORE_DEPARTED:"점포출발",
-        ARRIVED_STORE:"점포도착",
-        DELIVERED_TO_CUSTOMER:"고객전달완료",
-
-        ARRIVED_SUB_TERMINAL:"서브터미널도착",
-        DEPARTED_SUB_TERMINAL:"서브터미널출발",
-        ARRIVED_HUB_TERMINAL:"허브터미널도착",
-        DEPARTED_HUB_TERMINAL:"허브터미널출발",
-        ARRIVED_DEST_TERMINAL:"배송지터미널도착",
-        DELIVERY_STARTED:"배송출발",
-        DELIVERED:"배송완료",
-
-        AIR_READY:"비행기 이륙 준비",
-        AIR_DEPARTED:"항공 출발",
-        ARRIVED_COUNTRY:"국가 도착",
-        DELIVERED_ADDRESS:"주소지 배송완료"
-      };
-      return m[s] || s || "-";
+    async function getOne(inv){
+      try{
+        return await apiGet("/api/reservations/byWaybill/" + encodeURIComponent(inv));
+      }catch(e){
+        return null;
+      }
     }
-
-
-    function normNo(v){
-      return String(v||"").trim().replace(/[^\d]/g,"");
+    async function getList(){
+      try{
+        const o = await apiGet("/api/reservations");
+        return Array.isArray(o) ? o : [];
+      }catch(e){
+        return [];
+      }
     }
-
-    async function apiGetOneByWaybill(invRaw){
-      const inv = normNo(invRaw);
-      if(!inv) return null;
-      const r = await fetch("/api/reservations/byWaybill/" + encodeURIComponent(inv), { cache:"no-store" });
-      if(r.ok) return await r.json();
+    function pickCandidates(rec){
+      return [
+        rec?.waybillNo, rec?.invoiceNo, rec?.invoice_no, rec?.waybill, rec?.wb,
+        rec?.reserveNo, rec?.reservationNo
+      ].filter(Boolean).map(normNo);
+    }
+    function findInList(list, inv){
+      for(const rec of list){
+        const c = pickCandidates(rec);
+        if(c.includes(inv)) return rec;
+      }
       return null;
     }
 
-    async function apiGetReservationsList(){
-      const r = await fetch("/api/reservations", { cache:"no-store" });
-      if(!r.ok) throw new Error("API error");
-      const arr = await r.json();
-      return Array.isArray(arr) ? arr : [];
-    }
-
-    function matchReservation(list, invRaw){
-      const inv = normNo(invRaw);
-      if(!inv) return null;
-      return list.find(rec=>{
-        const candidates = [
-          rec?.waybillNo, rec?.invoiceNo, rec?.invoice_no, rec?.waybill, rec?.wb, rec?.reserveNo
-        ].filter(Boolean).map(normNo);
-        return candidates.includes(inv);
-      }) || null;
-    }
-
-
-    async function apiGetReservations(){ return await apiGetReservationsList(); }
-);
-      if(!r.ok) throw new Error("API error");
-      return await r.json();
-    }
+    function safeText(v){ return (v===0 ? "0" : (v ? String(v) : "-")); }
 
     function ensureEvents(rec){
-      if(!rec.events || !Array.isArray(rec.events)) rec.events = [];
+      if(!rec || !Array.isArray(rec.events)) rec.events = [];
+      // fallback: if no events but has storeName/status timestamps, create minimal
+      if(rec.events.length===0 && rec.storeName){
+        rec.events.push({
+          at: rec.storeAcceptedAt || rec.createdAt || "",
+          place: rec.storeName,
+          message: "점포접수 하였습니다"
+        });
+      }
       return rec.events;
     }
 
-    function renderEvents(rec){
-      const events = (rec.events && Array.isArray(rec.events)) ? rec.events.slice() : [];
-      // fallback for older fields
-      if(events.length === 0){
-        if(rec.storeAcceptedAt && rec.storeName) events.push({ at: rec.storeAcceptedAt, place: rec.storeName, message:"점포접수 하였습니다" });
-        if(rec.pickedAt && rec.storeName) events.push({ at: rec.pickedAt, place: rec.storeName, message:"기사수거 하였습니다" });
+    function render(rec){
+      $("errCard").style.display = "none";
+      $("resultCard").style.display = "block";
+      $("wbPill").textContent = safeText(rec.waybillNo || rec.invoiceNo || rec.invoice_no || rec.waybill);
+
+      const t = rec.type || rec.serviceType || rec.kindType || rec.shipType || "";
+      $("svc").textContent = typeLabel(t);
+      $("carrier").textContent = carrierLabel(t);
+
+      $("sender").textContent = safeText(rec.senderName || rec.fromName || rec.sender || rec.from);
+      $("receiver").textContent = safeText(rec.receiverName || rec.toName || rec.receiver || rec.to);
+      $("kind").textContent = safeText(rec.parcelKind || rec.goodsType || rec.itemType || rec.kind);
+
+      // timeline
+      const tl = $("timeline");
+      tl.innerHTML = "";
+      const events = ensureEvents(rec).slice().reverse(); // latest first? keep older first actually
+      events.reverse();
+      if(events.length===0){
+        tl.innerHTML = `<div class="muted">배송 흐름 정보가 아직 없어.</div>`;
+      }else{
+        for(const ev of events){
+          const row = document.createElement("div");
+          row.className = "ev";
+          row.innerHTML = `
+            <div class="ev_at">${safeText(ev.at)}</div>
+            <div class="ev_msg"><b>${safeText(ev.place)}</b> - ${safeText(ev.message)}</div>
+          `;
+          tl.appendChild(row);
+        }
       }
-      // sort by at asc
-      events.sort((a,b)=>String(a.at||"").localeCompare(String(b.at||"")));
-      return events;
+
+      $("status").innerHTML = `<span class="ok">조회 완료</span>`;
     }
 
     function showErr(msg){
       $("resultCard").style.display = "none";
-      $("errCard").style.display = "";
+      $("errCard").style.display = "block";
       $("errText").textContent = msg;
+      $("status").innerHTML = `<span class="err">조회 실패</span>`;
     }
 
-    function showResult(){
-      $("errCard").style.display = "none";
-      $("resultCard").style.display = "";
-    }
+    async function doSearch(invRaw){
+      const inv = normNo(invRaw);
+      if(!inv){ showErr("운송장 번호를 입력해줘."); return; }
 
-    function fill(rec){
-      $("wbPill").textContent = rec.waybillNo || "-";
-      $("svc").textContent = typeLabel(rec.type);
-      $("carrier").textContent = carrierLabel(rec.type);
-      $("sender").textContent = (rec.sender?.name ? `${rec.sender.name} (${rec.sender.phone||"-"})` : "-");
-      $("receiver").textContent = (rec.receiver?.name ? `${rec.receiver.name} (${rec.receiver.phone||"-"})` : "-");
-      const k = rec.package?.kind ?? rec.kind ?? "";
-      $("kind").textContent = kindLabel(k);
-      $("status").textContent = statusLabel(rec.status);
+      $("status").textContent = "조회 중...";
+      // update URL
+      const url = new URL(location.href);
+      url.searchParams.set("invoice_no", inv);
+      history.replaceState(null, "", url.toString());
 
-      const events = renderEvents(rec);
-      const tl = $("timeline");
-      tl.innerHTML = `<div style="margin-top:14px; font-weight:900;">배송흐름</div>` + (events.length? "" : `<div class="sub">아직 기록된 배송 단계가 없어.</div>`);
-      events.forEach(e=>{
-        const place = escapeHtml(e.place || "-");
-        const msg = escapeHtml(e.message || "-");
-        const at = escapeHtml(e.at || "-");
-        tl.innerHTML += `
-          <div class="item">
-            <div class="t1">${place} ${msg}</div>
-            <div class="t2">${at}</div>
-          </div>
-        `;
-      });
-    }
-
-    async function doSearch(wb, pushUrl){
-      const invoice = (wb || "").trim();
-      if(!invoice){ showErr("운송장 번호를 입력해줘!"); return; }
-
-      if(pushUrl){
-        const u = new URL(location.href);
-        u.searchParams.set("invoice_no", invoice);
-        history.replaceState(null, "", u.toString());
-      }
-
-      $("invoice").value = invoice;
-
-      let all;
-      try{
-        all = await apiGetReservations();
-      }catch(e){
-        showErr("서버에서 조회를 못 했어. 잠깐 후 다시 해줘!");
+      // 1) direct
+      const rec1 = await getOne(inv);
+      if(rec1 && (rec1.waybillNo || rec1.invoiceNo || rec1.invoice_no || rec1.reserveNo)){
+        render(rec1);
         return;
       }
-      const rec = (all || []).find(x => String(x.waybillNo||"") === invoice);
-      if(!rec){ showErr("등록된 운송장이 아님"); return; }
 
-      showResult();
-      fill(rec);
+      // 2) list fallback
+      const list = await getList();
+      const rec2 = findInList(list, inv);
+      if(rec2){
+        render(rec2);
+        return;
+      }
+
+      showErr(`등록된 운송장이 아님. (입력: ${inv} / 서버 ${list.length}건 중 일치 없음)`);
     }
 
-    $("btnSearch").onclick = () => doSearch($("invoice").value, true);
-    $("goHome").onclick = () => { window.location.href = "./index.html"; };
+    // wire
+    $("goHome").onclick = ()=> location.href = "./index.html";
+    $("btnSearch").onclick = ()=> doSearch($("invoice").value);
 
-    // auto-run if invoice_no exists
-    const inv = normNo(qp("invoice_no") || qp("waybill_no") || qp("waybillNo") || qp("wb") || "");
-    if(inv){
-      doSearch(inv, false);
+    // enter key
+    $("invoice").addEventListener("keydown", (e)=>{
+      if(e.key==="Enter") doSearch($("invoice").value);
+    });
+
+    // init from query
+    const qs = new URLSearchParams(location.search);
+    const qInv = normNo(qs.get("invoice_no") || qs.get("waybill_no") || qs.get("waybillNo") || qs.get("wb") || "");
+    if(qInv){
+      $("invoice").value = qInv;
+      doSearch(qInv);
     }
-  
 </script>
 </body>
 </html>
