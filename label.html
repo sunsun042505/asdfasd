@@ -8,6 +8,7 @@
   <title>라벨 출력 | 선우택배</title>
 
   <!-- libs (CDN) -->
+  <!-- NOTE: We rely on window.onload so these can be defer -->
   <script defer src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -217,6 +218,12 @@
       overflow:hidden;
     }
     .qrWrap canvas, .qrWrap img{width: 96px; height:96px}
+    .warn{
+      margin-top:8px;
+      font-size:11px;
+      color:#555;
+      line-height:1.35;
+    }
 
     @media print{
       body{background:#fff}
@@ -266,7 +273,7 @@
                 <div class="bigNo" id="wbText">-</div>
               </div>
               <div class="qrWrap" title="QR: 배송조회 링크">
-                <div id="qr"></div>
+                <div id="qr" style="font-weight:900;font-size:12px;color:#555">로딩…</div>
               </div>
             </div>
 
@@ -324,6 +331,8 @@
                 <div class="mono" id="wbMono">-</div>
               </div>
             </div>
+
+            <div class="warn" id="hintLine"></div>
           </div>
         </div>
       </div>
@@ -335,7 +344,7 @@
   </div>
 
 <script>
-(() => {
+(function(){
   const $ = (id)=>document.getElementById(id);
 
   function normNo(v){
@@ -348,7 +357,7 @@
 
   async function apiJson(path, opts={}, timeoutMs=9000){
     const u = new URL(path, location.origin);
-    u.searchParams.set("_ts", String(Date.now()));
+    u.searchParams.set("_ts", String(Date.now())); // cache bust
     const ctrl = new AbortController();
     const t = setTimeout(()=>ctrl.abort(), timeoutMs);
     try{
@@ -388,6 +397,13 @@
       return JSON.parse(jsonStr);
     }catch(e){ return null; }
   }
+  function parseLocalPayload(wb){
+    try{
+      const s = localStorage.getItem(`SW_LABEL_PAYLOAD_${wb}`);
+      if(!s) return null;
+      return JSON.parse(s);
+    }catch(e){ return null; }
+  }
 
   function setText(id, v){
     const el = $(id);
@@ -418,14 +434,23 @@
     return "";
   }
   function pickName(rec, which){
-    const o = rec?.[which] || {};
-    const name = pick(o, ["name","storeName","branchName"]) || pick(rec, [which+"Name", which+"_name"]);
-    return name || "-";
+    const o = rec?.[which];
+    if(o && typeof o === "object"){
+      const name = pick(o, ["name","storeName","branchName"]) || pick(rec, [which+"Name", which+"_name"]);
+      return name || "-";
+    }
+    // sometimes stored as senderName/senderPhone
+    const name2 = pick(rec, [which+"Name", which+"_name"]);
+    return name2 || "-";
   }
   function pickPhone(rec, which){
-    const o = rec?.[which] || {};
-    const phone = pick(o, ["phone","tel","mobile"]) || pick(rec, [which+"Phone", which+"_phone"]);
-    return phone || "-";
+    const o = rec?.[which];
+    if(o && typeof o === "object"){
+      const phone = pick(o, ["phone","tel","mobile"]) || pick(rec, [which+"Phone", which+"_phone"]);
+      return phone || "-";
+    }
+    const phone2 = pick(rec, [which+"Phone", which+"_phone"]);
+    return phone2 || "-";
   }
 
   function candidates(rec){
@@ -438,6 +463,10 @@
   }
 
   function renderBarcodeAndQR(wb){
+    setText("wbText", wb);
+    setText("wbMono", wb);
+
+    // Barcode
     try{
       if(window.JsBarcode){
         JsBarcode("#barcode", wb, {
@@ -448,85 +477,162 @@
           displayValue: false,
           margin: 0
         });
+      } else {
+        // keep empty but not crash
       }
     }catch(e){}
-    setText("wbText", wb);
-    setText("wbMono", wb);
 
+    // QR to tracking link
     const url = new URL("tracking.html", location.origin);
     url.searchParams.set("invoice_no", wb);
     const qrHost = $("qr");
     qrHost.innerHTML = "";
     try{
-      if(window.QRCode){
+      if(window.QRCode && window.QRCode.toCanvas){
         QRCode.toCanvas(url.toString(), { width: 96, margin: 1 }, (err, canvas)=>{
           if(!err && canvas) qrHost.appendChild(canvas);
-          else qrHost.textContent = "QR";
+          else qrHost.textContent = "QR 생성 실패";
         });
       } else {
-        qrHost.textContent = "QR";
+        qrHost.textContent = "QR 로딩중…";
       }
     }catch(e){
-      qrHost.textContent = "QR";
+      qrHost.textContent = "QR 생성 실패";
     }
   }
 
-  function applyRecord(rec, wb, sourceNote){
-    const t = (rec?.type || rec?.serviceType || rec?.service || "").toString();
-    setText("typeTag", typeLabel(t));
-    setText("carrier", carrierLabel(t));
+  function looksLikeStoreName(s){
+    const v = String(s||"").trim();
+    if(!v) return false;
+    // heuristics: contains "지점/점포/편의점/센터/터미널" and not looks like a street address
+    const hasWord = /(지점|점포|편의점|센터|터미널)/.test(v);
+    const looksAddress = /(\d{2,3}\-?\d{2,4}|\d{2,4}동|\d{1,4}호|로|길|번길)/.test(v);
+    return hasWord && !looksAddress;
+  }
 
-    setText("sName", pickName(rec, "sender"));
-    setText("sPhone", pickPhone(rec, "sender"));
-    setText("rName", pickName(rec, "receiver"));
-    setText("rPhone", pickPhone(rec, "receiver"));
+  function normalizeLabelFields(rec){
+    const t = String(rec?.type || rec?.serviceType || rec?.service || "").toUpperCase();
 
-    const pickupStore = pick(rec, ["storeName","pickupStoreName","originStoreName"]) || pick(rec?.sender, ["storeName","name"]);
-    const dropStore = pick(rec, ["destStoreName","dropoffStoreName","arrivalStoreName","receiverStoreName","toStoreName"]);
-    setText("pickupStore", pickupStore || "-");
-    setText("dropStore", dropStore || "-");
+    // pickup/drop store candidates
+    let pickupStore =
+      pick(rec, ["storeName","pickupStoreName","originStoreName"]) ||
+      pick(rec?.issuedStore, ["name"]) ||
+      pick(rec?.sender, ["storeName","name"]) ||
+      "";
 
-    const addr = pick(rec, ["addr","address"]) || pick(rec?.receiver, ["address","addr"]);
-    const memo = pick(rec, ["memo","note","remark"]);
-    const am = [addr, memo].filter(Boolean).join(" / ");
-    setText("addrMemo", am || "-");
+    let dropStore =
+      pick(rec, ["destStoreName","dropoffStoreName","arrivalStoreName","receiverStoreName","toStoreName","destinationStoreName"]) ||
+      pick(rec?.receiverStore, ["name"]) ||
+      pick(rec?.receiver, ["storeName"]) ||
+      "";
 
+    // address + memo
+    let addr =
+      pick(rec, ["addr","address","cvsAddr","storeAddr"]) ||
+      pick(rec?.receiver, ["address","addr"]) ||
+      "";
+
+    const memo = pick(rec, ["memo","note","remark"]) || "";
+
+    // Special: ECONOMY_CVS - sometimes they mistakenly saved "addr" as store-name or "주소/비고" confusion.
+    if(t === "ECONOMY_CVS"){
+      if(!dropStore && looksLikeStoreName(addr)){
+        // addr is actually store name
+        dropStore = addr;
+        addr = ""; // keep memo as address/memo
+      }
+      // If dropStore still empty but memo looks like store name, lift it
+      if(!dropStore && looksLikeStoreName(memo)){
+        dropStore = memo;
+      }
+    }
+
+    // Show "주소/비고" as addr + memo (but avoid duplicating store names)
+    const parts = [];
+    if(addr) parts.push(addr);
+    if(memo && memo !== addr) parts.push(memo);
+    const addrMemo = parts.join(" / ");
+
+    // package
     const pkg = rec?.package || {};
-    const w = pick(pkg, ["weightKg","weight"]) || pick(rec, ["weightKg","weight"]);
-    const kind = pick(pkg, ["kind","type"]) || pick(rec, ["pkgKind","kind"]);
-    setText("weightKg", (w!=="" ? w : "-"));
-    setText("pkgKind", kind || "-");
+    const weightKg =
+      pick(pkg, ["weightKg","weight"]) ||
+      pick(rec, ["weightKg","weight"]) || "";
+
+    const kind =
+      pick(pkg, ["kind","type"]) ||
+      pick(rec, ["pkgKind","kind"]) || "";
+
+    // sender/receiver
+    const sName = pickName(rec, "sender");
+    const sPhone = pickPhone(rec, "sender");
+    const rName = pickName(rec, "receiver");
+    const rPhone = pickPhone(rec, "receiver");
+
+    return { t, pickupStore, dropStore, addrMemo, weightKg, kind, sName, sPhone, rName, rPhone };
+  }
+
+  function applyRecord(rec, wb, sourceNote){
+    const f = normalizeLabelFields(rec);
+    setText("typeTag", typeLabel(f.t));
+    setText("carrier", carrierLabel(f.t));
+
+    setText("sName", f.sName);
+    setText("sPhone", f.sPhone);
+    setText("rName", f.rName);
+    setText("rPhone", f.rPhone);
+
+    setText("pickupStore", f.pickupStore || "-");
+    setText("dropStore", f.dropStore || "-");
+    setText("addrMemo", f.addrMemo || "-");
+    setText("weightKg", (f.weightKg!=="" ? f.weightKg : "-"));
+    setText("pkgKind", f.kind || "-");
 
     renderBarcodeAndQR(wb);
-    $("statusText").textContent = `라벨 준비됨 ✅\n- source: ${sourceNote}\n- type: ${t || "-"}\n- waybill: ${wb}`;
+
+    const hint = [];
+    if(sourceNote.includes("payload") && (f.sName==="-" || f.rName==="-" )) hint.push("※ 서버 조회 후 정보가 더 채워질 수 있음");
+    $("hintLine").textContent = hint.join(" ");
+    $("statusText").textContent = `라벨 렌더 ✅\n- source: ${sourceNote}\n- type: ${f.t || "-"}\n- waybill: ${wb}`;
+  }
+
+  function isPayloadPartial(rec){
+    // payload from kiosk may not include sender/receiver
+    const hasSender = !!(rec?.sender && typeof rec.sender === "object" && rec.sender.name);
+    const hasReceiver = !!(rec?.receiver && typeof rec.receiver === "object" && rec.receiver.name);
+    return !(hasSender && hasReceiver);
   }
 
   async function loadRecord(wb){
     renderBarcodeAndQR(wb);
 
-    const payload = parsePayload();
+    // 0) try payload first for immediate render (but DO NOT stop here; we will still fetch server to enrich)
+    const payload = parsePayload() || parseLocalPayload(wb);
     if(payload){
-      const pNo = normNo(payload.waybillNo||payload.invoiceNo||payload.invoice_no||payload.wb);
+      const pNo = normNo(payload.waybillNo||payload.invoiceNo||payload.invoice_no||payload.wb||payload.waybill);
       if(pNo && pNo === wb){
-        applyRecord(payload, wb, "payload");
-        return;
+        applyRecord(payload, wb, isPayloadPartial(payload) ? "payload(부분) → 서버 조회 중…" : "payload");
       }
     }
 
-    const tryCount = 8;
+    // 1) server fetch with retry (eventual consistency)
+    const tryCount = 10;
     for(let i=0;i<tryCount;i++){
+      // A) dedicated byWaybill endpoint (if present)
       const r1 = await apiJson(`/api/reservations/byWaybill/${encodeURIComponent(wb)}`);
-      if(r1.ok && r1.data){
+      if(r1.ok && r1.data && typeof r1.data === "object"){
         applyRecord(r1.data, wb, "byWaybill");
         return;
       }
 
+      // B) list endpoint
       const r2 = await apiJson(`/api/reservations`);
       if(r2.ok && Array.isArray(r2.data)){
         const found = r2.data.find(x => candidates(x).includes(wb));
         if(found){ applyRecord(found, wb, "reservations(list)"); return; }
       }
 
+      // C) KV store
       const key = "DELIVERY_RESERVATIONS_V1";
       const r3 = await apiJson(`/api/kv/get?key=${encodeURIComponent(key)}`);
       let arr = null;
@@ -545,12 +651,18 @@
         if(found){ applyRecord(found, wb, "kv:DELIVERY_RESERVATIONS_V1"); return; }
       }
 
-      $("statusText").textContent = `조회 중… (${i+1}/${tryCount})\n- waybill: ${wb}\n- 방금 발급한 송장은 서버 반영까지 몇 초 걸릴 수 있어.`;
+      $("statusText").textContent =
+        `조회 중… (${i+1}/${tryCount})\n- waybill: ${wb}\n- 방금 발급한 송장은 서버 반영까지 몇 초 걸릴 수 있어.`;
       await sleep(700);
     }
 
-    $("statusText").textContent =
-      `서버에서 운송장 정보를 찾지 못했어.\n- waybill: ${wb}\n- 원인 후보: (1) 아직 저장 전, (2) 다른 저장키 사용, (3) API/함수 배포 미반영\n\n그래도 바코드/QR은 표시했어.`;
+    // If we already rendered payload, keep it; else show error
+    if(!payload){
+      $("statusText").textContent =
+        `운송장 정보를 서버/로컬에서 찾지 못했어.\n- waybill: ${wb}\n\n그래도 바코드/QR은 표시했어.`;
+    } else {
+      $("statusText").textContent += `\n\n서버에서 못 찾았어서(아직 저장 전일 수 있음) payload로만 표시 중이야.`;
+    }
   }
 
   async function exportBlob(mime="image/jpeg"){
@@ -559,42 +671,57 @@
     return await new Promise(resolve => canvas.toBlob(resolve, mime, 0.92));
   }
 
-  $("btnReload").addEventListener("click", ()=> location.reload());
-  $("btnPrint").addEventListener("click", ()=> window.print());
+  function getWaybillFromQuery(){
+    return normNo(
+      qp("invoice_no") ||
+      qp("invoiceNo") ||
+      qp("waybill") ||
+      qp("waybillNo") ||
+      qp("waybill_no") ||
+      qp("invoice_no") ||
+      qp("wb")
+    );
+  }
 
-  $("btnJpg").addEventListener("click", async ()=>{
-    try{
-      const blob = await exportBlob("image/jpeg");
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `label_${$("wbText").textContent || "waybill"}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url), 1500);
-      $("statusText").textContent += "\n\nJPG 저장 완료";
-    }catch(e){
-      $("statusText").textContent += "\n\nJPG 저장 실패(브라우저 권한/지원 확인)";
+  // Start only after libs are loaded (fixes QR showing "QR" and missing barcode)
+  window.addEventListener("load", () => {
+    $("btnReload").addEventListener("click", ()=> location.reload());
+    $("btnPrint").addEventListener("click", ()=> window.print());
+
+    $("btnJpg").addEventListener("click", async ()=>{
+      try{
+        const blob = await exportBlob("image/jpeg");
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `label_${$("wbText").textContent || "waybill"}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 1500);
+        $("statusText").textContent += "\n\nJPG 저장 완료";
+      }catch(e){
+        $("statusText").textContent += "\n\nJPG 저장 실패(브라우저 권한/지원 확인)";
+      }
+    });
+
+    $("btnShare").addEventListener("click", async ()=>{
+      try{
+        if(!navigator.share){ $("statusText").textContent += "\n\n이 브라우저는 공유를 지원하지 않아."; return; }
+        const blob = await exportBlob("image/jpeg");
+        const file = new File([blob], `label_${$("wbText").textContent || "waybill"}.jpg`, { type: "image/jpeg" });
+        await navigator.share({ files: [file], title: "운송장 라벨", text: "라벨 이미지를 프린터 앱(Fun Print 등)으로 공유해 출력해줘." });
+      }catch(e){}
+    });
+
+    const wb = getWaybillFromQuery();
+    if(!wb){
+      $("statusText").textContent = "운송장 번호가 없어.\nlabel.html?invoice_no=81... 또는 label.html?waybill=81... 또는 label.html?payload=... 로 열어줘.";
+      renderBarcodeAndQR("000000000000000000");
+    } else {
+      loadRecord(wb);
     }
   });
-
-  $("btnShare").addEventListener("click", async ()=>{
-    try{
-      if(!navigator.share){ $("statusText").textContent += "\n\n이 브라우저는 공유를 지원하지 않아."; return; }
-      const blob = await exportBlob("image/jpeg");
-      const file = new File([blob], `label_${$("wbText").textContent || "waybill"}.jpg`, { type: "image/jpeg" });
-      await navigator.share({ files: [file], title: "운송장 라벨", text: "라벨 이미지를 프린터 앱(Fun Print 등)으로 공유해 출력해줘." });
-    }catch(e){}
-  });
-
-  const wb = normNo(qp("invoice_no") || qp("waybill") || qp("waybillNo") || qp("waybill_no") || qp("invoiceNo") || qp("wb"));
-  if(!wb){
-    $("statusText").textContent = "운송장 번호가 없어.\nlabel.html?invoice_no=81... 또는 label.html?waybill=81... 또는 label.html?payload=... 로 열어줘.";
-    renderBarcodeAndQR("000000000000000000");
-  } else {
-    loadRecord(wb);
-  }
 })();
 </script>
 </body>
