@@ -5,19 +5,23 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store, max-age=0" />
   <meta http-equiv="Pragma" content="no-cache" />
-  <title>운송장 라벨 출력 | 선우택배</title>
+  <title>라벨 출력 | 선우택배</title>
+
+  <!-- libs (CDN) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
   <style>
     :root{
-      --bg1:#061225;
-      --bg2:#041c2b;
-      --card: rgba(255,255,255,.07);
-      --border: rgba(255,255,255,.10);
+      --bg1:#071527;
+      --bg2:#041a2c;
       --text:#eaf1ff;
-      --muted: rgba(234,241,255,.65);
-      --muted2: rgba(234,241,255,.52);
-      --shadow: 0 20px 60px rgba(0,0,0,.35);
-      --radius: 18px;
-      --accent: rgba(110,231,255,.75);
+      --muted:rgba(234,241,255,.62);
+      --card:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.10);
+      --shadow:0 20px 60px rgba(0,0,0,.35);
+      --r:18px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -26,455 +30,416 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
       color:var(--text);
       background:
-        radial-gradient(1200px 700px at 70% 35%, rgba(0,180,255,.25), transparent 60%),
-        radial-gradient(900px 600px at 35% 65%, rgba(110,231,255,.18), transparent 62%),
-        radial-gradient(900px 600px at 60% 70%, rgba(120,90,255,.16), transparent 62%),
+        radial-gradient(1200px 700px at 70% 35%, rgba(0,180,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 35% 65%, rgba(110,231,255,.16), transparent 62%),
+        radial-gradient(900px 600px at 60% 70%, rgba(120,90,255,.14), transparent 62%),
         linear-gradient(180deg, var(--bg1), var(--bg2));
-      overflow-x:hidden;
     }
     .wrap{
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 26px 16px 44px;
+      max-width: 1100px;
+      margin:0 auto;
+      padding: 24px 16px 36px;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
     }
-    .card{
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      padding: 14px 14px 16px;
-    }
-    .topbar{
+    .top{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap: 12px;
+      padding: 14px 16px;
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
     }
     .brand{
-      display:flex;
-      align-items:center;
-      gap: 12px;
-      min-width:0;
+      display:flex; align-items:center; gap: 12px; min-width:0;
     }
     .logo{
-      width: 34px; height: 34px;
-      border-radius: 10px;
+      width: 34px; height: 34px; border-radius: 10px;
       background: linear-gradient(135deg, rgba(110,231,255,.9), rgba(102,242,194,.9));
       box-shadow: 0 10px 25px rgba(110,231,255,.16);
       flex:0 0 auto;
     }
-    .brand h1{ margin:0; font-size:16px; letter-spacing:-.2px; }
+    .brand h1{margin:0; font-size: 15px; letter-spacing:-.2px}
     .brand p{
-      margin:4px 0 0;
-      font-size:12px;
-      color:var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 620px;
+      margin: 4px 0 0; font-size:12px; color:var(--muted);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      max-width: 680px;
     }
-    .btns{
-      display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;
-    }
+    .btns{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
     .btn{
-      padding: 10px 12px;
+      padding: 9px 11px;
       border-radius: 12px;
-      border: 1px solid rgba(110,231,255,.35);
-      background: rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
       color: var(--text);
       cursor:pointer;
-      font-weight: 800;
-      letter-spacing: -.2px;
+      font-weight: 700;
+      font-size: 12px;
     }
-    .btn.primary{
-      border-color: rgba(110,231,255,.45);
-      background: linear-gradient(135deg, rgba(110,231,255,.22), rgba(102,242,194,.12));
-    }
+    .btn.primary{border-color: rgba(110,231,255,.28)}
     .btn:active{transform: translateY(1px)}
-    .hint{ color: var(--muted); font-size: 12px; line-height: 1.4; margin-top: 8px; }
-
     .grid{
-      margin-top: 14px;
       display:grid;
-      grid-template-columns: 1fr 320px;
+      grid-template-columns: 1fr 380px;
       gap: 14px;
       align-items:start;
     }
-    @media(max-width: 920px){
-      .grid{ grid-template-columns: 1fr; }
+    @media (max-width: 900px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: 14px;
+    }
+    .status{
+      font-size: 12px;
+      color: rgba(234,241,255,.72);
+      line-height:1.45;
+      font-variant-numeric: tabular-nums;
+      white-space: pre-wrap;
     }
 
     /* Label paper */
-    .paperWrap{
+    .stage{
       display:flex;
       align-items:flex-start;
       justify-content:center;
-      padding: 12px 0 0;
+      padding: 16px 0;
     }
     .paper{
-      width: 340px; /* label width */
+      width: 390px;
       background: #fff;
       color:#111;
       border-radius: 12px;
-      box-shadow: 0 18px 45px rgba(0,0,0,.35);
-      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding: 14px 14px 12px;
     }
-    .paperInner{ padding: 14px 14px 12px; }
-    .row{ display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; }
-    .small{ font-size: 10pt; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .bigNo{ font-size: 18pt; font-weight: 900; letter-spacing: .3px; line-height: 1.2; }
-    .tag{
-      font-size: 10pt;
-      font-weight: 900;
-      border: 1px solid rgba(0,0,0,.14);
-      background: rgba(0,0,0,.04);
-      padding: 6px 10px;
+    .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .title{
+      font-size: 12px;
+      letter-spacing:.6px;
+      color:#444;
+      font-weight:800;
+    }
+    .typeTag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
       border-radius: 999px;
+      background: #f3f4f6;
+      color:#111;
       white-space:nowrap;
     }
-    .line{ height:1px; background: rgba(0,0,0,.12); margin: 10px 0; }
-
+    .bigNo{
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: .4px;
+      margin: 4px 0 8px;
+      word-break: break-all;
+    }
+    .divider{
+      height:1px;
+      background:#e5e7eb;
+      margin: 8px 0 10px;
+    }
     .kv2{
       display:grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px 10px;
+      gap: 10px 14px;
     }
-    .kv2 .k{ font-size: 9.5pt; opacity:.75; }
-    .kv2 .v{ font-size: 10pt; font-weight: 900; word-break: break-word; }
-    .kv2 .v2{ font-size: 9.5pt; font-weight: 700; opacity:.85; word-break: break-word; }
-
-    .addr{
-      font-size: 10pt;
-      font-weight: 800;
-      line-height: 1.25;
+    .k{
+      font-size: 11px;
+      color:#444;
+      font-weight:800;
+      margin-bottom: 2px;
+    }
+    .v{
+      font-size: 12px;
+      color:#111;
+      font-weight:700;
+      min-height: 16px;
       word-break: break-word;
-      min-height: 26px;
     }
-    .barBox{
+    .kv1{
       margin-top: 10px;
-      padding-top: 6px;
-      text-align:center;
     }
-    #barcode{ width:100%; height: 62px; }
-    .qrBox{
-      width: 98px; height: 98px;
-      border: 1px solid rgba(0,0,0,.14);
-      border-radius: 12px;
-      background:#fff;
-      padding: 8px;
+    .small{
+      font-size: 11px;
+      color:#555;
+      font-weight:700;
+    }
+    .codeRow{
+      display:flex;
+      gap: 10px;
+      align-items:flex-end;
+      margin-top: 12px;
+    }
+    .barcodeWrap{
+      flex: 1;
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:flex-end;
+    }
+    svg{width:100%}
+    .mono{
+      text-align:center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      font-weight: 900;
+      margin-top: 4px;
+    }
+    .qrWrap{
+      width: 104px;
+      height: 104px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
       display:flex;
       align-items:center;
       justify-content:center;
+      overflow:hidden;
     }
-    .qrBox canvas, .qrBox img{
-      width:100% !important;
-      height:100% !important;
-      border-radius: 8px;
-    }
+    .qrWrap canvas, .qrWrap img{width: 96px; height:96px}
 
-    /* side panel */
-    .side .metaRow{
-      display:flex; justify-content:space-between; gap:10px; align-items:center;
-      padding: 10px 10px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.14);
-      margin-top: 10px;
-      font-size: 12px;
-      color: rgba(234,241,255,.72);
-      font-variant-numeric: tabular-nums;
-    }
-    .side .metaRow b{ color: var(--text); }
-
-    /* print */
     @media print{
-      body{ background:#fff; }
-      .noPrint{ display:none !important; }
-      .paper{ box-shadow:none; border:none; }
-      .wrap{ padding:0; }
-      .paperWrap{ padding:0; }
-    }
-
-    /* top banner */
-    .banner{
-      position: fixed;
-      top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(980px, calc(100% - 24px));
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(0,0,0,.55);
-      border: 1px solid rgba(110,231,255,.22);
-      color: rgba(234,241,255,.90);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 20px 60px rgba(0,0,0,.35);
-      display:none;
-      z-index: 50;
-      font-size: 13px;
+      body{background:#fff}
+      .top, .card{display:none !important}
+      .wrap{padding:0}
+      .stage{padding:0}
+      .paper{
+        width: 58mm;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 3mm;
+      }
+      .qrWrap{border:none}
     }
   </style>
 </head>
 
 <body>
-  <div class="banner" id="banner"></div>
-
   <div class="wrap">
-    <div class="card noPrint">
-      <div class="topbar">
-        <div class="brand">
-          <div class="logo" aria-hidden="true"></div>
-          <div style="min-width:0">
-            <h1>운송장 라벨 출력</h1>
-            <p>invoice_no=운송장번호로 열 수 있어 · 공유(앱) → 프린터 앱 선택</p>
-          </div>
-        </div>
-        <div class="btns">
-          <button class="btn" id="btnReload">새로고침</button>
-          <button class="btn primary" id="btnShare">공유(앱)</button>
-          <button class="btn" id="btnPng">PNG 저장</button>
-          <button class="btn" id="btnPrint">인쇄</button>
+    <div class="top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div style="min-width:0">
+          <h1>운송장 라벨 출력</h1>
+          <p>label.html?invoice_no=운송장번호 또는 label.html?payload=...</p>
         </div>
       </div>
-      <div class="hint">
-        iOS에서 Fun Print가 파일(PNG) 공유에 안 뜨면, “공유(앱)”로 먼저 열고 프린터 앱을 고르거나,
-        “PNG 저장” 후 사진앱/파일앱에서 공유해줘.
+      <div class="btns">
+        <button class="btn" id="btnReload">새로고침</button>
+        <button class="btn primary" id="btnShare">공유(앱)</button>
+        <button class="btn" id="btnJpg">JPG 저장</button>
+        <button class="btn" id="btnPrint">인쇄</button>
       </div>
     </div>
 
     <div class="grid">
       <div class="card">
-        <div class="paperWrap">
-          <div id="paper" class="paper">
-            <div class="paperInner">
-              <div class="row">
-                <div style="min-width:0; flex:1;">
-                  <div class="small" style="opacity:.7;">SUNWOO TAKBAE</div>
-                  <div class="bigNo mono" id="wbText">-</div>
-                  <div class="small" style="margin-top:6px; opacity:.8;">
-                    배송사: <span id="carrier" style="font-weight:900;">-</span>
-                  </div>
-                </div>
+        <div class="stage">
+          <div class="paper" id="paper">
+            <div class="row" style="align-items:center">
+              <div class="title">SUNWOO TAKBAE</div>
+              <div class="typeTag" id="typeTag">-</div>
+            </div>
 
-                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-                  <div class="tag" id="typeTag">-</div>
-                  <div class="qrBox" id="qrBox" aria-label="QR Code"></div>
-                </div>
+            <div class="row" style="align-items:flex-start">
+              <div style="flex:1; min-width:0">
+                <div class="bigNo" id="wbText">-</div>
               </div>
-
-              <div class="line"></div>
-
-              <div class="kv2">
-                <div>
-                  <div class="k">보내는분</div>
-                  <div class="v" id="senderName">-</div>
-                  <div class="v2 mono" id="senderPhone">-</div>
-                </div>
-                <div>
-                  <div class="k">받는분</div>
-                  <div class="v" id="receiverName">-</div>
-                  <div class="v2 mono" id="receiverPhone">-</div>
-                </div>
+              <div class="qrWrap" title="QR: 배송조회 링크">
+                <div id="qr"></div>
               </div>
+            </div>
 
-              <div class="line"></div>
+            <div class="small" style="margin-top:-2px">
+              배송사: <span id="carrier">-</span>
+            </div>
 
-              <div class="kv2">
-                <div>
-                  <div class="k">접수지점</div>
-                  <div class="v" id="storeName">-</div>
-                </div>
-                <div>
-                  <div class="k">도착점포</div>
-                  <div class="v" id="destStoreName">-</div>
-                </div>
-              </div>
+            <div class="divider"></div>
 
-              <div class="line"></div>
-
+            <div class="kv2">
               <div>
-                <div class="small" style="opacity:.75;">주소 / 비고</div>
-                <div class="addr" id="addr">-</div>
+                <div class="k">보내는분</div>
+                <div class="v" id="sName">-</div>
+                <div class="v" id="sPhone" style="font-weight:800">-</div>
               </div>
-
-              <div class="line"></div>
-
-              <div class="kv2">
-                <div>
-                  <div class="k">무게(kg)</div>
-                  <div class="v" id="weight">-</div>
-                </div>
-                <div>
-                  <div class="k">종류</div>
-                  <div class="v" id="kind">-</div>
-                </div>
+              <div>
+                <div class="k">받는분</div>
+                <div class="v" id="rName">-</div>
+                <div class="v" id="rPhone" style="font-weight:800">-</div>
               </div>
+            </div>
 
-              <div class="barBox">
+            <div class="divider"></div>
+
+            <div class="kv2">
+              <div>
+                <div class="k">접수지점</div>
+                <div class="v" id="pickupStore">-</div>
+              </div>
+              <div>
+                <div class="k">도착점포</div>
+                <div class="v" id="dropStore">-</div>
+              </div>
+            </div>
+
+            <div class="kv1">
+              <div class="k">주소 / 비고</div>
+              <div class="v" id="addrMemo">-</div>
+            </div>
+
+            <div class="kv2" style="margin-top:10px">
+              <div>
+                <div class="k">무게(kg)</div>
+                <div class="v" id="weightKg">-</div>
+              </div>
+              <div>
+                <div class="k">종류</div>
+                <div class="v" id="pkgKind">-</div>
+              </div>
+            </div>
+
+            <div class="codeRow">
+              <div class="barcodeWrap">
                 <svg id="barcode"></svg>
-                <div class="mono" id="wbMono" style="font-size:11pt; font-weight:900; margin-top:4px;"></div>
+                <div class="mono" id="wbMono">-</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="card side noPrint">
-        <div style="font-weight:900;">현재 상태</div>
-        <div class="hint" id="statusText" style="margin-top:6px;">불러오는 중...</div>
-        <div class="metaRow">
-          <span>시간</span><b id="clock">--:--:--</b>
-        </div>
-        <div class="metaRow">
-          <span>API</span><b id="apiBase">-</b>
-        </div>
-        <div class="metaRow">
-          <span>QR</span><b class="mono" id="qrValue">-</b>
-        </div>
+      <div class="card">
+        <div class="status" id="statusText">준비 중…</div>
       </div>
     </div>
   </div>
 
-  <!-- libs -->
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+  const $ = (id)=>document.getElementById(id);
 
-  <script>
-  (() => {
-    const $ = (id)=>document.getElementById(id);
+  function normNo(v){
+    return String(v ?? "").trim().replace(/[^0-9]/g, "");
+  }
+  function qp(name){
+    return new URLSearchParams(location.search).get(name) || "";
+  }
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
-    const bannerEl = $("banner");
-    function banner(msg, ms=2000){
-      bannerEl.textContent = msg;
-      bannerEl.style.display = "block";
-      clearTimeout(bannerEl._t);
-      bannerEl._t = setTimeout(()=> bannerEl.style.display="none", ms);
+  async function apiJson(path, opts={}, timeoutMs=9000){
+    const u = new URL(path, location.origin);
+    u.searchParams.set("_ts", String(Date.now()));
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), timeoutMs);
+    try{
+      const res = await fetch(u.toString(), {
+        ...opts,
+        headers: {
+          "cache-control":"no-store",
+          "pragma":"no-cache",
+          ...(opts.headers||{})
+        },
+        signal: ctrl.signal
+      });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+      return { ok: res.ok, status: res.status, data };
+    } finally {
+      clearTimeout(t);
     }
+  }
 
-    function tick(){
-      const d = new Date();
-      const hh = String(d.getHours()).padStart(2,"0");
-      const mm = String(d.getMinutes()).padStart(2,"0");
-      const ss = String(d.getSeconds()).padStart(2,"0");
-      $("clock").textContent = `${hh}:${mm}:${ss}`;
-    }
-    tick(); setInterval(tick, 1000);
+  function decodeB64Url(input){
+    try{
+      const s = String(input||"").replace(/-/g,'+').replace(/_/g,'/');
+      const pad = s.length % 4 ? '='.repeat(4 - (s.length % 4)) : '';
+      const str = atob(s + pad);
+      const bytes = Uint8Array.from(str, c => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }catch(e){ return ""; }
+  }
+  function parsePayload(){
+    const p = qp("payload");
+    if(!p) return null;
+    try{
+      const jsonStr = decodeB64Url(p);
+      if(!jsonStr) return null;
+      return JSON.parse(jsonStr);
+    }catch(e){ return null; }
+  }
 
-    const API_BASE = location.origin;
-    $("apiBase").textContent = API_BASE;
+  function setText(id, v){
+    const el = $(id);
+    if(!el) return;
+    el.textContent = (v===undefined || v===null || v==="") ? "-" : String(v);
+  }
 
-    function qp(k){ return new URLSearchParams(location.search).get(k); }
-    function normNo(v){ return String(v ?? "").trim().replace(/[^0-9]/g,""); }
+  function typeLabel(type){
+    const t = String(type||"").toUpperCase();
+    if(t==="DOMESTIC") return "국내택배";
+    if(t==="INTERNATIONAL") return "국제택배";
+    if(t==="ECONOMY_CVS") return "반값택배";
+    if(t==="RETURN") return "반품/반송";
+    return "-";
+  }
+  function carrierLabel(type){
+    const t = String(type||"").toUpperCase();
+    if(t==="ECONOMY_CVS") return "선우네트웍스";
+    if(t==="INTERNATIONAL") return "네버랩인터내셔널에어포트(주)(인천국제공항)";
+    return "선우택배";
+  }
 
-    function typeLabel(t){
-      const m = { DOMESTIC:"국내택배", INTERNATIONAL:"국제택배", ECONOMY_CVS:"반값택배", RETURN:"반품택배" };
-      return m[String(t||"").toUpperCase()] || (t || "-");
+  function pick(obj, keys){
+    for(const k of keys){
+      const v = obj?.[k];
+      if(v!==undefined && v!==null && v!=="") return v;
     }
-    function carrierLabel(t){
-      const u = String(t||"").toUpperCase();
-      if(u === "ECONOMY_CVS") return "선우네트웍스";
-      if(u === "INTERNATIONAL") return "네버랩인터내셔널에어포트(주)(인천국제공항)";
-      if(u === "DOMESTIC" || u === "RETURN") return "선우택배";
-      return "-";
-    }
+    return "";
+  }
+  function pickName(rec, which){
+    const o = rec?.[which] || {};
+    const name = pick(o, ["name","storeName","branchName"]) || pick(rec, [which+"Name", which+"_name"]);
+    return name || "-";
+  }
+  function pickPhone(rec, which){
+    const o = rec?.[which] || {};
+    const phone = pick(o, ["phone","tel","mobile"]) || pick(rec, [which+"Phone", which+"_phone"]);
+    return phone || "-";
+  }
 
-    const KIND_LABEL = {
-      DOCUMENT: "서류",
-      BOX: "박스",
-      FOOD: "식품",
-      ELECTRONICS: "전자제품",
-      CLOTHES: "의류",
-      ETC: "기타"
-    };
-    function kindLabel(k){
-      const u = String(k||"").toUpperCase();
-      return KIND_LABEL[u] || (k ? String(k) : "-");
+  function candidates(rec){
+    const keys = ["waybillNo","invoiceNo","invoice_no","waybill","wb","reserveNo","originalWaybillNo"];
+    const out = [];
+    for (const k of keys){
+      if(rec && rec[k]) out.push(normNo(rec[k]));
     }
+    return out.filter(Boolean);
+  }
 
-    function pickAddr(rec){
-      // prefer receiver address, then generic addr/memo
-      return rec?.addr || rec?.address || rec?.memo || rec?.receiver?.address || rec?.sender?.address || "-";
-    }
-    function pickName(obj){
-      if(!obj) return "-";
-      if(typeof obj === "string") return obj || "-";
-      return obj.name || obj.storeName || obj.title || "-";
-    }
-    function pickPhone(obj){
-      if(!obj || typeof obj === "string") return "-";
-      return obj.phone || obj.tel || obj.mobile || "-";
-    }
-
-    async function apiJson(path, opts={}, timeoutMs=8000){
-      const u = new URL(path, location.origin);
-      u.searchParams.set("_ts", String(Date.now()));
-      const ctrl = new AbortController();
-      const t = setTimeout(()=>ctrl.abort(), timeoutMs);
-      try{
-        const res = await fetch(u.toString(), {
-          ...opts,
-          headers: {
-            "cache-control":"no-store",
-            "pragma":"no-cache",
-            ...(opts.headers||{})
-          },
-          signal: ctrl.signal
-        });
-        const txt = await res.text();
-        let data = null;
-        try { data = txt ? JSON.parse(txt) : null; } catch { data = txt; }
-        return { ok: res.ok, status: res.status, data };
-      } finally { clearTimeout(t); }
-    }
-
-    function decodeB64Url(s){
-      try{
-        const pad = "=".repeat((4 - (s.length % 4)) % 4);
-        const b64 = (s.replace(/-/g,"+").replace(/_/g,"/")) + pad;
-        const str = atob(b64);
-        const bytes = Uint8Array.from(str, c => c.charCodeAt(0));
-        return new TextDecoder().decode(bytes);
-      }catch(e){ return ""; }
-    }
-    function parsePayload(){
-      const p = qp("payload");
-      if(!p) return null;
-      try{
-        const jsonStr = decodeB64Url(p);
-        if(!jsonStr) return null;
-        return JSON.parse(jsonStr);
-      }catch(e){ return null; }
-    }
-
-    function setText(id, v){
-      const el = $(id);
-      if(!el) return;
-      el.textContent = (v === undefined || v === null || v === "") ? "-" : String(v);
-    }
-
-    function renderQR(wb){
-      const box = $("qrBox");
-      if(!box) return;
-      box.innerHTML = "";
-      const url = `${location.origin}/tracking.html?invoice_no=${encodeURIComponent(wb)}`;
-      $("qrValue").textContent = wb;
-      try{
-        if(window.QRCode){
-          // qrcodejs renders into element
-          new QRCode(box, { text: url, width: 82, height: 82, correctLevel: QRCode.CorrectLevel.H });
-        }else{
-          box.textContent = "QR";
-        }
-      }catch(e){
-        box.textContent = "QR";
-      }
-    }
-
-    function renderBarcode(wb){
-      try{
+  function renderBarcodeAndQR(wb){
+    try{
+      if(window.JsBarcode){
         JsBarcode("#barcode", wb, {
           format: "CODE128",
           lineColor: "#111",
@@ -483,149 +448,154 @@
           displayValue: false,
           margin: 0
         });
-      }catch(e){}
-      setText("wbText", wb);
-      setText("wbMono", wb);
-      renderQR(wb);
-    }
-
-    function applyRecord(rec, wb){
-      const t = (rec?.type || rec?.serviceType || "").toString();
-      setText("typeTag", typeLabel(t));
-      setText("carrier", carrierLabel(t));
-
-      // sender/receiver
-      const s = rec?.sender || rec?.from || {};
-      const r = rec?.receiver || rec?.to || {};
-      setText("senderName", pickName(s));
-      setText("senderPhone", pickPhone(s));
-      setText("receiverName", pickName(r));
-      setText("receiverPhone", pickPhone(r));
-
-      // stores
-      setText("storeName", rec?.storeName || rec?.originStoreName || rec?.pickupStoreName || "-");
-      setText("destStoreName", rec?.destStoreName || rec?.destinationStoreName || rec?.dropoffStoreName || (String(t).toUpperCase()==="ECONOMY_CVS" ? "미정" : "-"));
-
-      // address/memo
-      setText("addr", pickAddr(rec));
-
-      // weight/kind
-      const w = (rec?.package?.weightKg ?? rec?.weightKg ?? rec?.package?.weight ?? rec?.weight ?? "-");
-      setText("weight", w);
-      const k = (rec?.package?.kind ?? rec?.kind ?? rec?.package?.kindKey ?? rec?.kindKey ?? "");
-      setText("kind", kindLabel(k));
-
-      // status
-      const st = rec?.status || "-";
-      setText("statusText", `상태: ${st}`);
-      renderBarcode(wb);
-    }
-
-    function candidates(rec){
-      const keys = ["waybillNo","invoiceNo","invoice_no","waybill","wb","reserveNo"];
-      const out = [];
-      for (const k of keys){
-        if(rec && rec[k]) out.push(normNo(rec[k]));
       }
-      return out.filter(Boolean);
-    }
+    }catch(e){}
+    setText("wbText", wb);
+    setText("wbMono", wb);
 
-    async function loadRecord(wb){
-      // 0) payload
-      const payload = parsePayload();
-      if(payload && (normNo(payload.waybillNo||payload.invoiceNo||payload.invoice_no||payload.wb) === wb)){
-        applyRecord(payload, wb);
-        $("statusText").textContent = "라벨 준비됨(키오스크 전달 정보 기준)";
+    const url = new URL("tracking.html", location.origin);
+    url.searchParams.set("invoice_no", wb);
+    const qrHost = $("qr");
+    qrHost.innerHTML = "";
+    try{
+      if(window.QRCode){
+        QRCode.toCanvas(url.toString(), { width: 96, margin: 1 }, (err, canvas)=>{
+          if(!err && canvas) qrHost.appendChild(canvas);
+          else qrHost.textContent = "QR";
+        });
+      } else {
+        qrHost.textContent = "QR";
+      }
+    }catch(e){
+      qrHost.textContent = "QR";
+    }
+  }
+
+  function applyRecord(rec, wb, sourceNote){
+    const t = (rec?.type || rec?.serviceType || rec?.service || "").toString();
+    setText("typeTag", typeLabel(t));
+    setText("carrier", carrierLabel(t));
+
+    setText("sName", pickName(rec, "sender"));
+    setText("sPhone", pickPhone(rec, "sender"));
+    setText("rName", pickName(rec, "receiver"));
+    setText("rPhone", pickPhone(rec, "receiver"));
+
+    const pickupStore = pick(rec, ["storeName","pickupStoreName","originStoreName"]) || pick(rec?.sender, ["storeName","name"]);
+    const dropStore = pick(rec, ["destStoreName","dropoffStoreName","arrivalStoreName","receiverStoreName","toStoreName"]);
+    setText("pickupStore", pickupStore || "-");
+    setText("dropStore", dropStore || "-");
+
+    const addr = pick(rec, ["addr","address"]) || pick(rec?.receiver, ["address","addr"]);
+    const memo = pick(rec, ["memo","note","remark"]);
+    const am = [addr, memo].filter(Boolean).join(" / ");
+    setText("addrMemo", am || "-");
+
+    const pkg = rec?.package || {};
+    const w = pick(pkg, ["weightKg","weight"]) || pick(rec, ["weightKg","weight"]);
+    const kind = pick(pkg, ["kind","type"]) || pick(rec, ["pkgKind","kind"]);
+    setText("weightKg", (w!=="" ? w : "-"));
+    setText("pkgKind", kind || "-");
+
+    renderBarcodeAndQR(wb);
+    $("statusText").textContent = `라벨 준비됨 ✅\n- source: ${sourceNote}\n- type: ${t || "-"}\n- waybill: ${wb}`;
+  }
+
+  async function loadRecord(wb){
+    renderBarcodeAndQR(wb);
+
+    const payload = parsePayload();
+    if(payload){
+      const pNo = normNo(payload.waybillNo||payload.invoiceNo||payload.invoice_no||payload.wb);
+      if(pNo && pNo === wb){
+        applyRecord(payload, wb, "payload");
         return;
       }
+    }
 
-      // 1) byWaybill endpoint (if exists)
+    const tryCount = 8;
+    for(let i=0;i<tryCount;i++){
       const r1 = await apiJson(`/api/reservations/byWaybill/${encodeURIComponent(wb)}`);
       if(r1.ok && r1.data){
-        applyRecord(r1.data, wb);
+        applyRecord(r1.data, wb, "byWaybill");
         return;
       }
 
-      // 2) list endpoint
       const r2 = await apiJson(`/api/reservations`);
       if(r2.ok && Array.isArray(r2.data)){
         const found = r2.data.find(x => candidates(x).includes(wb));
-        if(found){ applyRecord(found, wb); return; }
+        if(found){ applyRecord(found, wb, "reservations(list)"); return; }
       }
 
-      // 3) KV fallback
       const key = "DELIVERY_RESERVATIONS_V1";
       const r3 = await apiJson(`/api/kv/get?key=${encodeURIComponent(key)}`);
-      const arr = (r3.ok && (Array.isArray(r3.data?.value) ? r3.data.value : (Array.isArray(r3.data) ? r3.data : null))) || null;
+      let arr = null;
+      if(r3.ok){
+        const v = (r3.data && typeof r3.data === "object" && ("value" in r3.data)) ? r3.data.value : r3.data;
+        if(Array.isArray(v)) arr = v;
+        else if(typeof v === "string"){
+          try{
+            const pv = JSON.parse(v);
+            if(Array.isArray(pv)) arr = pv;
+          }catch(e){}
+        }
+      }
       if(arr){
         const found = arr.find(x => candidates(x).includes(wb));
-        if(found){ applyRecord(found, wb); return; }
+        if(found){ applyRecord(found, wb, "kv:DELIVERY_RESERVATIONS_V1"); return; }
       }
 
-      // not found
-      renderBarcode(wb);
-      $("typeTag").textContent = "-";
-      $("carrier").textContent = "-";
-      $("statusText").textContent = "서버에서 운송장 정보를 찾지 못했어. (아직 저장 전이거나 API 설정 확인 필요)";
-      banner("서버에서 운송장 정보를 못 찾았어.", 2500);
+      $("statusText").textContent = `조회 중… (${i+1}/${tryCount})\n- waybill: ${wb}\n- 방금 발급한 송장은 서버 반영까지 몇 초 걸릴 수 있어.`;
+      await sleep(700);
     }
 
-    async function exportBlob(mime="image/png"){
-      const node = $("paper");
-      const canvas = await html2canvas(node, { backgroundColor: "#ffffff", scale: 2, useCORS: true });
-      return await new Promise(resolve => canvas.toBlob(resolve, mime, 0.92));
+    $("statusText").textContent =
+      `서버에서 운송장 정보를 찾지 못했어.\n- waybill: ${wb}\n- 원인 후보: (1) 아직 저장 전, (2) 다른 저장키 사용, (3) API/함수 배포 미반영\n\n그래도 바코드/QR은 표시했어.`;
+  }
+
+  async function exportBlob(mime="image/jpeg"){
+    const node = $("paper");
+    const canvas = await html2canvas(node, { backgroundColor: "#ffffff", scale: 2, useCORS: true });
+    return await new Promise(resolve => canvas.toBlob(resolve, mime, 0.92));
+  }
+
+  $("btnReload").addEventListener("click", ()=> location.reload());
+  $("btnPrint").addEventListener("click", ()=> window.print());
+
+  $("btnJpg").addEventListener("click", async ()=>{
+    try{
+      const blob = await exportBlob("image/jpeg");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `label_${$("wbText").textContent || "waybill"}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 1500);
+      $("statusText").textContent += "\n\nJPG 저장 완료";
+    }catch(e){
+      $("statusText").textContent += "\n\nJPG 저장 실패(브라우저 권한/지원 확인)";
     }
+  });
 
-    $("btnReload").addEventListener("click", ()=> location.reload());
-    $("btnPrint").addEventListener("click", ()=> window.print());
-    $("btnPng").addEventListener("click", async ()=>{
-      try{
-        const blob = await exportBlob("image/png");
-        if(!blob) throw new Error("blob_fail");
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `label_${$("wbText").textContent || "waybill"}.png`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(()=>URL.revokeObjectURL(url), 1500);
-        banner("PNG 저장 완료");
-      }catch(e){
-        banner("PNG 저장 실패(브라우저 권한/지원 확인)", 2600);
-      }
-    });
+  $("btnShare").addEventListener("click", async ()=>{
+    try{
+      if(!navigator.share){ $("statusText").textContent += "\n\n이 브라우저는 공유를 지원하지 않아."; return; }
+      const blob = await exportBlob("image/jpeg");
+      const file = new File([blob], `label_${$("wbText").textContent || "waybill"}.jpg`, { type: "image/jpeg" });
+      await navigator.share({ files: [file], title: "운송장 라벨", text: "라벨 이미지를 프린터 앱(Fun Print 등)으로 공유해 출력해줘." });
+    }catch(e){}
+  });
 
-    $("btnShare").addEventListener("click", async ()=>{
-      try{
-        const blob = await exportBlob("image/jpeg"); // jpeg often friendlier on iOS share sheet
-        if(!blob) throw new Error("blob_fail");
-        const file = new File([blob], `label_${$("wbText").textContent||"waybill"}.jpg`, { type: "image/jpeg" });
-        const canShare = navigator.canShare && navigator.canShare({ files:[file] });
-        if(navigator.share && canShare){
-          await navigator.share({ files:[file], title:"운송장 라벨", text:"라벨 이미지" });
-          banner("공유 완료");
-        }else{
-          // fallback: open
-          const url = URL.createObjectURL(blob);
-          window.open(url, "_blank");
-          banner("공유 미지원: 새 탭으로 열었어");
-          setTimeout(()=>URL.revokeObjectURL(url), 1500);
-        }
-      }catch(e){
-        banner("공유 실패(권한/지원 확인)", 2600);
-      }
-    });
-
-    // start
-    const wb = normNo(qp("invoice_no") || qp("waybillNo") || qp("waybill_no") || qp("wb") || "");
-    if(!wb){
-      $("statusText").textContent = "invoice_no가 없어. 예) label.html?invoice_no=81xxxxxxxxxxxxxxxx";
-      banner("운송장 번호(invoice_no)가 필요해.");
-      return;
-    }
+  const wb = normNo(qp("invoice_no") || qp("waybillNo") || qp("waybill_no") || qp("invoiceNo") || qp("wb"));
+  if(!wb){
+    $("statusText").textContent = "운송장 번호가 없어.\nlabel.html?invoice_no=81... 또는 label.html?payload=... 로 열어줘.";
+    renderBarcodeAndQR("000000000000000000");
+  } else {
     loadRecord(wb);
-  })();
-  </script>
+  }
+})();
+</script>
 </body>
 </html>
