@@ -171,7 +171,7 @@
         <div class="logo" aria-hidden="true"></div>
         <div>
           <h1>택배 시스템</h1>
-          <div class="sub">고객(예약/조회) · 키오스크(운송장발급) · 점포(접수) · 기사(집화)</div>
+          <div class="sub">고객(customer) · 키오스크(kiosk) · 점포(store) · 기사(LOGISTICS) · 배송조회 · 작업현황</div>
         </div>
       </div>
       <div class="badge" id="clock">—</div>
@@ -182,7 +182,7 @@
       <div id="home">
         <div class="grid">
           <button class="bigbtn" id="goCustomer">
-            <div class="t">고객 화면 <span class="pill">customer.html</span></div>
+            <div class="t">고객 화면 <span class="pill">예약/조회</span></div>
             <div class="d">예약 버튼 + 배송조회 버튼</div>
           </button>
 
@@ -192,14 +192,25 @@
           </button>
 
           <button class="bigbtn" id="goStore">
-            <div class="t">점포 화면 <span class="pill">store.html</span></div>
+            <div class="t">점포 화면 <span class="pill">로그인</span></div>
             <div class="d">점포 등록/로그인 → 운송장번호로 접수</div>
           </button>
 
           <button class="bigbtn" id="goCourier">
-            <div class="t">기사 화면 <span class="pill">LOGISTICS.html</span></div>
+            <div class="t">기사 화면 <span class="pill">로그인</span></div>
             <div class="d">기사 등록/로그인 → 집화 처리</div>
           </button>
+
+          <button class="bigbtn" id="goTracking">
+            <div class="t">배송조회 <span class="pill">tracking.html</span></div>
+            <div class="d">운송장번호로 배송흐름/기본정보 조회</div>
+          </button>
+
+          <button class="bigbtn" id="goWorkstatus">
+            <div class="t">작업현황 <span class="pill">Workstatus.html</span></div>
+            <div class="d">오늘 처리량 / 허브 물량 / 레일 상태</div>
+          </button>
+
         </div>
 
         <div class="card">
@@ -557,16 +568,10 @@
 
   // Navigation
   function show(view){
-    ["home","customer","store","courier"].forEach(id => { const el = $(id); if(el) el.style.display = "none"; });
-    const vEl = $(view); if(vEl) vEl.style.display = "";
+    ["home","customer","store","courier"].forEach(id => $(id).style.display = "none");
+    $(view).style.display = "";
     if(view === "store") renderStoreLists();
     if(view === "courier") renderCourierLists();
-    // URL을 화면과 동기화 (새로고침/공유 시 같은 화면 유지)
-    try{
-      const map = { home:"./index.html", customer:"./customer.html", store:"./store.html", courier:"./LOGISTICS.html" };
-      const to = map[view] || "./index.html";
-      history.replaceState({}, "", to);
-    }catch(e){}
   }
   document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => show("home"));
 
@@ -574,28 +579,8 @@
   $("goKiosk").onclick = () => { window.location.href = "./kiosk.html"; };
   $("goStore").onclick = () => { window.location.href = "./store.html"; };
   $("goCourier").onclick = () => { window.location.href = "./LOGISTICS.html"; };
-  // Route init: customer.html / store.html / LOGISTICS.html 로 들어와도 같은 UI에서 해당 화면을 바로 띄움
-  (function(){
-    function detectStartView(){
-      try{
-        const sp = new URLSearchParams(location.search);
-        const v = (sp.get("view") || "").toLowerCase();
-        if(["home","customer","store","courier"].includes(v)) return v;
-      }catch(e){}
-      const p = (location.pathname || "").toLowerCase();
-      if(p.endsWith("store.html")) return "store";
-      if(p.endsWith("customer.html")) return "customer";
-      if(p.endsWith("logistics.html")) return "courier";
-      const h = (location.hash || "").replace("#","").toLowerCase();
-      if(["home","customer","store","courier"].includes(h)) return h;
-      return "home";
-    }
-    const start = detectStartView();
-    show(start);
-    if(start === "store") hydrateStoreSession();
-    if(start === "courier") hydrateCourierSession();
-  })();
-
+  $("goTracking").onclick = () => { window.location.href = "./tracking.html"; };
+  $("goWorkstatus").onclick = () => { window.location.href = "./Workstatus.html"; };
 
 
   // ---------- CUSTOMER: tabs ----------
@@ -1024,9 +1009,18 @@ ${detailText(rec)}
     alert("삭제 완료");
   };
 
-  // init
-  show("home");
+  // init (multi-page start)
+  const __page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  let __start = "home";
+  if(__page === "store.html") __start = "store";
+  if(__page === "logistics.html") __start = "courier";
+  if(__page === "customer.html") __start = "customer";
+
+  show(__start);
   setCustTab("reserve");
+  if(__start === "store") hydrateStoreSession();
+  if(__start === "courier") hydrateCourierSession();
+
 </script>
 </body>
 </html>
