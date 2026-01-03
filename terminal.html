@@ -231,6 +231,25 @@
     await apiPost("/kv/set", { key, value });
   }
 
+// ---- Couriers (기사) are stored in KV like index.html (no /api/couriers/login route) ----
+const COURIERS_KEY = "DELIVERY_COURIERS_V1";
+
+async function loadKey(key, fallback){
+  let v = null;
+  try{ v = await kvGet(key); }catch{ v = null; }
+  if(v == null) return fallback;
+  if(typeof v === "string"){
+    try{ v = JSON.parse(v); }catch{ return fallback; }
+  }
+  return v;
+}
+
+async function getCourierByCode(code){
+  const list = await loadKey(COURIERS_KEY, []);
+  const c = (Array.isArray(list) ? list : []).find(x => String(x.code) === String(code));
+  return c || null;
+}
+
   function fmt(s) { return (s == null || s === "") ? "-" : String(s); }
 
   function extractInfo(rec) {
@@ -276,23 +295,29 @@
   }
 
   async function login() {
-    const code = $("courierCode").value.trim();
-    if (!code) return banner("warn","기사코드를 입력해.");
-    try {
-      const r = await apiPost("/couriers/login", { code });
-      session = r.courier || { code };
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      $("loginAs").textContent = (session.name ? session.name + " ("+session.code+")" : "기사코드 " + session.code);
-      setLoggedIn(true);
-      banner("good","로그인 완료.");
-      await loadDestinations();
-      await loadRails();
-    } catch (e) {
-      banner("bad", e.message.includes("NO_COURIER") ? "없는 기사입니다." : ("로그인 실패: " + e.message));
-    }
-  }
+  const code = $("courierCode").value.trim();
+  if (!code) return banner("warn","기사코드를 입력해.");
 
-  function logout() {
+  try {
+    // ✅ this project stores couriers in KV (DELIVERY_COURIERS_V1)
+    const c = await getCourierByCode(code);
+    if(!c){
+      banner("bad","없는 기사입니다.");
+      return;
+    }
+    session = { code: String(c.code), name: c.name || "", phone: c.phone || "" };
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    $("loginAs").textContent = (session.name ? `${session.name} (${session.code})` : `기사코드 ${session.code}`);
+    setLoggedIn(true);
+    banner("good","로그인 완료.");
+    await loadDestinations();
+    await loadRails();
+  } catch (e) {
+    banner("bad", "로그인 실패: " + (e?.message || String(e)));
+  }
+}
+
+function logout() {
     session = null;
     currentRec = null;
     sessionStorage.removeItem(SESSION_KEY);
