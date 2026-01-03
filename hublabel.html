@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <title>허브 라벨 | 선우택배</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root{--bg1:#071527;--bg2:#041a2c;--text:#eaf1ff;--muted:rgba(234,241,255,.62);
+          --border:rgba(255,255,255,.10);--shadow:0 20px 60px rgba(0,0,0,.35);--r:18px;}
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo","Noto Sans KR", sans-serif;
+         color:var(--text);
+         background: radial-gradient(1200px 700px at 70% 35%, rgba(0,180,255,.22), transparent 60%),
+                     radial-gradient(900px 600px at 35% 65%, rgba(110,231,255,.16), transparent 62%),
+                     linear-gradient(180deg,var(--bg1),var(--bg2));}
+    .wrap{max-width:1100px;margin:0 auto;padding:22px 14px 36px;display:flex;flex-direction:column;gap:12px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:var(--r);
+         background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+         border:1px solid var(--border);box-shadow:var(--shadow);backdrop-filter: blur(10px);}
+    .btn{padding:9px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.20);color:var(--text);cursor:pointer;font-weight:900;font-size:12px}
+    .grid{display:grid;grid-template-columns: 1fr 380px;gap:12px;align-items:start}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+    .card{border-radius:var(--r);background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+          border:1px solid var(--border);box-shadow:var(--shadow);backdrop-filter: blur(10px);padding:14px;}
+    .status{font-size:12px;color:rgba(234,241,255,.75);white-space:pre-wrap;line-height:1.45}
+    .stage{display:flex;justify-content:center;padding:16px 0}
+    .paper{width:390px;background:#fff;color:#111;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.25);padding:14px 14px 12px}
+    .row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .title{font-size:12px;letter-spacing:.6px;color:#444;font-weight:900}
+    .tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:900;padding:4px 8px;border-radius:999px;background:#f3f4f6;color:#111;white-space:nowrap}
+    .bigNo{font-size:24px;font-weight:1000;letter-spacing:.4px;margin:4px 0 8px;word-break:break-all}
+    .divider{height:1px;background:#e5e7eb;margin:8px 0 10px}
+    .kv2{display:grid;grid-template-columns: 1fr 1fr;gap:10px 14px}
+    .k{font-size:11px;color:#444;font-weight:900;margin-bottom:2px}
+    .v{font-size:12px;color:#111;font-weight:900;min-height:16px;word-break:break-word}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+    .qrWrap{width:104px;height:104px;border:1px solid #e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .qrWrap canvas{width:96px;height:96px}
+    svg{width:100%}
+    @media print{
+      body{background:#fff}
+      .top,.card{display:none !important}
+      .wrap{padding:0}.stage{padding:0}
+      .paper{width:58mm;border-radius:0;box-shadow:none;padding:3mm}
+      .qrWrap{border:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div style="font-weight:1000">허브 라벨 출력</div>
+        <div style="font-size:12px;color:rgba(234,241,255,.65);margin-top:4px">hublabel.html?waybill=...&hub=terminal|center&rail=1&next=...</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="btn" id="btnReload">새로고침</button>
+        <button class="btn" id="btnShare">공유(앱)</button>
+        <button class="btn" id="btnJpg">JPG 저장</button>
+        <button class="btn" id="btnPrint">인쇄</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="stage">
+          <div class="paper" id="paper">
+            <div class="row" style="align-items:center">
+              <div class="title">SUNWOO HUB LABEL</div>
+              <div class="tag" id="hubTag">-</div>
+            </div>
+
+            <div class="row">
+              <div style="flex:1;min-width:0">
+                <div class="bigNo mono" id="wbText">-</div>
+                <div class="v" style="font-size:12px;color:#333;font-weight:900" id="line1">-</div>
+                <div class="v" style="font-size:12px;color:#333;font-weight:900" id="line2">-</div>
+              </div>
+              <div class="qrWrap"><div id="qr" style="font-weight:900;color:#555;font-size:12px">로딩…</div></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="kv2">
+              <div><div class="k">레일</div><div class="v" id="rail">-</div></div>
+              <div><div class="k">다음 목적지</div><div class="v" id="next">-</div></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div>
+              <svg id="barcode"></svg>
+              <div class="v mono" style="text-align:center;margin-top:4px" id="wbMono">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="status" id="statusText">준비 중…</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(()=>{
+  const $ = (id)=>document.getElementById(id);
+  function qp(name){ return new URLSearchParams(location.search).get(name)||""; }
+  function digits(v){ return String(v||"").replace(/[^0-9]/g,""); }
+
+  async function exportBlob(mime="image/jpeg"){
+    const node = $("paper");
+    const canvas = await html2canvas(node, { backgroundColor:"#ffffff", scale:2, useCORS:true });
+    return await new Promise(resolve => canvas.toBlob(resolve, mime, 0.92));
+  }
+
+  function render(wb, hub, rail, next){
+    $("wbText").textContent = wb; $("wbMono").textContent = wb;
+    $("hubTag").textContent = hub==="center" ? "허브센터" : "허브터미널";
+    $("rail").textContent = rail ? `${rail}번` : "-";
+    $("next").textContent = next || "-";
+    $("line1").textContent = hub==="center" ? "센터 작업용 라벨" : "터미널 작업용 라벨";
+    $("line2").textContent = next ? `다음: ${next}` : "다음: (미지정)";
+
+    try{ if(window.JsBarcode){ JsBarcode("#barcode", wb, { format:"CODE128", lineColor:"#111", width:2, height:58, displayValue:false, margin:0 }); } }catch(e){}
+
+    const url = new URL("Workstatus.html", location.origin);
+    url.searchParams.set("wb", wb);
+    const qrHost = $("qr");
+    qrHost.innerHTML = "";
+    try{
+      if(window.QRCode && window.QRCode.toCanvas){
+        QRCode.toCanvas(url.toString(), { width:96, margin:1 }, (err, canvas)=>{
+          if(!err && canvas) qrHost.appendChild(canvas);
+          else qrHost.textContent = "QR 실패";
+        });
+      } else qrHost.textContent = "QR 로딩중…";
+    }catch(e){ qrHost.textContent = "QR 실패"; }
+  }
+
+  window.addEventListener("load", async ()=>{
+    const wb = digits(qp("waybill") || qp("invoice_no") || qp("invoiceNo") || qp("wb"));
+    const hub = (qp("hub")||"terminal").toLowerCase();
+    const rail = qp("rail");
+    const next = qp("next");
+
+    if(!wb){
+      $("statusText").textContent = "운송장 번호가 없어. hublabel.html?waybill=... 로 열어줘.";
+      render("000000000000000000", hub, rail, next);
+      return;
+    }
+    render(wb, hub, rail, next);
+    $("statusText").textContent = `라벨 준비됨 ✅\n- waybill: ${wb}\n(인쇄/저장 가능)`;
+
+    $("btnReload").addEventListener("click", ()=>location.reload());
+    $("btnPrint").addEventListener("click", ()=>window.print());
+    $("btnJpg").addEventListener("click", async ()=>{
+      try{
+        const blob = await exportBlob("image/jpeg");
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `hublabel_${wb}.jpg`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 1500);
+      }catch(e){}
+    });
+    $("btnShare").addEventListener("click", async ()=>{
+      try{
+        if(!navigator.share) return;
+        const blob = await exportBlob("image/jpeg");
+        const file = new File([blob], `hublabel_${wb}.jpg`, { type:"image/jpeg" });
+        await navigator.share({ files:[file], title:"허브 라벨", text:"허브 라벨을 프린터 앱으로 공유해 출력해줘." });
+      }catch(e){}
+    });
+  });
+})();
+</script>
+</body>
+</html>

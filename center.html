@@ -2,665 +2,847 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>강남허브센터 · 센터</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <title>허브센터 작업 | 선우택배</title>
   <style>
     :root{
-      --bg:#0b1020; --text:#eaf0ff; --muted:#a9b3d7; --accent:#7aa2ff;
-      --good:#35d07f; --warn:#ffcc66; --bad:#ff6b6b;
-      --card: rgba(0,0,0,.18); --line: rgba(255,255,255,.10);
-      --shadow: 0 18px 40px rgba(0,0,0,.35); --radius:18px;
+      --bg1:#071527; --bg2:#041a2c;
+      --text:#eaf1ff; --muted:rgba(234,241,255,.62);
+      --card:rgba(255,255,255,.06); --border:rgba(255,255,255,.10);
+      --shadow:0 20px 60px rgba(0,0,0,.35);
+      --r:18px;
+      --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial;
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color:var(--text);
       background:
-        radial-gradient(1200px 600px at 20% 10%, rgba(122,162,255,.18), transparent 55%),
-        radial-gradient(900px 500px at 80% 0%, rgba(53,208,127,.12), transparent 55%),
-        var(--bg);
-      color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px;
+        radial-gradient(1200px 700px at 70% 35%, rgba(0,180,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 35% 65%, rgba(110,231,255,.16), transparent 62%),
+        radial-gradient(900px 600px at 60% 70%, rgba(120,90,255,.14), transparent 62%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
     }
-    .panel{ width:min(1100px, 100%); background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); box-shadow: var(--shadow); overflow:hidden; position:relative; }
-    header{ padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:12px;
-      background: linear-gradient(180deg, rgba(122,162,255,.12), rgba(0,0,0,0)); }
-    .brand{display:flex; align-items:center; gap:12px;}
-    .logo{ width:38px; height:38px; border-radius:12px;
-      background: linear-gradient(135deg, rgba(122,162,255,.65), rgba(53,208,127,.55));
-      box-shadow: 0 10px 20px rgba(0,0,0,.28); }
-    h1{margin:0; font-size:16px;}
-    .sub{font-size:12px; color:var(--muted); margin-top:2px;}
-    .badge{ font-size:12px; padding:7px 10px; border:1px solid rgba(255,255,255,.12);
-      border-radius:999px; background: rgba(0,0,0,.18); color:var(--muted); display:flex; gap:10px; align-items:center; }
-    .content{ padding:18px 20px 22px; }
-    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
-    @media (max-width: 920px){ .grid{grid-template-columns:1fr;} }
-    .card{ background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius: 16px; padding:14px; }
-    .card h2{ margin:0 0 8px; font-size:14px; }
-    .muted{ color:var(--muted); font-size:12px; }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .row > *{ flex:1; }
-    label{ font-size:12px; color:var(--muted); display:block; margin:8px 0 6px; }
-    input, select, textarea{ width:100%; padding:11px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18); color:var(--text); outline:none; }
-    input::placeholder, textarea::placeholder{ color: rgba(233,240,255,.38); }
-    button{ cursor:pointer; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.18); color:var(--text); }
-    button.primary{ background: rgba(122,162,255,.20); border-color: rgba(122,162,255,.35); }
-    button.good{ background: rgba(53,208,127,.14); border-color: rgba(53,208,127,.35); }
-    button.warn{ background: rgba(255,204,102,.14); border-color: rgba(255,204,102,.35); }
-    button.bad{ background: rgba(255,107,107,.14); border-color: rgba(255,107,107,.35); }
-    button:disabled{ opacity:.45; cursor:not-allowed; }
-    .pill{ font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:var(--muted); }
-    .sep{ height:1px; background: rgba(255,255,255,.08); margin:12px 0; }
-    .kv{ display:grid; grid-template-columns: 120px 1fr; gap:8px 12px; font-size:13px; }
-    .kv div:nth-child(odd){ color:var(--muted); }
-    .rail{ display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.12); margin-top:8px; }
-    .dot{ width:10px; height:10px; border-radius:999px; }
-    .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; color:var(--muted); font-size:12px; }
-    .legend span{ display:flex; align-items:center; gap:6px; }
-    .banner{ position:absolute; left:16px; right:16px; top:10px; transform: translateY(-120%); opacity:0;
-      transition: all .25s ease; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.35); color:var(--text); }
-    .banner.show{ transform: translateY(0); opacity:1; }
-    .banner.good{ border-color: rgba(53,208,127,.35); background: rgba(53,208,127,.10); }
-    .banner.warn{ border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.10); }
-    .banner.bad{ border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.10); }
-    .topActions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
-    a.link{ color: var(--accent); text-decoration:none; }
+    .wrap{max-width:1180px;margin:0 auto;padding:22px 14px 36px;display:flex;flex-direction:column;gap:12px}
+    .top{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px 16px;border-radius:var(--r);
+      background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+      border:1px solid var(--border);box-shadow:var(--shadow);backdrop-filter: blur(10px);
+    }
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg, rgba(110,231,255,.9), rgba(102,242,194,.9));flex:0 0 auto}
+    .brand h1{margin:0;font-size:15px;letter-spacing:-.2px}
+    .brand p{margin:4px 0 0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .btn{
+      padding:9px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.20);color:var(--text);cursor:pointer;
+      font-weight:800;font-size:12px;
+      text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+    }
+    .btn.primary{border-color: rgba(110,231,255,.32)}
+    .btn.danger{border-color: rgba(239,68,68,.35)}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .grid{display:grid;grid-template-columns: 420px 1fr;gap:12px;align-items:start}
+    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
+    .card{
+      border-radius:var(--r);
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--border);box-shadow:var(--shadow);backdrop-filter: blur(10px);
+      padding:14px;
+    }
+    .sectionTitle{font-size:12px;color:rgba(234,241,255,.8);font-weight:900;margin:0 0 8px}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px}
+    label{font-size:11px;color:rgba(234,241,255,.72);font-weight:800}
+    input, textarea, select{
+      width:100%;
+      padding:10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.20);color:var(--text);outline:none;
+      font-weight:800;font-size:13px;
+    }
+    textarea{min-height:120px;resize:vertical}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);font-size:12px;font-weight:900}
+    .pill.ok{border-color: rgba(34,197,94,.35)}
+    .pill.warn{border-color: rgba(245,158,11,.35)}
+    .pill.bad{border-color: rgba(239,68,68,.35)}
+    .kvs{display:grid;grid-template-columns: 1fr 1fr;gap:10px}
+    .kv{padding:10px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.18)}
+    .kv .k{font-size:11px;color:rgba(234,241,255,.65);font-weight:900}
+    .kv .v{font-size:13px;font-weight:900;margin-top:6px;word-break:break-word}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+    .events{margin-top:10px;border-top:1px solid rgba(255,255,255,.10);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+    .ev{padding:10px;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.16)}
+    .ev .t{font-size:11px;color:rgba(234,241,255,.65);font-weight:900}
+    .ev .m{margin-top:6px;font-weight:900;font-size:13px}
+    .banner{
+      position:sticky;top:10px;z-index:50;
+      padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.28);backdrop-filter: blur(10px);
+      display:none;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .banner.show{display:flex}
+    .banner .msg{font-size:12px;font-weight:900;color:rgba(234,241,255,.92)}
+    .badgeDot{width:10px;height:10px;border-radius:999px;flex:0 0 auto}
+    .dotOk{background:var(--ok)} .dotWarn{background:var(--warn)} .dotBad{background:var(--bad)}
+    .railGrid{display:grid;grid-template-columns: repeat(5, 1fr);gap:8px}
+    .railBtn{
+      padding:10px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);cursor:pointer;text-align:center;
+      font-weight:1000;font-size:12px;user-select:none;
+    }
+    .railBtn.ok{outline:2px solid rgba(34,197,94,.35)}
+    .railBtn.warn{outline:2px solid rgba(245,158,11,.35)}
+    .railBtn.bad{outline:2px solid rgba(239,68,68,.35)}
+    .help{font-size:12px;color:rgba(234,241,255,.70);line-height:1.45;white-space:pre-wrap}
+    .small{font-size:11px;color:rgba(234,241,255,.62);font-weight:800}
+    .rightActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .modalBack{
+      position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;
+      align-items:center;justify-content:center;padding:16px;z-index:100;
+    }
+    .modalBack.show{display:flex}
+    .modal{
+      width:min(520px, 100%); border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.14); box-shadow:var(--shadow);
+      padding:14px;
+    }
+    .modal h3{margin:0 0 8px;font-size:14px}
+    .modal .muted{font-size:12px;color:rgba(234,241,255,.70);line-height:1.5}
   </style>
 </head>
 <body>
-  <div class="panel">
-    <div id="banner" class="banner"></div>
-    <header>
+  <div class="wrap">
+    <div class="banner" id="banner">
+      <div class="row" style="gap:10px">
+        <div class="badgeDot" id="bannerDot"></div>
+        <div class="msg" id="bannerMsg">-</div>
+      </div>
+      <button class="btn" id="bannerClose">닫기</button>
+    </div>
+
+    <div class="top">
       <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <h1>강남허브센터 · 센터 작업</h1>
-          <div class="sub">기사코드 로그인 · 운송장 조회 · 입고/출고/분류완료 · 서브 센터 이동지시</div>
+        <div class="logo"></div>
+        <div style="min-width:0">
+          <h1>허브센터 작업</h1>
+          <p>기사코드 로그인 → 운송장 조회/입고/출고/분류/이동예정 + 일괄 처리 + 반송 생성 + 허브라벨</p>
         </div>
       </div>
-      <div class="badge">
-        <span id="clock">—</span>
-        <span class="pill">v1.2</span>
+      <div class="btns">
+        <a class="btn" href="Workstatus.html">작업현황</a>
+        <button class="btn" id="btnLogout">로그아웃</button>
       </div>
-    </header>
+    </div>
 
-    <div class="content">
-      <div class="grid">
-        <div class="card" id="loginCard">
-          <h2>로그인</h2>
-          <div class="muted">기사코드로 로그인해. (기기 저장 안 하고, 이 탭(session)에서만 유지)</div>
-          <label>기사코드</label>
-          <input id="courierCode" placeholder="예) 1234" />
-          <div class="row" style="margin-top:10px;">
-            <button class="primary" id="btnLogin">로그인</button>
-            <button id="btnHome">메인으로</button>
-          </div>
-          <div class="sep"></div>
-          <div class="muted" id="ping">API: 확인중…</div>
+    <div class="grid">
+      <div class="card" id="loginCard">
+        <p class="sectionTitle">로그인</p>
+        <div class="field">
+          <label>기사 코드</label>
+          <input id="courierCode" placeholder="예) H001" autocomplete="off" />
         </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="btnLogin">로그인</button>
+        </div>
+        <div class="help" style="margin-top:10px">
+- 이 페이지는 허브 작업자(기사코드) 전용이야.
+- 로그인은 브라우저 탭 단위(sessionStorage)라서, 닫으면 자동 로그아웃돼.
+        </div>
+      </div>
 
-        <div class="card" id="opsCard" style="display:none;">
-          <div class="row" style="align-items:flex-start;">
-            <div style="flex:2;">
-              <h2>운송장 조회</h2>
-              <div class="muted">운송장 번호를 입력하고 조회해.</div>
-            </div>
-            <div class="topActions" style="flex:1;">
-              <span class="pill" id="loginAs">—</span>
-              <button class="bad" id="btnLogout">로그아웃</button>
+      <div class="card" id="mainCard" style="display:none">
+        <div class="row" style="justify-content:space-between;align-items:flex-start">
+          <div>
+            <p class="sectionTitle">조회 / 처리</p>
+            <div class="row" style="gap:10px">
+              <span class="pill ok" id="whoPill">작업자: <span class="mono" id="who">-</span></span>
+              <span class="pill" id="stagePill">상태: <span id="stageText">-</span></span>
             </div>
           </div>
-
-          <label>운송장 번호</label>
-          <div class="row">
-            <input id="waybill" placeholder="18자리 운송장 번호" />
-            <button class="primary" id="btnLookup" style="flex:0 0 120px;">조회</button>
-          </div>
-
-          <div class="sep"></div>
-
-          <div class="kv" id="infoKv">
-            <div>상태</div><div class="muted">조회 전</div>
+          <div class="rightActions">
+            <button class="btn" id="btnHubLabel" disabled>허브라벨</button>
+            <button class="btn danger" id="btnReturn" disabled>배송불가/반송</button>
           </div>
         </div>
 
-        <div class="card" id="actionCard" style="display:none;">
-          <h2>허브 처리</h2>
-          <div class="muted">레일 번호(1~5)를 넣고 버튼을 누르면 배송흐름에 기록돼.</div>
-
-          <label>레일 번호 (1~5)</label>
-          <input id="railNo" inputmode="numeric" placeholder="예) 1" />
-
-          <div class="row" style="margin-top:10px;">
-            <button class="good" id="btnIn">입고(간선하차)</button>
-            <button class="warn" id="btnOut">출고(간선상차)</button>
-            <button id="btnSort">분류완료</button>
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <label>운송장 번호</label>
+            <input id="waybillInput" placeholder="스캔/입력 (숫자만)" autocomplete="off" />
           </div>
-
-          <div class="sep"></div>
-
-          <h2>서브 센터 이동 지시</h2>
-          <div class="muted">등록된 센터을 선택하고 “출발”을 누르면 “이동될 예정”으로 기록돼.</div>
-          <label>도착 센터 선택</label>
-          <div class="row">
-            <select id="destSelect">
-              <option value="">불러오는 중…</option>
+          <div class="field" style="max-width:160px">
+            <label>레일 번호 (1~5)</label>
+            <input id="railInput" placeholder="예) 1" inputmode="numeric" />
+          </div>
+          <div class="field" style="max-width:220px">
+            <label>다음 이동 예정지(선택)</label>
+            <select id="nextSelect">
+              <option value="">(선택 안 함)</option>
             </select>
-            <button class="primary" id="btnMove" style="flex:0 0 120px;">출발</button>
           </div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <button class="btn primary" id="btnLookup">조회</button>
+          </div>
+        </div>
 
-<div class="sep" style="margin:12px 0;"></div>
-<div class="box">
-  <div class="h">배송불가 / 반송접수</div>
-  <div class="muted">규격초과/무게불일치 등으로 배송이 불가하면 반송 운송장을 발급해.</div>
-  <label style="margin-top:10px;">사유(직접입력)</label>
-  <input id="returnReason" placeholder="예: 규격초과, 무게불일치, 주소불명" />
-  <div class="row" style="margin-top:10px;">
-    <button class="bad" id="btnReturn" type="button">배송불가 처리(반송접수)</button>
-    <button class="primary" id="btnReturnPrint" type="button" style="display:none;">반송라벨 출력</button>
-  </div>
-  <div class="hint" id="returnResult" style="display:none;"></div>
-</div>
+        <div class="kvs" style="margin-top:10px">
+          <div class="kv">
+            <div class="k">서비스</div>
+            <div class="v" id="svc">-</div>
+          </div>
+          <div class="kv">
+            <div class="k">운송장</div>
+            <div class="v mono" id="wb">-</div>
+          </div>
+          <div class="kv">
+            <div class="k">보내는분</div>
+            <div class="v" id="sender">-</div>
+          </div>
+          <div class="kv">
+            <div class="k">받는분</div>
+            <div class="v" id="receiver">-</div>
+          </div>
+        </div>
 
-          <details style="margin-top:10px;">
-            <summary class="muted">등록 센터 목록 관리</summary>
-            <div style="margin-top:10px;">
-              <div class="row">
-                <input id="newDestName" placeholder="새 센터 이름 (예: 의왕터미널)" />
-                <button id="btnAddDest" style="flex:0 0 140px;">추가</button>
-              </div>
-              <div id="destList" class="muted" style="margin-top:10px;"></div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="btnInbound" disabled>입고(간선하차)</button>
+          <button class="btn" id="btnOutbound" disabled>출고(간선상차)</button>
+          <button class="btn" id="btnSortDone" disabled>분류완료</button>
+          <button class="btn" id="btnMovePlan" disabled>서브로 출발(이동예정)</button>
+        </div>
+        <div class="small" id="integrityHint" style="margin-top:8px">-</div>
+
+        <div class="events" id="eventsBox">
+          <p class="sectionTitle" style="margin:0">배송흐름(최근)</p>
+          <div id="eventsList"></div>
+        </div>
+      </div>
+
+      <div class="card" id="sideCard">
+        <p class="sectionTitle">일괄 처리 / 레일 현황</p>
+
+        <div class="field">
+          <label>일괄 운송장 (줄바꿈/공백/쉼표 가능)</label>
+          <textarea id="batchInput" placeholder="81...&#10;81...&#10;30..."></textarea>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="btnBatchLookup">일괄 조회</button>
+          <button class="btn" id="btnBatchInbound">일괄 입고</button>
+          <button class="btn" id="btnBatchOutbound">일괄 출고</button>
+          <button class="btn" id="btnBatchSort">일괄 분류완료</button>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>일괄 레일 번호(1~5) (입고/출고/분류에 적용)</label>
+          <input id="batchRail" placeholder="예) 2" inputmode="numeric" />
+        </div>
+
+        <div class="help" id="batchResult" style="margin-top:10px">-</div>
+
+        <div style="margin-top:14px">
+          <p class="sectionTitle">레일 1~5 작동 현황(편집)</p>
+          <div class="railGrid" id="railGrid"></div>
+          <div class="help" style="margin-top:10px">
+- 초록: 정상 작동
+- 빨강: 미작동
+- 노랑: 고장(점검중)
+(레일 버튼을 눌러 상태를 바꿀 수 있어)
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <p class="sectionTitle">허브센터 목록(이동 예정지)</p>
+          <div class="row">
+            <div class="field">
+              <label>추가할 이름</label>
+              <input id="listAddName" placeholder="예) 의왕터미널 / 선우택배 의왕지점" />
             </div>
-          </details>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <button class="btn" id="btnListAdd">추가</button>
+            </div>
+          </div>
+          <div class="help" id="listHelp" style="margin-top:10px">-</div>
         </div>
 
-        <div class="card" id="railCard" style="display:none;">
-          <h2>레일 작동 현황 (편집)</h2>
-          <div class="muted">레일을 클릭하면 상태가 순환돼. (초록=정상 / 노랑=고장(점검중) / 빨강=미작동)</div>
-          <div id="rails"></div>
-          <div class="legend">
-            <span><i class="dot" style="background:var(--good)"></i>정상작동</span>
-            <span><i class="dot" style="background:var(--warn)"></i>고장(점검중)</span>
-            <span><i class="dot" style="background:var(--bad)"></i>미작동</span>
-          </div>
-          <div class="sep"></div>
-          <div class="muted">※ 이 상태는 Workstatus.html(작업현황)에도 그대로 보여.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- return modal -->
+  <div class="modalBack" id="modalBack">
+    <div class="modal">
+      <h3>배송불가/반송 처리</h3>
+      <div class="muted">허브에서 배송불가 처리 시, <b>반송 운송장</b>을 생성하고 원 운송장 배송흐름에 <b>반송접수</b> 이벤트가 추가돼.</div>
+      <div class="row" style="margin-top:10px">
+        <div class="field">
+          <label>사유(선택)</label>
+          <select id="returnReason">
+            <option value="">(직접 입력)</option>
+            <option value="규격초과">규격초과</option>
+            <option value="무게불일치">무게불일치</option>
+            <option value="파손">파손</option>
+            <option value="주소불명">주소불명</option>
+            <option value="금지품">금지품</option>
+            <option value="기타">기타</option>
+          </select>
         </div>
+        <div class="field">
+          <label>사유(직접입력)</label>
+          <input id="returnReasonText" placeholder="예) 무게 5kg 초과" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnReturnCancel">취소</button>
+        <button class="btn danger" id="btnReturnConfirm">반송 처리 + 반송송장 생성</button>
       </div>
     </div>
   </div>
 
 <script>
-(() => {
-  const HUB_NAME = '강남허브센터';
-  const LIST_KEY = 'DELIVERY_CENTERS_V1';
-  const RAIL_KEY = 'HUB_RAIL_STATUS_CENTER_V1';
-  const SESSION_KEY = 'HUB_SESSION_CENTER_V1';
+(()=>{
+  const HUB_KIND = "center"; // terminal | center
+  const HUB_NAME = "허브센터";
+  const LIST_KEY = "DELIVERY_CENTERS_V1";
+  const RAIL_KEY = "HUB_CENTER_RAIL_STATUS_V1";
 
-  const $ = (id) => document.getElementById(id);
-  const bannerEl = $("banner");
+  const $ = (id)=>document.getElementById(id);
+  const tz = "Asia/Seoul";
 
-  function banner(type, msg) {
-    bannerEl.className = "banner show " + (type||"");
-    bannerEl.textContent = msg;
-    window.clearTimeout(bannerEl._t);
-    bannerEl._t = window.setTimeout(() => {
-      bannerEl.className = "banner";
-    }, 2600);
+  function banner(type, msg){
+    const b = $("banner");
+    const dot = $("bannerDot");
+    $("bannerMsg").textContent = msg;
+    dot.className = "badgeDot " + (type==="ok" ? "dotOk" : type==="warn" ? "dotWarn" : "dotBad");
+    b.classList.add("show");
+    clearTimeout(b._t);
+    b._t = setTimeout(()=>b.classList.remove("show"), 4800);
+  }
+  $("bannerClose").addEventListener("click", ()=> $("banner").classList.remove("show"));
+
+  function nowISO(){ return new Date().toISOString(); }
+  function fmtKST(d){
+    try { return new Date(d).toLocaleString("ko-KR", { timeZone: tz }); } catch { return String(d||""); }
+  }
+  function onlyDigits(v){ return String(v??"").replace(/[^0-9]/g,""); }
+  function parseBatch(text){
+    const raw = String(text||"").replace(/\r/g," ").replace(/,/g," ").replace(/\t/g," ");
+    return raw.split(/\s+/).map(x=>onlyDigits(x)).filter(Boolean);
   }
 
-  function tick() {
-    const d = new Date();
-    $("clock").textContent = d.toLocaleTimeString("ko-KR", {hour12:false});
+  async function apiJson(path, opts={}, timeoutMs=12000){
+    const u = new URL(path, location.origin);
+    u.searchParams.set("_ts", String(Date.now()));
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(u.toString(), {
+        ...opts,
+        headers: { "cache-control":"no-store", "pragma":"no-cache", ...(opts.headers||{}) },
+        signal: ctrl.signal
+      });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+      return { ok: res.ok, status: res.status, data };
+    } finally {
+      clearTimeout(t);
+    }
   }
-  setInterval(tick, 1000); tick();
 
-  async function apiGet(path) {
-    const res = await fetch("/api" + path, { cache:"no-store" });
-    const txt = await res.text();
-    let data = null;
-    try { data = txt ? JSON.parse(txt) : null; } catch { data = { raw: txt }; }
-    if (!res.ok) throw new Error(data?.error || data?.detail || ("HTTP " + res.status));
-    return data;
+  async function kvGet(key){
+    const r = await apiJson(`/api/kv/get?key=${encodeURIComponent(key)}`);
+    if(!r.ok) return null;
+    const d = r.data;
+    if(d && typeof d === "object" && ("value" in d)) return d.value;
+    return d;
   }
-  async function apiPost(path, body) {
-    const res = await fetch("/api" + path, {
+  async function kvSet(key, value){
+    const r = await apiJson(`/api/kv/set`, {
       method:"POST",
-      headers:{ "Content-Type":"application/json; charset=utf-8", "Cache-Control":"no-store" },
-      body: JSON.stringify(body || {})
+      headers: { "content-type":"application/json" },
+      body: JSON.stringify({ key, value })
     });
-    const txt = await res.text();
-    let data = null;
-    try { data = txt ? JSON.parse(txt) : null; } catch { data = { raw: txt }; }
-    if (!res.ok) throw new Error(data?.error || data?.detail || ("HTTP " + res.status));
-    return data;
-  }
-  async function kvGet(key) {
-    const r = await apiGet("/kv/get?key=" + encodeURIComponent(key));
-    return r.value;
-  }
-  async function kvSet(key, value) {
-    await apiPost("/kv/set", { key, value });
+    return r.ok;
   }
 
-// ---- Couriers (기사) are stored in KV like index.html (no /api/couriers/login route) ----
-const COURIERS_KEY = "DELIVERY_COURIERS_V1";
-
-async function loadKey(key, fallback){
-  let v = null;
-  try{ v = await kvGet(key); }catch{ v = null; }
-  if(v == null) return fallback;
-  if(typeof v === "string"){
-    try{ v = JSON.parse(v); }catch{ return fallback; }
-  }
-  return v;
-}
-
-async function getCourierByCode(code){
-  const list = await loadKey(COURIERS_KEY, []);
-  const c = (Array.isArray(list) ? list : []).find(x => String(x.code) === String(code));
-  return c || null;
-}
-
-  function fmt(s) { return (s == null || s === "") ? "-" : String(s); }
-
-  function extractInfo(rec) {
-    const sender = rec.sender || {};
-    const receiver = rec.receiver || {};
-    const pkg = rec.package || {};
-    const storeName = rec.storeName || sender.name || "";
-    const info = {
-      service: rec.type || "-",
-      reserveNo: rec.reserveNo || "-",
-      waybillNo: rec.waybillNo || "-",
-      storeName: storeName || "-",
-      senderName: sender.name || rec.senderName || "-",
-      senderPhone: sender.phone || "-",
-      receiverName: receiver.name || rec.receiverName || "-",
-      receiverPhone: receiver.phone || "-",
-      weightKg: (pkg.weightKg != null ? pkg.weightKg : (rec.weightKg != null ? rec.weightKg : "-")),
-      kind: pkg.kind || rec.kind || "-",
-      memo: rec.memo || "-",
-    };
-    return info;
+  async function fetchAllReservations(){
+    const r = await apiJson("/api/reservations");
+    return (r.ok && Array.isArray(r.data)) ? r.data : [];
   }
 
-  let session = null;
-  let currentRec = null;
-  let destList = [];
-  let railState = null;
-
-  function setLoggedIn(on) {
-    $("loginCard").style.display = on ? "none" : "";
-    $("opsCard").style.display = on ? "" : "none";
-    $("actionCard").style.display = on ? "" : "none";
-    $("railCard").style.display = on ? "" : "none";
+  function candidates(rec){
+    const keys = ["waybillNo","invoiceNo","invoice_no","waybill","wb","reserveNo","originalWaybillNo","returnWaybillNo"];
+    const out = [];
+    for(const k of keys) if(rec && rec[k]) out.push(onlyDigits(rec[k]));
+    return out.filter(Boolean);
   }
 
-  async function ping() {
-    try {
-      const r = await apiGet("/ping");
-      $("ping").textContent = "API: OK (" + fmt(r.time) + ")";
-    } catch (e) {
-      $("ping").textContent = "API: 연결 실패 - " + e.message;
-    }
+  async function fetchByWaybill(wb){
+    wb = onlyDigits(wb);
+    if(!wb) return null;
+    const r1 = await apiJson(`/api/reservations/byWaybill/${encodeURIComponent(wb)}`);
+    if(r1.ok && r1.data && typeof r1.data === "object") return r1.data;
+    const all = await fetchAllReservations();
+    return all.find(x => candidates(x).includes(wb)) || null;
   }
 
-  async function login() {
-  const code = $("courierCode").value.trim();
-  if (!code) return banner("warn","기사코드를 입력해.");
-
-  try {
-    // ✅ this project stores couriers in KV (DELIVERY_COURIERS_V1)
-    const c = await getCourierByCode(code);
-    if(!c){
-      banner("bad","없는 기사입니다.");
-      return;
-    }
-    session = { code: String(c.code), name: c.name || "", phone: c.phone || "" };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    $("loginAs").textContent = (session.name ? `${session.name} (${session.code})` : `기사코드 ${session.code}`);
-    setLoggedIn(true);
-    banner("good","로그인 완료.");
-    await loadDestinations();
-    await loadRails();
-  } catch (e) {
-    banner("bad", "로그인 실패: " + (e?.message || String(e)));
-  }
-}
-
-function logout() {
-    session = null;
-    currentRec = null;
-    sessionStorage.removeItem(SESSION_KEY);
-    $("courierCode").value = "";
-    $("waybill").value = "";
-    $("railNo").value = "";
-    $("infoKv").innerHTML = '<div>상태</div><div class="muted">조회 전</div>';
-    setLoggedIn(false);
-    banner("good","로그아웃 됨.");
+  async function upsertReservation(rec){
+    const r = await apiJson(`/api/reservations/upsert`, {
+      method:"POST",
+      headers: { "content-type":"application/json" },
+      body: JSON.stringify(rec)
+    });
+    return r.ok ? r.data : null;
   }
 
-  async function hydrateSession() {
-    const s = sessionStorage.getItem(SESSION_KEY);
-    if (!s) return;
-    try {
-      session = JSON.parse(s);
-      $("loginAs").textContent = (session.name ? session.name + " ("+session.code+")" : "기사코드 " + session.code);
-      setLoggedIn(true);
-      await loadDestinations();
-      await loadRails();
-    } catch {
-      sessionStorage.removeItem(SESSION_KEY);
-    }
+  function serviceLabel(type){
+    const t = String(type||"").toUpperCase();
+    if(t==="ECONOMY_CVS") return "반값택배";
+    if(t==="INTERNATIONAL") return "국제택배";
+    if(t==="RETURN") return "반품/반송";
+    return "국내택배";
   }
 
-  function renderInfo(rec) {
-    const i = extractInfo(rec);
-    const typeLabel = {
-      DOMESTIC:"국내택배",
-      INTERNATIONAL:"국제택배",
-      ECONOMY_CVS:"반값택배",
-      RETURN:"반품택배"
-    }[rec.type] || fmt(rec.type);
-
-    $("infoKv").innerHTML = `
-      <div>서비스</div><div>${typeLabel}</div>
-      <div>운송장</div><div><b>${fmt(i.waybillNo)}</b></div>
-      <div>예약번호</div><div>${fmt(i.reserveNo)}</div>
-      <div>접수지점</div><div>${fmt(i.storeName)}</div>
-      <div>보내는분</div><div>${fmt(i.senderName)} / ${fmt(i.senderPhone)}</div>
-      <div>받는분</div><div>${fmt(i.receiverName)} / ${fmt(i.receiverPhone)}</div>
-      <div>무게(kg)</div><div>${fmt(i.weightKg)}</div>
-      <div>종류</div><div>${fmt(i.kind)}</div>
-      <div>메모</div><div>${fmt(i.memo)}</div>
-    `;
+  function ensureEvents(rec){
+    if(!rec.events || !Array.isArray(rec.events)) rec.events = [];
+    return rec.events;
   }
 
-  async function lookup() {
-    const wb = $("waybill").value.trim();
-    if (!wb) return banner("warn","운송장 번호를 입력해.");
-    try {
-      const rec = await apiGet("/reservations/byWaybill/" + encodeURIComponent(wb));
-      currentRec = rec;
-      if (!Array.isArray(currentRec.events)) currentRec.events = [];
-      renderInfo(currentRec);
-      banner("good","조회 완료.");
-    } catch (e) {
-      currentRec = null;
-      $("infoKv").innerHTML = `<div>상태</div><div class="muted">조회 실패: ${fmt(e.message)}</div>`;
-      banner("bad","운송장을 찾지 못했어.");
-    }
+  function hubStage(rec){
+    const evs = (rec.events && Array.isArray(rec.events)) ? rec.events : [];
+    const rel = evs.filter(e => (e.place||"").includes(HUB_NAME));
+    const last = rel.length ? rel[rel.length-1] : null;
+    const msg = (last?.message||"");
+    if(!last) return "NONE";
+    if(msg.includes("반송접수")) return "RETURNED";
+    if(msg.includes("이동될 예정")) return "MOVE_PLANNED";
+    if(msg.includes("분류완료")) return "SORTED";
+    if(msg.includes("간선상차")) return "OUTBOUND";
+    if(msg.includes("간선하차")) return "INBOUND";
+    return "OTHER";
   }
 
-  function railNum() {
-    const n = parseInt(String($("railNo").value).trim(), 10);
-    if (!Number.isInteger(n) || n < 1 || n > 5) return null;
+  function setStageUI(stage){
+    $("stageText").textContent = stage;
+    const pill = $("stagePill");
+    pill.classList.remove("ok","warn","bad");
+    if(stage==="INBOUND" || stage==="SORTED") pill.classList.add("ok");
+    else if(stage==="OUTBOUND" || stage==="MOVE_PLANNED") pill.classList.add("warn");
+    else if(stage==="RETURNED") pill.classList.add("bad");
+  }
+
+  function integrityExplain(stage){
+    if(stage==="NONE") return "무결성: 아직 허브 이벤트가 없어. 먼저 입고(간선하차)를 해야 해.";
+    if(stage==="INBOUND") return "무결성: 입고 완료. 분류완료 또는 출고(간선상차) 가능.";
+    if(stage==="SORTED") return "무결성: 분류완료. 출고 또는 서브로 이동예정 등록 가능.";
+    if(stage==="OUTBOUND") return "무결성: 출고(간선상차) 완료. 서브로 이동예정만 가능.";
+    if(stage==="MOVE_PLANNED") return "무결성: 이미 이동예정을 등록했어. 중복 처리를 막았어.";
+    if(stage==="RETURNED") return "무결성: 반송 처리됨. 추가 허브 처리는 막혀.";
+    return "무결성: 상태 확인 필요.";
+  }
+
+  function allowButtons(stage){
+    $("btnInbound").disabled = !(stage==="NONE");
+    $("btnSortDone").disabled = !(stage==="INBOUND");
+    $("btnOutbound").disabled = !(stage==="INBOUND" || stage==="SORTED");
+    $("btnMovePlan").disabled = !(stage==="OUTBOUND" || stage==="SORTED");
+    $("btnReturn").disabled = (stage==="RETURNED");
+  }
+
+  function railNum(v){
+    const n = parseInt(String(v||"").trim(), 10);
+    if(!Number.isFinite(n) || n<1 || n>5) return null;
     return n;
   }
 
-  async function pushEvent(kind, extra) {
-    if (!currentRec) return banner("warn","먼저 운송장을 조회해.");
-    const place = HUB_NAME;
-    let msg = "";
-    if (kind === "IN") {
-      const rn = railNum(); if (!rn) return banner("warn","레일 번호(1~5)를 입력해.");
-      msg = `${rn}번 레일에서 간선하차했습니다`;
-    } else if (kind === "OUT") {
-      const rn = railNum(); if (!rn) return banner("warn","레일 번호(1~5)를 입력해.");
-      msg = `${rn}번 레일에서 간선상차했습니다`;
-    } else if (kind === "SORT") {
-      const rn = railNum(); if (!rn) return banner("warn","레일 번호(1~5)를 입력해.");
-      msg = `${rn}번 레일에서 분류완료되었습니다.`;
-    } else if (kind === "MOVE") {
-      const dest = String(extra?.dest || "").trim();
-      if (!dest) return banner("warn","도착 센터을 선택해.");
-      msg = `${dest}로 이동될 예정입니다`;
-    } else {
+  function makeEvent(place, message, actor){
+    return { time: new Date().toISOString(), place, message, actor: actor || "" };
+  }
+
+  function genWaybill(prefix2){
+    const prefix = String(prefix2||"").replace(/[^0-9]/g,"").slice(0,2);
+    let base = Date.now().toString();
+    while(base.length < 16) base += Math.floor(Math.random()*10).toString();
+    base = base.slice(-16);
+    return prefix + base;
+  }
+
+  function hubPlaceName(rail){
+    if(rail) return `${HUB_NAME} ${rail}번 레일`;
+    return HUB_NAME;
+  }
+
+  function buildMovePlanMsg(nextName){ return `${HUB_NAME} · ${nextName}로 이동될 예정입니다`; }
+
+  function fillInfo(rec){
+    $("svc").textContent = serviceLabel(rec.type);
+    $("wb").textContent = onlyDigits(rec.waybillNo || rec.invoiceNo || rec.invoice_no || rec.waybill || rec.reserveNo || "");
+    const sName = rec.sender?.name || rec.senderName || rec.storeName || "-";
+    const sPhone = rec.sender?.phone || rec.senderPhone || rec.sender?.tel || "";
+    $("sender").textContent = sPhone ? `${sName} (${sPhone})` : `${sName}`;
+    const rName = rec.receiver?.name || rec.receiverName || "-";
+    const rPhone = rec.receiver?.phone || rec.receiverPhone || "";
+    $("receiver").textContent = rPhone ? `${rName} (${rPhone})` : `${rName}`;
+  }
+
+  function renderEvents(rec){
+    const box = $("eventsList");
+    box.innerHTML = "";
+    const evs = (rec.events && Array.isArray(rec.events)) ? rec.events.slice(-8) : [];
+    if(!evs.length){
+      box.innerHTML = `<div class="help">이 운송장에는 아직 배송흐름 이벤트가 없어.</div>`;
       return;
     }
-
-    const ev = { time: new Date().toISOString(), place, message: msg };
-    currentRec.events = Array.isArray(currentRec.events) ? currentRec.events : [];
-    currentRec.events.push(ev);
-
-    try {
-      const r = await apiPost("/reservations/upsert", currentRec);
-      currentRec = r.rec || currentRec;
-      renderInfo(currentRec);
-      banner("good","배송흐름에 기록했어.");
-    } catch (e) {
-      banner("bad","저장 실패: " + e.message);
-    }
-  }
-
-  function ensureDestShape(arr) {
-    const out = [];
-    for (const x of (arr || [])) {
-      if (!x) continue;
-      if (typeof x === "string") out.push({ name: x, createdAt: "" });
-      else if (typeof x === "object" && x.name) out.push({ name: String(x.name), createdAt: String(x.createdAt||"") });
-    }
-    // unique by name
-    const seen = new Set();
-    return out.filter(d => (seen.has(d.name) ? false : (seen.add(d.name), true)));
-  }
-
-  function renderDestinations() {
-    const sel = $("destSelect");
-    sel.innerHTML = `<option value="">선택…</option>` + destList.map(d => `<option value="${d.name}">${d.name}</option>`).join("");
-    const list = $("destList");
-    if (!destList.length) {
-      list.innerHTML = "<div>등록된 센터이 없어. 아래에서 추가해줘.</div>";
-      return;
-    }
-    list.innerHTML = destList.map(d => `
-      <div class="rail" style="margin-top:8px;">
-        <div>${d.name}</div>
-        <button data-del="${d.name}" class="bad" style="flex:0 0 auto; padding:7px 10px; border-radius:10px;">삭제</button>
-      </div>
-    `).join("");
-    list.querySelectorAll("button[data-del]").forEach(b => b.onclick = async () => {
-      const name = b.getAttribute("data-del");
-      destList = destList.filter(x => x.name !== name);
-      await kvSet(LIST_KEY, destList);
-      renderDestinations();
-      banner("good","삭제됨.");
-    });
-  }
-
-  async function loadDestinations() {
-    try {
-      const v = await kvGet(LIST_KEY);
-      destList = ensureDestShape(v);
-      await kvSet(LIST_KEY, destList); // normalize
-      renderDestinations();
-    } catch (e) {
-      destList = [];
-      renderDestinations();
-      banner("warn","센터 목록을 불러오지 못했어: " + e.message);
-    }
-  }
-
-  async function addDestination() {
-    const name = $("newDestName").value.trim();
-    if (!name) return banner("warn","이름을 입력해.");
-    destList = ensureDestShape([...destList, { name, createdAt: new Date().toISOString() }]);
-    try {
-      await kvSet(LIST_KEY, destList);
-      $("newDestName").value = "";
-      renderDestinations();
-      banner("good","추가됨.");
-    } catch (e) {
-      banner("bad","저장 실패: " + e.message);
-    }
-  }
-
-  function defaultRails() {
-    return { rails: [1,2,3,4,5].map(n => ({ no:n, status:"OK" })), updatedAt: new Date().toISOString() };
-  }
-
-  function normalizeRails(v) {
-    if (!v || typeof v !== "object") return defaultRails();
-    const rails = Array.isArray(v.rails) ? v.rails : [];
-    const map = new Map();
-    for (const r of rails) {
-      const no = parseInt(r?.no,10);
-      if (!Number.isInteger(no) || no<1 || no>5) continue;
-      const st = String(r?.status || "OK").toUpperCase();
-      map.set(no, (st==="OK"||st==="DOWN"||st==="FAULT") ? st : "OK");
-    }
-    const out = defaultRails();
-    out.rails = [1,2,3,4,5].map(n => ({ no:n, status: map.get(n) || "OK" }));
-    out.updatedAt = String(v.updatedAt || new Date().toISOString());
-    return out;
-  }
-
-  function statusMeta(st) {
-    if (st === "OK") return { label:"정상작동", color:"var(--good)", next:"DOWN" };
-    if (st === "DOWN") return { label:"미작동", color:"var(--bad)", next:"FAULT" };
-    return { label:"고장(점검중)", color:"var(--warn)", next:"OK" };
-  }
-
-  function renderRails() {
-    const wrap = $("rails");
-    wrap.innerHTML = railState.rails.map(r => {
-      const m = statusMeta(r.status);
-      return `
-        <div class="rail" data-rail="${r.no}">
-          <div class="row" style="gap:10px; align-items:center; flex-wrap:nowrap;">
-            <div class="dot" style="background:${m.color}"></div>
-            <div><b>${r.no}번 레일</b> <span class="pill">${m.label}</span></div>
-          </div>
-          <button style="flex:0 0 auto;">상태 변경</button>
-        </div>
+    for(const e of evs){
+      const div = document.createElement("div");
+      div.className = "ev";
+      div.innerHTML = `
+        <div class="t">${fmtKST(e.time)} · <span class="mono">${(e.place||"-")}</span></div>
+        <div class="m">${(e.message||"-")}</div>
       `;
-    }).join("");
-    wrap.querySelectorAll("[data-rail]").forEach(el => {
-      el.onclick = async () => {
-        const no = parseInt(el.getAttribute("data-rail"),10);
-        const idx = railState.rails.findIndex(x => x.no === no);
-        if (idx < 0) return;
-        const cur = railState.rails[idx].status;
-        const next = statusMeta(cur).next;
-        railState.rails[idx].status = next;
-        railState.updatedAt = new Date().toISOString();
-        renderRails();
-        try {
-          await kvSet(RAIL_KEY, railState);
-          banner("good", `${no}번 레일 상태 저장됨.`);
-        } catch (e) {
-          banner("bad","저장 실패: " + e.message);
-        }
-      };
-    });
-  }
-
-  async function loadRails() {
-    try {
-      const v = await kvGet(RAIL_KEY);
-      railState = normalizeRails(v);
-      await kvSet(RAIL_KEY, railState); // normalize
-      renderRails();
-    } catch (e) {
-      railState = defaultRails();
-      renderRails();
-      banner("warn","레일 상태를 불러오지 못했어: " + e.message);
+      box.appendChild(div);
     }
   }
 
-  // Wire up
-  $("btnHome").onclick = () => window.location.href = "./index.html";
-  $("btnLogin").onclick = login;
-  $("btnLogout").onclick = logout;
-  $("btnLookup").onclick = lookup;
-  $("btnIn").onclick = () => pushEvent("IN");
-  $("btnOut").onclick = () => pushEvent("OUT");
-  $("btnSort").onclick = () => pushEvent("SORT");
-  $("btnMove").onclick = () => pushEvent("MOVE", { dest: $("destSelect").value });
-  $("btnAddDest").onclick = addDestination;
-// 배송불가 / 반송접수
-function genWaybill(prefix){
-  const p = String(prefix || "37");
-  const need = 18 - p.length;
-  const mix = (Date.now().toString() + Math.floor(Math.random()*1e16).toString() + Math.floor(Math.random()*1e16).toString()).replace(/\D/g,'');
-  const digits = (mix.length >= need ? mix.slice(-need) : mix.padStart(need,'0'));
-  return p + digits;
-}
-function deepClone(obj){
-  try{ return JSON.parse(JSON.stringify(obj||{})); }catch{ return obj||{}; }
-}
-async function upsertFallback(rec){
-  try{
-    const res = await apiPost("/reservations/upsert", rec);
-    return (res && res.rec) ? res.rec : rec;
-  }catch(e){
-    // fallback to KV update
-    const key = "DELIVERY_RESERVATIONS_V1";
-    const list = await kvGet(key, []);
-    const arr = Array.isArray(list) ? list : [];
-    const i = arr.findIndex(x => (x && (String(x.waybillNo||"") === String(rec.waybillNo||""))) || (x && x.reserveNo === rec.reserveNo));
-    if(i >= 0) arr[i] = rec; else arr.unshift(rec);
-    await kvSet(key, arr);
-    return rec;
+  let current = null;
+
+  function setCurrent(rec){
+    current = rec;
+    fillInfo(rec);
+    renderEvents(rec);
+    const st = hubStage(rec);
+    setStageUI(st);
+    allowButtons(st);
+    $("integrityHint").textContent = integrityExplain(st);
+    $("btnHubLabel").disabled = false;
   }
-}
-async function doReturn(){
-  if(!currentRec){ banner("bad","먼저 운송장을 조회해줘."); return; }
-  const reason = ($("returnReason").value || "").trim();
-  if(!reason){ banner("bad","사유를 입력해줘."); return; }
-  const rail = ($("railNo").value || "").trim();
-  if(!rail || isNaN(Number(rail)) || Number(rail) < 1 || Number(rail) > 5){
-    banner("bad","레일 번호(1~5)를 먼저 입력해줘."); return;
+
+  function who(){ return sessionStorage.getItem(`SW_HUB_${HUB_KIND}_COURIER`) || ""; }
+
+  function requireLogin(){
+    const c = who();
+    if(!c) return false;
+    $("who").textContent = c;
+    $("whoPill").classList.add("ok");
+    return true;
   }
-  const now = nowStr();
-  const iso = new Date().toISOString();
-  const place = `${HUB_NAME} ${rail}번 레일`;
 
-  // 원 운송장에 반송 이벤트 추가
-  currentRec.events = Array.isArray(currentRec.events) ? currentRec.events : [];
-  currentRec.events.push({ time: iso, place, message: `반송접수 하였습니다(사유:${reason})` });
-  currentRec.updatedAt = now;
-
-  // 반송 운송장 생성
-  const returnWb = genWaybill("37");
-  const ret = {
-    reserveNo: `RETURN-${now.replace(/[^0-9]/g,"").slice(0,8)}-${Math.random().toString(36).slice(2,7).toUpperCase()}`,
-    type: "RETURN",
-    status: "WAYBILL_ISSUED",
-    waybillNo: returnWb,
-    createdAt: now,
-    updatedAt: now,
-    originalWaybillNo: currentRec.waybillNo,
-    reason,
-    sender: deepClone(currentRec.receiver || currentRec.sender || {}),
-    receiver: deepClone(currentRec.sender || currentRec.receiver || {}),
-    package: deepClone(currentRec.package || {}),
-    storeName: currentRec.storeName || "",
-    addr: currentRec.addr || currentRec.address || "",
-    events: [{ time: iso, place, message: `반송 운송장이 발급되었습니다(사유:${reason})` }]
-  };
-
-  try{
-    currentRec = await upsertFallback(currentRec);
-    await upsertFallback(ret);
-    $("returnResult").style.display = "";
-    $("returnResult").textContent = `반송운송장: ${returnWb}`;
-    $("btnReturnPrint").style.display = "";
-    $("btnReturnPrint").onclick = ()=> window.open(`./label.html?invoice_no=${encodeURIComponent(returnWb)}`, "_blank");
-    banner("good","반송접수 완료! 반송라벨을 출력할 수 있어.");
-  }catch(e){
-    banner("bad","반송접수 저장 실패: " + e.message);
+  function showLogin(show){
+    $("loginCard").style.display = show ? "" : "none";
+    $("mainCard").style.display = show ? "none" : "";
   }
-}
-$("btnReturn").onclick = doReturn;
 
+  async function loadList(){
+    const v = await kvGet(LIST_KEY);
+    let arr = [];
+    if(Array.isArray(v)) arr = v;
+    else if(typeof v === "string"){ try { const p = JSON.parse(v); if(Array.isArray(p)) arr = p; } catch {} }
+    else if(v && typeof v === "object" && Array.isArray(v.items)) arr = v.items;
 
-  // init
-  ping();
-  hydrateSession();
+    arr = arr.map(x => typeof x === "string" ? {name:x} : x).filter(x => x && x.name);
+    const sel = $("nextSelect");
+    sel.innerHTML = `<option value="">(선택 안 함)</option>`;
+    for(const it of arr){
+      const opt = document.createElement("option");
+      opt.value = it.name;
+      opt.textContent = it.name;
+      sel.appendChild(opt);
+    }
+    $("listHelp").textContent = arr.length ? `등록됨: ${arr.length}개` : "등록된 목록이 없어. 아래에서 이름을 추가해줘.";
+    return arr;
+  }
 
+  async function addToList(name){
+    name = String(name||"").trim();
+    if(!name) return false;
+    const v = await kvGet(LIST_KEY);
+    let arr = [];
+    if(Array.isArray(v)) arr = v;
+    else if(typeof v === "string"){ try { const p = JSON.parse(v); if(Array.isArray(p)) arr = p; } catch {} }
+    else if(v && typeof v === "object" && Array.isArray(v.items)) arr = v.items;
+    arr = arr.map(x => typeof x === "string" ? {name:x} : x).filter(x => x && x.name);
+    if(arr.some(x => x.name === name)) return true;
+    arr.push({ name, createdAt: nowISO() });
+    return await kvSet(LIST_KEY, arr);
+  }
+
+  async function loadRailStatus(){
+    const v = await kvGet(RAIL_KEY);
+    let rails = {};
+    if(v && typeof v === "object" && v.rails) rails = v.rails;
+    for(let i=1;i<=5;i++) if(!rails[i]) rails[i] = "OK";
+    return rails;
+  }
+
+  async function saveRailStatus(rails){ return await kvSet(RAIL_KEY, { rails, updatedAt: nowISO() }); }
+
+  function railClass(st){ if(st==="OK") return "ok"; if(st==="FAULT") return "warn"; return "bad"; }
+
+  async function renderRailGrid(){
+    const rails = await loadRailStatus();
+    const grid = $("railGrid");
+    grid.innerHTML = "";
+    for(let i=1;i<=5;i++){
+      const st = rails[i] || "OK";
+      const btn = document.createElement("div");
+      btn.className = `railBtn ${railClass(st)}`;
+      btn.innerHTML = `레일 ${i}<div style="margin-top:6px;font-size:11px;color:rgba(234,241,255,.78)">${st==="OK"?"정상":st==="DOWN"?"미작동":"고장"}</div>`;
+      btn.addEventListener("click", async ()=>{
+        const cur = rails[i] || "OK";
+        const next = (cur==="OK") ? "DOWN" : (cur==="DOWN") ? "FAULT" : "OK";
+        rails[i] = next;
+        const ok = await saveRailStatus(rails);
+        if(ok) { banner("ok", `레일 ${i} 상태 저장 완료`); renderRailGrid(); }
+        else { banner("bad", "레일 상태 저장 실패(서버 확인 필요)"); }
+      });
+      grid.appendChild(btn);
+    }
+  }
+
+  function assertRail(){
+    const n = railNum($("railInput").value);
+    if(!n) { banner("warn", "레일 번호(1~5)를 입력해줘."); return null; }
+    return n;
+  }
+  function assertWaybill(){
+    const wb = onlyDigits($("waybillInput").value);
+    if(!wb) { banner("warn", "운송장 번호를 입력해줘."); return null; }
+    return wb;
+  }
+
+  function actionAllowed(stage, action){
+    if(action==="INBOUND") return stage==="NONE";
+    if(action==="SORT") return stage==="INBOUND";
+    if(action==="OUTBOUND") return stage==="INBOUND" || stage==="SORTED";
+    if(action==="MOVE") return stage==="OUTBOUND" || stage==="SORTED";
+    if(action==="RETURN") return stage!=="RETURNED";
+    return false;
+  }
+
+  async function doAction(action){
+    if(!requireLogin()) { banner("warn", "로그인이 필요해."); return; }
+    if(!current) { banner("warn", "먼저 조회를 해줘."); return; }
+    const st = hubStage(current);
+    if(!actionAllowed(st, action)) { banner("bad", `무결성 검사: 현재 상태(${st})에서는 이 작업을 할 수 없어.`); return; }
+    const rail = assertRail(); if(!rail) return;
+
+    const place = hubPlaceName(rail);
+    const actor = who();
+    let msg = "";
+    if(action==="INBOUND") msg = `${place}에서 간선하차했습니다`;
+    if(action==="OUTBOUND") msg = `${place}에서 간선상차했습니다`;
+    if(action==="SORT") msg = `${place}에서 분류완료되었습니다.`;
+
+    const evs = ensureEvents(current);
+    evs.push(makeEvent(place, msg, actor));
+    current.updatedAt = fmtKST(nowISO());
+
+    const saved = await upsertReservation(current);
+    if(saved) { current = saved; setCurrent(current); banner("ok", "처리 완료"); }
+    else { banner("bad", "저장 실패(서버/함수 확인 필요)"); }
+  }
+
+  async function doMovePlan(){
+    if(!requireLogin()) { banner("warn", "로그인이 필요해."); return; }
+    if(!current) { banner("warn", "먼저 조회를 해줘."); return; }
+    const st = hubStage(current);
+    if(!actionAllowed(st, "MOVE")) { banner("bad", `무결성 검사: 현재 상태(${st})에서는 이동예정을 등록할 수 없어.`); return; }
+    const nextName = $("nextSelect").value;
+    if(!nextName) { banner("warn", "이동 예정지를 선택해줘."); return; }
+    const rail = assertRail(); if(!rail) return;
+
+    const place = hubPlaceName(rail);
+    const evs = ensureEvents(current);
+    evs.push(makeEvent(place, buildMovePlanMsg(nextName), who()));
+    current.nextPlanned = nextName;
+    current.updatedAt = fmtKST(nowISO());
+
+    const saved = await upsertReservation(current);
+    if(saved) { current = saved; setCurrent(current); banner("ok", "이동예정 등록 완료"); }
+    else { banner("bad", "저장 실패(서버/함수 확인 필요)"); }
+  }
+
+  function openHubLabel(rec, rail, next){
+    const wb = onlyDigits(rec.waybillNo || rec.invoiceNo || rec.invoice_no || rec.waybill || rec.reserveNo || "");
+    const url = new URL("hublabel.html", location.origin);
+    url.searchParams.set("waybill", wb);
+    url.searchParams.set("hub", HUB_KIND);
+    if(rail) url.searchParams.set("rail", String(rail));
+    if(next) url.searchParams.set("next", next);
+    window.open(url.toString(), "_blank");
+  }
+
+  $("btnReturn").addEventListener("click", ()=>{ if(current) $("modalBack").classList.add("show"); });
+  $("btnReturnCancel").addEventListener("click", ()=>$("modalBack").classList.remove("show"));
+
+  async function doReturnCreate(){
+    if(!requireLogin()) { banner("warn","로그인이 필요해."); return; }
+    if(!current) { banner("warn","먼저 조회를 해줘."); return; }
+    const st = hubStage(current);
+    if(!actionAllowed(st, "RETURN")) { banner("bad", "이미 반송 처리된 건이야."); return; }
+    const rail = assertRail(); if(!rail) return;
+
+    const picked = $("returnReason").value;
+    const typed = $("returnReasonText").value.trim();
+    const reason = typed || picked || "사유미입력";
+
+    const origWb = onlyDigits(current.waybillNo || current.invoiceNo || current.invoice_no || current.waybill || "");
+    if(!origWb) { banner("bad","원 운송장 번호가 없어. 데이터 확인 필요."); return; }
+
+    const returnWb = genWaybill("37");
+
+    const place = hubPlaceName(rail);
+    ensureEvents(current).push(makeEvent(place, `반송접수 하였습니다(사유:${reason})`, who()));
+    current.returnWaybillNo = returnWb;
+
+    const retRec = {
+      type: "RETURN",
+      status: "WAYBILL_ISSUED",
+      waybillNo: returnWb,
+      originalWaybillNo: origWb,
+      createdAt: fmtKST(nowISO()),
+      updatedAt: fmtKST(nowISO()),
+      hub: HUB_KIND,
+      sender: current.receiver || { name: "-", phone: "" },
+      receiver: current.sender || { name: "-", phone: "" },
+      memo: `반송 사유:${reason}`,
+      events: [
+        makeEvent("반송", "반송 운송장이 생성되었습니다", who()),
+        makeEvent(place, `반송접수 하였습니다(사유:${reason})`, who())
+      ]
+    };
+
+    $("btnReturnConfirm").disabled = true;
+    const savedOrig = await upsertReservation(current);
+    const savedRet = await upsertReservation(retRec);
+    $("btnReturnConfirm").disabled = false;
+
+    if(savedOrig && savedRet){
+      current = savedOrig;
+      setCurrent(current);
+      $("modalBack").classList.remove("show");
+      banner("ok", `반송 처리 완료 + 반송송장 생성(${returnWb})`);
+      openHubLabel(savedRet, rail, "");
+    } else {
+      banner("bad", "반송 저장 실패(서버 확인 필요)");
+    }
+  }
+  $("btnReturnConfirm").addEventListener("click", doReturnCreate);
+
+  async function batchRun(action){
+    if(!requireLogin()) { banner("warn","로그인이 필요해."); return; }
+    const list = parseBatch($("batchInput").value);
+    if(!list.length) { banner("warn","일괄 운송장을 입력해줘."); return; }
+    const rail = railNum($("batchRail").value);
+    if(!rail) { banner("warn","일괄 레일 번호(1~5)를 입력해줘."); return; }
+
+    const results = [];
+    let ok=0, fail=0;
+    for(const wb of list){
+      const rec = await fetchByWaybill(wb);
+      if(!rec) { fail++; results.push(`❌ ${wb}: 조회 실패(없는 운송장)`); continue; }
+      const st = hubStage(rec);
+      const want = (action==="INBOUND")?"INBOUND":(action==="OUTBOUND")?"OUTBOUND":"SORT";
+      if(!actionAllowed(st, want)) { fail++; results.push(`❌ ${wb}: 무결성 차단(현재 ${st})`); continue; }
+      const place = hubPlaceName(rail);
+      let msg = "";
+      if(action==="INBOUND") msg = `${place}에서 간선하차했습니다`;
+      if(action==="OUTBOUND") msg = `${place}에서 간선상차했습니다`;
+      if(action==="SORT") msg = `${place}에서 분류완료되었습니다.`;
+      ensureEvents(rec).push(makeEvent(place, msg, who()));
+      const saved = await upsertReservation(rec);
+      if(saved) { ok++; results.push(`✅ ${wb}: 처리 완료`); }
+      else { fail++; results.push(`❌ ${wb}: 저장 실패`); }
+    }
+    $("batchResult").textContent = `결과: 성공 ${ok} / 실패 ${fail}\n` + results.slice(0, 60).join("\n");
+    banner(ok? "ok":"bad", `일괄 처리 완료: 성공 ${ok} / 실패 ${fail}`);
+  }
+
+  async function batchLookup(){
+    const list = parseBatch($("batchInput").value);
+    if(!list.length) { banner("warn","일괄 운송장을 입력해줘."); return; }
+    const all = await fetchAllReservations();
+    const found = [];
+    for(const wb of list){
+      const rec = all.find(x => candidates(x).includes(wb));
+      if(rec) found.push(`✅ ${wb}: ${serviceLabel(rec.type)} / 상태 ${hubStage(rec)}`);
+      else found.push(`❌ ${wb}: 없음`);
+    }
+    $("batchResult").textContent = found.join("\n");
+  }
+
+  $("btnLogin").addEventListener("click", ()=>{
+    const c = $("courierCode").value.trim();
+    if(!c) { banner("warn","기사 코드를 입력해줘."); return; }
+    sessionStorage.setItem(`SW_HUB_${HUB_KIND}_COURIER`, c);
+    $("who").textContent = c;
+    showLogin(false);
+    banner("ok", "로그인 완료");
+  });
+  $("btnLogout").addEventListener("click", ()=>{
+    sessionStorage.removeItem(`SW_HUB_${HUB_KIND}_COURIER`);
+    current = null;
+    showLogin(true);
+    banner("ok", "로그아웃 완료");
+  });
+
+  $("waybillInput").addEventListener("input", (e)=>{ e.target.value = onlyDigits(e.target.value); });
+
+  $("btnLookup").addEventListener("click", async ()=>{
+    if(!requireLogin()) { banner("warn","로그인이 필요해."); return; }
+    const wb = assertWaybill(); if(!wb) return;
+    const rec = await fetchByWaybill(wb);
+    if(!rec) {
+      banner("bad", "등록된 운송장을 찾지 못했어.");
+      current = null;
+      $("btnHubLabel").disabled = true;
+      $("btnReturn").disabled = true;
+      return;
+    }
+    setCurrent(rec);
+    banner("ok", "조회 완료");
+  });
+
+  $("btnInbound").addEventListener("click", ()=>doAction("INBOUND"));
+  $("btnOutbound").addEventListener("click", ()=>doAction("OUTBOUND"));
+  $("btnSortDone").addEventListener("click", ()=>doAction("SORT"));
+  $("btnMovePlan").addEventListener("click", doMovePlan);
+
+  $("btnHubLabel").addEventListener("click", ()=>{
+    if(!current) return;
+    const rail = railNum($("railInput").value) || "";
+    const next = $("nextSelect").value || "";
+    openHubLabel(current, rail, next);
+  });
+
+  $("btnBatchLookup").addEventListener("click", batchLookup);
+  $("btnBatchInbound").addEventListener("click", ()=>batchRun("INBOUND"));
+  $("btnBatchOutbound").addEventListener("click", ()=>batchRun("OUTBOUND"));
+  $("btnBatchSort").addEventListener("click", ()=>batchRun("SORT"));
+
+  $("btnListAdd").addEventListener("click", async ()=>{
+    const name = $("listAddName").value.trim();
+    if(!name) { banner("warn","추가할 이름을 입력해줘."); return; }
+    const ok = await addToList(name);
+    if(ok) { $("listAddName").value=""; await loadList(); banner("ok", "목록 추가 완료"); }
+    else { banner("bad", "목록 저장 실패(서버 확인 필요)"); }
+  });
+
+  (async ()=>{
+    const c = who();
+    showLogin(!c);
+    if(c) $("who").textContent = c;
+    await loadList();
+    await renderRailGrid();
+    banner("ok", "준비 완료");
+  })();
 })();
 </script>
 </body>

@@ -2,318 +2,270 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>작업현황 · Workstatus</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <title>작업현황 | 선우택배</title>
   <style>
     :root{
-      --bg:#0b1020; --text:#eaf0ff; --muted:#a9b3d7; --accent:#7aa2ff;
-      --good:#35d07f; --warn:#ffcc66; --bad:#ff6b6b;
-      --card: rgba(0,0,0,.18); --line: rgba(255,255,255,.10);
-      --shadow: 0 18px 40px rgba(0,0,0,.35); --radius:18px;
+      --bg1:#071527; --bg2:#041a2c;
+      --text:#eaf1ff; --muted:rgba(234,241,255,.62);
+      --border:rgba(255,255,255,.10); --shadow:0 20px 60px rgba(0,0,0,.35);
+      --r:18px; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box} html,body{height:100%}
     body{
-      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial;
-      background:
-        radial-gradient(1200px 600px at 20% 10%, rgba(122,162,255,.18), transparent 55%),
-        radial-gradient(900px 500px at 80% 0%, rgba(53,208,127,.12), transparent 55%),
-        var(--bg);
-      color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px;
+      margin:0;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo","Noto Sans KR", sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 700px at 70% 35%, rgba(0,180,255,.22), transparent 60%),
+                  radial-gradient(900px 600px at 35% 65%, rgba(110,231,255,.16), transparent 62%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
     }
-    .panel{ width:min(1180px, 100%); background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); box-shadow: var(--shadow); overflow:hidden; position:relative; }
-    header{ padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:12px;
-      background: linear-gradient(180deg, rgba(122,162,255,.12), rgba(0,0,0,0)); }
-    .brand{display:flex; align-items:center; gap:12px;}
-    .logo{ width:38px; height:38px; border-radius:12px;
-      background: linear-gradient(135deg, rgba(122,162,255,.65), rgba(53,208,127,.55));
-      box-shadow: 0 10px 20px rgba(0,0,0,.28); }
-    h1{margin:0; font-size:16px;}
-    .sub{font-size:12px; color:var(--muted); margin-top:2px;}
-    .badge{ font-size:12px; padding:7px 10px; border:1px solid rgba(255,255,255,.12);
-      border-radius:999px; background: rgba(0,0,0,.18); color:var(--muted); display:flex; gap:10px; align-items:center; }
-    .pill{ font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:var(--muted); }
-    .content{ padding:18px 20px 22px; }
-    .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; }
-    @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
-    .card{ background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius: 16px; padding:14px; }
-    .card h2{ margin:0 0 8px; font-size:14px; }
-    .muted{ color:var(--muted); font-size:12px; }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    button{ cursor:pointer; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.18); color:var(--text); }
-    button.primary{ background: rgba(122,162,255,.20); border-color: rgba(122,162,255,.35); }
-    .sep{ height:1px; background: rgba(255,255,255,.08); margin:12px 0; }
-    table{ width:100%; border-collapse:collapse; }
-    th, td{ text-align:left; padding:8px 8px; border-bottom:1px solid rgba(255,255,255,.08); font-size:13px; }
-    th{ color:var(--muted); font-weight:600; font-size:12px; }
-    .dot{ width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:6px; }
-    .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; color:var(--muted); font-size:12px; }
-    .legend span{ display:flex; align-items:center; gap:6px; }
-    .railBox{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
-    @media (max-width: 720px){ .railBox{grid-template-columns: repeat(2, 1fr);} }
-    .rail{ padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.12); }
-    .banner{ position:absolute; left:16px; right:16px; top:10px; transform: translateY(-120%); opacity:0;
-      transition: all .25s ease; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.35); color:var(--text); }
-    .banner.show{ transform: translateY(0); opacity:1; }
-    .banner.good{ border-color: rgba(53,208,127,.35); background: rgba(53,208,127,.10); }
-    .banner.warn{ border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.10); }
-    .banner.bad{ border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.10); }
+    .wrap{max-width:1180px;margin:0 auto;padding:22px 14px 36px;display:flex;flex-direction:column;gap:12px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:var(--r);
+         background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+         border:1px solid var(--border);box-shadow:var(--shadow);backdrop-filter: blur(10px);}
+    .btn{padding:9px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.20);color:var(--text);cursor:pointer;font-weight:900;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .grid{display:grid;grid-template-columns: 1fr 1fr;gap:12px;align-items:start}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{border-radius:var(--r);background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+          border:1px solid var(--border);box-shadow:var(--shadow);backdrop-filter: blur(10px);padding:14px;}
+    .title{font-size:12px;color:rgba(234,241,255,.8);font-weight:1000;margin:0 0 10px}
+    .kpi{display:grid;grid-template-columns: repeat(3, 1fr);gap:10px}
+    @media(max-width:620px){.kpi{grid-template-columns:1fr}}
+    .tile{padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.16)}
+    .tile .k{font-size:11px;color:rgba(234,241,255,.65);font-weight:1000}
+    .tile .v{margin-top:8px;font-size:22px;font-weight:1000}
+    .railGrid{display:grid;grid-template-columns: repeat(5, 1fr);gap:8px}
+    .rail{padding:10px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.18);text-align:center;font-weight:1000;font-size:12px}
+    .ok{outline:2px solid rgba(34,197,94,.35)} .warn{outline:2px solid rgba(245,158,11,.35)} .bad{outline:2px solid rgba(239,68,68,.35)}
+    .legend{font-size:12px;color:rgba(234,241,255,.74);line-height:1.45;white-space:pre-wrap}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.10);font-size:12px}
+    .table th{text-align:left;color:rgba(234,241,255,.72);font-weight:1000}
+    .table td{font-weight:900}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+    .small{font-size:11px;color:rgba(234,241,255,.62);font-weight:900}
   </style>
 </head>
 <body>
-  <div class="panel">
-    <div id="banner" class="banner"></div>
-    <header>
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <h1>작업현황</h1>
-          <div class="sub">오늘 처리량 · 현재 허브 보관물량 · 레일 작동 현황 (서버 저장 데이터 기준)</div>
-        </div>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div style="font-weight:1000">작업현황</div>
+        <div class="small">오늘 처리량 / 허브 체류 물량 / 레일 현황</div>
       </div>
-      <div class="badge">
-        <span id="clock">—</span>
-        <span class="pill">v1.2</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn" href="terminal.html">허브터미널</a>
+        <a class="btn" href="center.html">허브센터</a>
+        <button class="btn" id="btnRefresh">새로고침</button>
       </div>
-    </header>
+    </div>
 
-    <div class="content">
-      <div class="row" style="justify-content:space-between; margin-bottom:12px;">
-        <div class="muted" id="apiState">API: 확인중…</div>
-        <div class="row">
-          <button id="btnHome">메인으로</button>
-          <button class="primary" id="btnRefresh">새로고침</button>
+    <div class="grid">
+      <div class="card">
+        <p class="title">오늘 처리량 (입고 / 출고 / 반송)</p>
+        <div class="kpi">
+          <div class="tile"><div class="k">입고(간선하차)</div><div class="v" id="kpiInbound">-</div></div>
+          <div class="tile"><div class="k">출고(간선상차)</div><div class="v" id="kpiOutbound">-</div></div>
+          <div class="tile"><div class="k">반송접수/반송송장</div><div class="v" id="kpiReturn">-</div></div>
         </div>
-      </div>
 
-      <div class="grid">
-        <div class="card">
-          <h2>오늘 처리량</h2>
-          <div class="muted">허브(터미널/센터)에서 발생한 이벤트 기준</div>
-          <div class="sep"></div>
-          <table>
-            <thead><tr><th>구분</th><th>건수</th></tr></thead>
-            <tbody id="todayTbody">
-              <tr><td>입고(간선하차)</td><td>-</td></tr>
-              <tr><td>출고(간선상차)</td><td>-</td></tr>
-              <tr><td>반송</td><td>-</td></tr>
-            </tbody>
+        <div style="margin-top:14px">
+          <p class="title">현재 허브에 있는 물량(최근 이벤트 기준)</p>
+          <table class="table">
+            <thead><tr><th>운송장</th><th>서비스</th><th>최근 위치</th><th>최근 메시지</th></tr></thead>
+            <tbody id="invBody"></tbody>
           </table>
-
-          <div class="sep"></div>
-
-          <h2>현재 허브에 있는 물량</h2>
-          <div class="muted">마지막 허브 이벤트가 “간선하차/분류완료”이고, 이후 “간선상차/이동될 예정”이 없는 건</div>
-          <div class="sep"></div>
-          <table>
-            <thead><tr><th>운송장</th><th>서비스</th><th>최근 상태</th><th>시간</th></tr></thead>
-            <tbody id="invTbody">
-              <tr><td colspan="4" class="muted">불러오는 중…</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h2>레일 작동 현황</h2>
-          <div class="muted">터미널/센터 페이지에서 편집한 상태가 보여.</div>
-
-          <div class="sep"></div>
-
-          <div class="muted"><b>허브터미널</b></div>
-          <div id="railsTerminal" class="railBox"></div>
-
-          <div class="sep"></div>
-
-          <div class="muted"><b>허브센터</b></div>
-          <div id="railsCenter" class="railBox"></div>
-
-          <div class="legend">
-            <span><i class="dot" style="background:var(--good)"></i>정상작동</span>
-            <span><i class="dot" style="background:var(--warn)"></i>고장(점검중)</span>
-            <span><i class="dot" style="background:var(--bad)"></i>미작동</span>
-          </div>
-
-          <div class="sep"></div>
-
-          <div class="muted">
-            · 레일 상태는 <b>terminal.html</b> / <b>center.html</b>에서 변경 가능<br/>
-            · 숫자만으로는 부족하면, 허브 쪽에서 레일별 “작동/고장/점검중” 상태를 갱신해줘
-          </div>
+          <div class="small" id="invHint" style="margin-top:8px">-</div>
         </div>
       </div>
+
+      <div class="card">
+        <p class="title">현재 레일 작동 현황</p>
+        <div class="legend">
+- 초록: 정상 작동
+- 빨강: 미작동
+- 노랑: 고장(점검중)
+(레일 상태 편집은 terminal/center 페이지에서 가능)
+        </div>
+
+        <div style="margin-top:14px">
+          <p class="title">허브터미널 레일</p>
+          <div class="railGrid" id="railTerminal"></div>
+        </div>
+
+        <div style="margin-top:14px">
+          <p class="title">허브센터 레일</p>
+          <div class="railGrid" id="railCenter"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="title">작업 대기열(이동 예정)</p>
+      <table class="table">
+        <thead><tr><th>운송장</th><th>최근 허브</th><th>이동 예정지</th><th>메시지</th></tr></thead>
+        <tbody id="planBody"></tbody>
+      </table>
+      <div class="small" id="planHint" style="margin-top:8px">-</div>
     </div>
   </div>
 
 <script>
-(() => {
-  const $ = (id) => document.getElementById(id);
-  const bannerEl = $("banner");
+(()=>{
+  const tz = "Asia/Seoul";
+  const $ = (id)=>document.getElementById(id);
+  function digits(v){ return String(v||"").replace(/[^0-9]/g,""); }
+  function todayKey(){ return new Date().toLocaleDateString("sv-SE", { timeZone: tz }); }
+  function parseTime(t){ const d = new Date(t); return isNaN(d.getTime()) ? null : d; }
 
-  function banner(type, msg) {
-    bannerEl.className = "banner show " + (type||"");
-    bannerEl.textContent = msg;
-    window.clearTimeout(bannerEl._t);
-    bannerEl._t = window.setTimeout(() => { bannerEl.className = "banner"; }, 2600);
+  async function apiJson(path, opts={}, timeoutMs=12000){
+    const u = new URL(path, location.origin);
+    u.searchParams.set("_ts", String(Date.now()));
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), timeoutMs);
+    try{
+      const res = await fetch(u.toString(), { ...opts, headers: { "cache-control":"no-store","pragma":"no-cache",...(opts.headers||{}) }, signal: ctrl.signal });
+      const text = await res.text();
+      let data=null; try{ data = text ? JSON.parse(text) : null; }catch{ data = text; }
+      return {ok:res.ok,status:res.status,data};
+    } finally { clearTimeout(t); }
   }
-
-  function tick() {
-    $("clock").textContent = new Date().toLocaleTimeString("ko-KR", {hour12:false});
+  async function kvGet(key){
+    const r = await apiJson(`/api/kv/get?key=${encodeURIComponent(key)}`);
+    if(!r.ok) return null;
+    const d=r.data;
+    if(d && typeof d==="object" && ("value" in d)) return d.value;
+    return d;
   }
-  setInterval(tick, 1000); tick();
-
-  async function apiGet(path) {
-    const res = await fetch("/api" + path, { cache:"no-store" });
-    const txt = await res.text();
-    let data = null;
-    try { data = txt ? JSON.parse(txt) : null; } catch { data = { raw: txt }; }
-    if (!res.ok) throw new Error(data?.error || data?.detail || ("HTTP " + res.status));
-    return data;
+  function railClass(st){ if(st==="OK") return "ok"; if(st==="FAULT") return "warn"; return "bad"; }
+  function railLabel(st){ if(st==="OK") return "정상"; if(st==="FAULT") return "고장"; return "미작동"; }
+  function serviceLabel(type){
+    const t = String(type||"").toUpperCase();
+    if(t==="ECONOMY_CVS") return "반값택배";
+    if(t==="INTERNATIONAL") return "국제택배";
+    if(t==="RETURN") return "반품/반송";
+    return "국내택배";
   }
-  async function kvGet(key) {
-    const r = await apiGet("/kv/get?key=" + encodeURIComponent(key));
-    return r.value;
+  function lastEvent(rec){
+    const ev = Array.isArray(rec.events) ? rec.events : [];
+    return ev.length ? ev[ev.length-1] : null;
   }
-
-  function isToday(iso) {
-    const d = new Date(iso);
-    const now = new Date();
-    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+  function hubInventoryFilter(rec){
+    const e = lastEvent(rec);
+    if(!e) return false;
+    const place = String(e.place||"");
+    const msg = String(e.message||"");
+    const isHub = place.includes("허브터미널") || place.includes("허브센터");
+    if(!isHub) return false;
+    return msg.includes("간선하차") || msg.includes("분류완료");
   }
-  function statusMeta(st) {
-    st = String(st||"OK").toUpperCase();
-    if (st==="OK") return { label:"정상", color:"var(--good)" };
-    if (st==="DOWN") return { label:"미작동", color:"var(--bad)" };
-    return { label:"점검중", color:"var(--warn)" };
+  function movePlanFilter(rec){
+    const e = lastEvent(rec);
+    if(!e) return false;
+    const place = String(e.place||"");
+    const msg = String(e.message||"");
+    const isHub = place.includes("허브터미널") || place.includes("허브센터");
+    return isHub && msg.includes("이동될 예정");
   }
-  function normalizeRails(v) {
-    const rails = (v && Array.isArray(v.rails)) ? v.rails : [];
-    const map = new Map();
-    for (const r of rails) {
-      const no = parseInt(r?.no,10);
-      if (!Number.isInteger(no) || no<1 || no>5) continue;
-      map.set(no, String(r?.status||"OK").toUpperCase());
+  function countToday(evs, keyword){
+    const tk = todayKey(); let c=0;
+    for(const e of evs){
+      const d = parseTime(e.time); if(!d) continue;
+      const day = d.toLocaleDateString("sv-SE", { timeZone: tz });
+      if(day!==tk) continue;
+      const msg = String(e.message||"");
+      if(msg.includes(keyword)) c++;
     }
-    return [1,2,3,4,5].map(no => ({ no, status: map.get(no) || "OK" }));
+    return c;
   }
-  function renderRails(elId, rails) {
-    const el = $(elId);
-    el.innerHTML = rails.map(r => {
-      const m = statusMeta(r.status);
-      return `<div class="rail"><div class="muted"><span class="dot" style="background:${m.color}"></span><b>${r.no}번</b></div><div style="margin-top:6px;">${m.label}</div></div>`;
-    }).join("");
+  async function renderRails(){
+    const t = await kvGet("HUB_TERMINAL_RAIL_STATUS_V1");
+    const c = await kvGet("HUB_CENTER_RAIL_STATUS_V1");
+    const tr = (t && typeof t==="object" && t.rails) ? t.rails : {};
+    const cr = (c && typeof c==="object" && c.rails) ? c.rails : {};
+    const termBox = $("railTerminal");
+    const centBox = $("railCenter");
+    termBox.innerHTML = ""; centBox.innerHTML = "";
+    for(let i=1;i<=5;i++){
+      const st = tr[i] || "OK";
+      const div = document.createElement("div");
+      div.className = `rail ${railClass(st)}`;
+      div.innerHTML = `레일 ${i}<div class="small" style="margin-top:6px">${railLabel(st)}</div>`;
+      termBox.appendChild(div);
+    }
+    for(let i=1;i<=5;i++){
+      const st = cr[i] || "OK";
+      const div = document.createElement("div");
+      div.className = `rail ${railClass(st)}`;
+      div.innerHTML = `레일 ${i}<div class="small" style="margin-top:6px">${railLabel(st)}</div>`;
+      centBox.appendChild(div);
+    }
   }
 
-  function typeLabel(t) {
-    return ({DOMESTIC:"국내", INTERNATIONAL:"국제", ECONOMY_CVS:"반값", RETURN:"반품"})[t] || (t||"-");
-  }
+  async function load(){
+    $("invBody").innerHTML = "";
+    $("planBody").innerHTML = "";
+    $("invHint").textContent = "로딩 중…";
+    $("planHint").textContent = "로딩 중…";
 
-  function findLastHubEvent(events) {
-    if (!Array.isArray(events)) return null;
-    // last by time (events already appended in order, but safe sort)
-    const sorted = [...events].filter(e => e && e.time).sort((a,b)=> new Date(a.time)-new Date(b.time));
-    for (let i=sorted.length-1; i>=0; i--) {
-      const p = String(sorted[i].place||"");
-      if (/허브터미널|허브센터/.test(p)) return sorted[i];
-    }
-    return null;
-  }
+    const r = await apiJson("/api/reservations");
+    const all = (r.ok && Array.isArray(r.data)) ? r.data : [];
 
-  async function load() {
-    try {
-      const ping = await apiGet("/ping");
-      $("apiState").textContent = "API: OK (" + (ping.time || "-") + ")";
-    } catch (e) {
-      $("apiState").textContent = "API: 연결 실패 - " + e.message;
-      banner("bad", "API 연결 실패");
-      return;
-    }
-
-    // rails
-    try {
-      const term = normalizeRails(await kvGet("HUB_RAIL_STATUS_TERMINAL_V1"));
-      renderRails("railsTerminal", term);
-    } catch {
-      renderRails("railsTerminal", [1,2,3,4,5].map(no=>({no,status:"OK"})));
-    }
-    try {
-      const cen = normalizeRails(await kvGet("HUB_RAIL_STATUS_CENTER_V1"));
-      renderRails("railsCenter", cen);
-    } catch {
-      renderRails("railsCenter", [1,2,3,4,5].map(no=>({no,status:"OK"})));
-    }
-
-    // reservations
-    let list = [];
-    try {
-      list = await apiGet("/reservations");
-      if (!Array.isArray(list)) list = [];
-    } catch (e) {
-      banner("bad", "예약 목록을 불러오지 못했어: " + e.message);
-      list = [];
-    }
-
-    // counts
-    let inCnt=0, outCnt=0, retCnt=0;
-    const inv = [];
-    for (const rec of list) {
-      const events = Array.isArray(rec.events) ? rec.events : [];
-      for (const ev of events) {
-        if (!ev || !ev.time) continue;
-        if (!isToday(ev.time)) continue;
-        const msg = String(ev.message||"");
-        const place = String(ev.place||"");
-        if (!/허브터미널|허브센터/.test(place)) continue;
-        if (msg.includes("간선하차")) inCnt++;
-        if (msg.includes("간선상차")) outCnt++;
-        if (msg.includes("반송")) retCnt++;
+    let inbound=0,outbound=0,ret=0;
+    for(const rec of all){
+      const evs = Array.isArray(rec.events) ? rec.events : [];
+      inbound += countToday(evs, "간선하차");
+      outbound += countToday(evs, "간선상차");
+      ret += countToday(evs, "반송접수");
+      if(String(rec.type||"").toUpperCase()==="RETURN"){
+        const d = parseTime(rec.createdAt) || parseTime(rec.updatedAt);
+        if(d && d.toLocaleDateString("sv-SE",{timeZone:tz})===todayKey()) ret++;
       }
+    }
+    $("kpiInbound").textContent = inbound;
+    $("kpiOutbound").textContent = outbound;
+    $("kpiReturn").textContent = ret;
 
-      const lastHub = findLastHubEvent(events);
-      if (!lastHub) continue;
-      const msg = String(lastHub.message||"");
-      // in hub if last hub event is inbound/sort and not outbound/move
-      if (msg.includes("간선하차") || msg.includes("분류완료")) {
-        // check if there is a later hub event that indicates leaving
-        const sorted = [...events].filter(e => e && e.time).sort((a,b)=> new Date(a.time)-new Date(b.time));
-        const last = sorted[sorted.length-1];
-        // if last overall event is at hub inbound/sort, we consider it in hub; otherwise ignore
-        if (last && last === lastHub) {
-          inv.push({
-            waybill: rec.waybillNo || "-",
-            type: rec.type || "-",
-            msg: lastHub.place + " · " + msg,
-            time: new Date(lastHub.time).toLocaleString("ko-KR", {hour12:false})
-          });
+    const inv = all.filter(hubInventoryFilter).slice(-80).reverse();
+    if(inv.length===0){
+      $("invBody").innerHTML = `<tr><td colspan="4" class="small">허브 체류 물량이 없어.</td></tr>`;
+    }else{
+      for(const rec of inv){
+        const e = lastEvent(rec);
+        const wb = digits(rec.waybillNo || rec.invoiceNo || rec.invoice_no || rec.waybill || rec.reserveNo || "");
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="mono">${wb}</td><td>${serviceLabel(rec.type)}</td><td>${(e.place||"-")}</td><td>${(e.message||"-")}</td>`;
+        $("invBody").appendChild(tr);
+      }
+    }
+    $("invHint").textContent = `허브 체류: ${inv.length}건 (최근 이벤트가 허브 '간선하차/분류완료'인 건)`;
+
+    const plans = all.filter(movePlanFilter).slice(-120).reverse();
+    if(plans.length===0){
+      $("planBody").innerHTML = `<tr><td colspan="4" class="small">이동 예정(대기열)이 없어.</td></tr>`;
+    }else{
+      for(const rec of plans){
+        const e = lastEvent(rec);
+        const wb = digits(rec.waybillNo || rec.invoiceNo || rec.invoice_no || rec.waybill || rec.reserveNo || "");
+        let next = rec.nextPlanned || "";
+        if(!next){
+          const m = String(e.message||"");
+          const mm = m.match(/·\s*(.+)로 이동될 예정/);
+          if(mm) next = mm[1].trim();
         }
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="mono">${wb}</td><td>${(e.place||"-")}</td><td>${next || "-"}</td><td>${(e.message||"-")}</td>`;
+        $("planBody").appendChild(tr);
       }
     }
+    $("planHint").textContent = `이동 예정: ${plans.length}건`;
 
-    $("todayTbody").innerHTML = `
-      <tr><td>입고(간선하차)</td><td><b>${inCnt}</b></td></tr>
-      <tr><td>출고(간선상차)</td><td><b>${outCnt}</b></td></tr>
-      <tr><td>반송</td><td><b>${retCnt}</b></td></tr>
-    `;
-
-    const tbody = $("invTbody");
-    if (!inv.length) {
-      tbody.innerHTML = `<tr><td colspan="4" class="muted">현재 허브에 있는 물량이 없어.</td></tr>`;
-    } else {
-      tbody.innerHTML = inv.slice(0,200).map(x => `
-        <tr>
-          <td><b>${x.waybill}</b></td>
-          <td>${typeLabel(x.type)}</td>
-          <td>${x.msg}</td>
-          <td class="muted">${x.time}</td>
-        </tr>
-      `).join("");
-    }
-
-    banner("good", "작업현황 갱신 완료");
+    await renderRails();
   }
 
-  $("btnHome").onclick = () => window.location.href = "./index.html";
-  $("btnRefresh").onclick = load;
-
+  $("btnRefresh").addEventListener("click", load);
   load();
 })();
 </script>
