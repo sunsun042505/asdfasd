@@ -208,6 +208,7 @@
           </div>
           <div class="actions">
             <button class="btn" id="goWorkstatus">작업현황</button>
+            <button class="btn" id="goTracking">배송조회</button>
             <button class="btn danger" id="wipeAll">전체 데이터 삭제</button>
           </div>
         </div>
@@ -574,7 +575,11 @@
   const wsBtn = $("goWorkstatus");
   if(wsBtn) wsBtn.onclick = () => { window.location.href = "./Workstatus.html"; };
 
-  // ---------- CUSTOMER: tabs ----------
+  
+  // ---------- TRACKING PAGE ----------
+  const trBtn = $("goTracking");
+  if(trBtn) trBtn.onclick = () => { window.location.href = "./tracking.html"; };
+// ---------- CUSTOMER: tabs ----------
   function setCustTab(which){
     const reserveOn = which === "reserve";
     $("tabReserve").classList.toggle("on", reserveOn);
