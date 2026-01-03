@@ -1,310 +1,551 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>허브 센터 · 선우택배</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>강남허브센터 · 센터</title>
   <style>
     :root{
-      --bg:#0b1220; --card:#101a2f; --card2:#0f1830; --text:#eaf0ff; --muted:rgba(234,240,255,.68);
-      --line:rgba(255,255,255,.12); --accent:#7bdcff; --good:#35d07f; --bad:#ff6b6b;
+      --bg:#0b1020; --text:#eaf0ff; --muted:#a9b3d7; --accent:#7aa2ff;
+      --good:#35d07f; --warn:#ffcc66; --bad:#ff6b6b;
+      --card: rgba(0,0,0,.18); --line: rgba(255,255,255,.10);
+      --shadow: 0 18px 40px rgba(0,0,0,.35); --radius:18px;
     }
     *{box-sizing:border-box}
-    body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", "Apple SD Gothic Neo", Arial; background: radial-gradient(900px 500px at 15% -10%, rgba(123,220,255,.28), transparent 55%), radial-gradient(900px 500px at 110% 10%, rgba(53,208,127,.18), transparent 55%), var(--bg); color:var(--text); }
-    .wrap{ max-width:980px; margin:0 auto; padding:18px 14px 40px; }
-    .top{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .brand{ display:flex; flex-direction:column; gap:4px;}
-    .brand .t{ font-weight:900; letter-spacing:-.02em; font-size:18px;}
-    .brand .s{ color:var(--muted); font-size:12px;}
-    .meta{ display:flex; align-items:center; gap:10px; color:var(--muted); font-size:12px;}
-    .badge{ padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.06); }
-    .card{ margin-top:14px; border:1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03)); border-radius:16px; padding:14px; box-shadow: 0 16px 40px rgba(0,0,0,.28); }
-    label{ display:block; font-size:12px; color:var(--muted); margin:0 0 6px; }
-    input, select{ width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--line); background:rgba(0,0,0,.18); color:var(--text); outline:none;}
-    .row{ display:grid; grid-template-columns: 2fr 1fr; gap:10px; align-items:end;}
-    .btn{ cursor:pointer; border-radius:12px; padding:12px 12px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); font-weight:800; }
-    .btn:hover{ background:rgba(255,255,255,.09); }
-    .btn.primary{ background: linear-gradient(180deg, rgba(123,220,255,.35), rgba(123,220,255,.12)); border-color: rgba(123,220,255,.38); }
-    .btn.bad{ background: linear-gradient(180deg, rgba(255,107,107,.35), rgba(255,107,107,.12)); border-color: rgba(255,107,107,.38); }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .hint{ color:var(--muted); font-size:12px; margin-top:10px; line-height:1.4;}
-    .list{ margin-top:12px; display:grid; gap:10px;}
-    .item{ padding:12px; border:1px solid var(--line); border-radius:14px; background: rgba(0,0,0,.18);}
-    .sub{ color:var(--muted); font-size:12px;}
-    .err{ color: var(--bad); font-weight:800;}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial;
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(122,162,255,.18), transparent 55%),
+        radial-gradient(900px 500px at 80% 0%, rgba(53,208,127,.12), transparent 55%),
+        var(--bg);
+      color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px;
+    }
+    .panel{ width:min(1100px, 100%); background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); box-shadow: var(--shadow); overflow:hidden; position:relative; }
+    header{ padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:12px;
+      background: linear-gradient(180deg, rgba(122,162,255,.12), rgba(0,0,0,0)); }
+    .brand{display:flex; align-items:center; gap:12px;}
+    .logo{ width:38px; height:38px; border-radius:12px;
+      background: linear-gradient(135deg, rgba(122,162,255,.65), rgba(53,208,127,.55));
+      box-shadow: 0 10px 20px rgba(0,0,0,.28); }
+    h1{margin:0; font-size:16px;}
+    .sub{font-size:12px; color:var(--muted); margin-top:2px;}
+    .badge{ font-size:12px; padding:7px 10px; border:1px solid rgba(255,255,255,.12);
+      border-radius:999px; background: rgba(0,0,0,.18); color:var(--muted); display:flex; gap:10px; align-items:center; }
+    .content{ padding:18px 20px 22px; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    @media (max-width: 920px){ .grid{grid-template-columns:1fr;} }
+    .card{ background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius: 16px; padding:14px; }
+    .card h2{ margin:0 0 8px; font-size:14px; }
+    .muted{ color:var(--muted); font-size:12px; }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .row > *{ flex:1; }
+    label{ font-size:12px; color:var(--muted); display:block; margin:8px 0 6px; }
+    input, select, textarea{ width:100%; padding:11px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18); color:var(--text); outline:none; }
+    input::placeholder, textarea::placeholder{ color: rgba(233,240,255,.38); }
+    button{ cursor:pointer; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.18); color:var(--text); }
+    button.primary{ background: rgba(122,162,255,.20); border-color: rgba(122,162,255,.35); }
+    button.good{ background: rgba(53,208,127,.14); border-color: rgba(53,208,127,.35); }
+    button.warn{ background: rgba(255,204,102,.14); border-color: rgba(255,204,102,.35); }
+    button.bad{ background: rgba(255,107,107,.14); border-color: rgba(255,107,107,.35); }
+    button:disabled{ opacity:.45; cursor:not-allowed; }
+    .pill{ font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:var(--muted); }
+    .sep{ height:1px; background: rgba(255,255,255,.08); margin:12px 0; }
+    .kv{ display:grid; grid-template-columns: 120px 1fr; gap:8px 12px; font-size:13px; }
+    .kv div:nth-child(odd){ color:var(--muted); }
+    .rail{ display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.12); margin-top:8px; }
+    .dot{ width:10px; height:10px; border-radius:999px; }
+    .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; color:var(--muted); font-size:12px; }
+    .legend span{ display:flex; align-items:center; gap:6px; }
+    .banner{ position:absolute; left:16px; right:16px; top:10px; transform: translateY(-120%); opacity:0;
+      transition: all .25s ease; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.35); color:var(--text); }
+    .banner.show{ transform: translateY(0); opacity:1; }
+    .banner.good{ border-color: rgba(53,208,127,.35); background: rgba(53,208,127,.10); }
+    .banner.warn{ border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.10); }
+    .banner.bad{ border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.10); }
+    .topActions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    a.link{ color: var(--accent); text-decoration:none; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="top">
+  <div class="panel">
+    <div id="banner" class="banner"></div>
+    <header>
       <div class="brand">
-        <div class="t">허브 센터</div>
-        <div class="s">선우택배 · 배송불가(반송) 처리</div>
-      </div>
-      <div class="meta">
-        <div class="badge mono" id="clock">--:--:--</div>
-        <div class="badge mono" id="ver">v1.2</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="row">
+        <div class="logo" aria-hidden="true"></div>
         <div>
+          <h1>강남허브센터 · 센터 작업</h1>
+          <div class="sub">기사코드 로그인 · 운송장 조회 · 입고/출고/분류완료 · 서브 센터 이동지시</div>
+        </div>
+      </div>
+      <div class="badge">
+        <span id="clock">—</span>
+        <span class="pill">v1.2</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="grid">
+        <div class="card" id="loginCard">
+          <h2>로그인</h2>
+          <div class="muted">기사코드로 로그인해. (기기 저장 안 하고, 이 탭(session)에서만 유지)</div>
+          <label>기사코드</label>
+          <input id="courierCode" placeholder="예) 1234" />
+          <div class="row" style="margin-top:10px;">
+            <button class="primary" id="btnLogin">로그인</button>
+            <button id="btnHome">메인으로</button>
+          </div>
+          <div class="sep"></div>
+          <div class="muted" id="ping">API: 확인중…</div>
+        </div>
+
+        <div class="card" id="opsCard" style="display:none;">
+          <div class="row" style="align-items:flex-start;">
+            <div style="flex:2;">
+              <h2>운송장 조회</h2>
+              <div class="muted">운송장 번호를 입력하고 조회해.</div>
+            </div>
+            <div class="topActions" style="flex:1;">
+              <span class="pill" id="loginAs">—</span>
+              <button class="bad" id="btnLogout">로그아웃</button>
+            </div>
+          </div>
+
           <label>운송장 번호</label>
-          <input id="wb" class="mono" placeholder="18자리 (예: 59...)" />
+          <div class="row">
+            <input id="waybill" placeholder="18자리 운송장 번호" />
+            <button class="primary" id="btnLookup" style="flex:0 0 120px;">조회</button>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="kv" id="infoKv">
+            <div>상태</div><div class="muted">조회 전</div>
+          </div>
         </div>
-        <div>
-          <button class="btn primary" id="btnLoad" type="button">조회</button>
+
+        <div class="card" id="actionCard" style="display:none;">
+          <h2>허브 처리</h2>
+          <div class="muted">레일 번호(1~5)를 넣고 버튼을 누르면 배송흐름에 기록돼.</div>
+
+          <label>레일 번호 (1~5)</label>
+          <input id="railNo" inputmode="numeric" placeholder="예) 1" />
+
+          <div class="row" style="margin-top:10px;">
+            <button class="good" id="btnIn">입고(간선하차)</button>
+            <button class="warn" id="btnOut">출고(간선상차)</button>
+            <button id="btnSort">분류완료</button>
+          </div>
+
+          <div class="sep"></div>
+
+          <h2>서브 센터 이동 지시</h2>
+          <div class="muted">등록된 센터을 선택하고 “출발”을 누르면 “이동될 예정”으로 기록돼.</div>
+          <label>도착 센터 선택</label>
+          <div class="row">
+            <select id="destSelect">
+              <option value="">불러오는 중…</option>
+            </select>
+            <button class="primary" id="btnMove" style="flex:0 0 120px;">출발</button>
+          </div>
+
+          <details style="margin-top:10px;">
+            <summary class="muted">등록 센터 목록 관리</summary>
+            <div style="margin-top:10px;">
+              <div class="row">
+                <input id="newDestName" placeholder="새 센터 이름 (예: 의왕터미널)" />
+                <button id="btnAddDest" style="flex:0 0 140px;">추가</button>
+              </div>
+              <div id="destList" class="muted" style="margin-top:10px;"></div>
+            </div>
+          </details>
+        </div>
+
+        <div class="card" id="railCard" style="display:none;">
+          <h2>레일 작동 현황 (편집)</h2>
+          <div class="muted">레일을 클릭하면 상태가 순환돼. (초록=정상 / 노랑=고장(점검중) / 빨강=미작동)</div>
+          <div id="rails"></div>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--good)"></i>정상작동</span>
+            <span><i class="dot" style="background:var(--warn)"></i>고장(점검중)</span>
+            <span><i class="dot" style="background:var(--bad)"></i>미작동</span>
+          </div>
+          <div class="sep"></div>
+          <div class="muted">※ 이 상태는 Workstatus.html(작업현황)에도 그대로 보여.</div>
         </div>
       </div>
-
-      <div id="result" class="list" style="display:none;"></div>
-
-      <div class="row" style="grid-template-columns: 1fr; margin-top:12px;">
-        <button class="btn bad" id="btnUn" type="button" disabled>배송불가(반송) + 반송운송장 발급</button>
-      </div>
-
-      <div class="hint">• 센터에서는 <b>반값택배</b> 운송장에 대해 배송불가 처리 가능. (국내/국제는 터미널에서)</div>
     </div>
   </div>
 
 <script>
 (() => {
-  const APP_VERSION = "1.2";
-  const API_BASE = "/api";
-  const STORAGE_KEYS = { RES: "DELIVERY_RESERVATIONS_V1", SESSION: "DELIVERY_SESSION_V1" };
-  const HUB_C = "강남허브센터";
+  const HUB_NAME = '강남허브센터';
+  const LIST_KEY = 'DELIVERY_CENTERS_V1';
+  const RAIL_KEY = 'HUB_RAIL_STATUS_CENTER_V1';
+  const SESSION_KEY = 'HUB_SESSION_CENTER_V1';
+
   const $ = (id) => document.getElementById(id);
+  const bannerEl = $("banner");
 
-  function escapeHtml(s){
-    return String(s ?? "").replace(/[&<>"']/g, (m) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));
-  }
-  function nowStr(){ const d=new Date(); const p=(n)=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; }
-  function normDigits(v){ return String(v ?? "").replace(/[^0-9]/g,""); }
-
-  function tick(){
-    const d=new Date(); const p=(n)=>String(n).padStart(2,"0");
-    $("clock").textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-    $("ver").textContent = `v${APP_VERSION}`;
-  }
-  setInterval(tick, 500); tick();
-
-  function loadSession(){
-    try{ return JSON.parse(localStorage.getItem(STORAGE_KEYS.SESSION) || "{}"); }catch{ return {}; }
+  function banner(type, msg) {
+    bannerEl.className = "banner show " + (type||"");
+    bannerEl.textContent = msg;
+    window.clearTimeout(bannerEl._t);
+    bannerEl._t = window.setTimeout(() => {
+      bannerEl.className = "banner";
+    }, 2600);
   }
 
-  let useLocalFallback = false;
-  const mem = Object.create(null);
-
-  async function apiGetFresh(key, fallback){
-    if(useLocalFallback){
-      try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }catch{ return fallback; }
-    }
-    try{
-      const res = await fetch(`${API_BASE}/kv/get?key=${encodeURIComponent(key)}&_ts=${Date.now()}`, { cache:"no-store" });
-      if(!res.ok) throw new Error("GET failed");
-      const json = await res.json();
-      mem[key] = json.value ?? fallback;
-      return mem[key];
-    }catch(e){
-      useLocalFallback = true;
-      try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }catch{ return fallback; }
-    }
+  function tick() {
+    const d = new Date();
+    $("clock").textContent = d.toLocaleTimeString("ko-KR", {hour12:false});
   }
-  async function apiSet(key, value){
-    if(useLocalFallback){ localStorage.setItem(key, JSON.stringify(value)); return; }
-    const res = await fetch(`${API_BASE}/kv/set`, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ key, value }) });
-    if(!res.ok){
-      useLocalFallback = true;
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-    mem[key] = value;
+  setInterval(tick, 1000); tick();
+
+  async function apiGet(path) {
+    const res = await fetch("/api" + path, { cache:"no-store" });
+    const txt = await res.text();
+    let data = null;
+    try { data = txt ? JSON.parse(txt) : null; } catch { data = { raw: txt }; }
+    if (!res.ok) throw new Error(data?.error || data?.detail || ("HTTP " + res.status));
+    return data;
   }
-  async function getReservations(){ return await apiGetFresh(STORAGE_KEYS.RES, []); }
-  async function upsertRes(rec){
-    const arr = await getReservations();
-    const idx = (arr||[]).findIndex(r => String(r.reserveNo||"") === String(rec.reserveNo||""));
-    if(idx>=0) arr[idx] = rec; else arr.push(rec);
-    await apiSet(STORAGE_KEYS.RES, arr);
-  }
-  async function findByWaybill(wb){
-    const key = normDigits(wb);
-    if(!key) return null;
-    const arr = await getReservations();
-    return (arr||[]).find(r => normDigits(r.waybillNo) === key) || null;
-  }
-
-  function ensureEvents(rec){ if(!rec.events || !Array.isArray(rec.events)) rec.events = []; }
-  function pushEvent(rec, place, message){
-    ensureEvents(rec);
-    rec.events.push({ at: new Date().toISOString(), place, message });
-  }
-
-  function makeWaybill(prefix2){
-    const prefix = String(prefix2||"").slice(0,2);
-    const restLen = 18 - prefix.length;
-    let digits = "";
-    if(window.crypto && crypto.getRandomValues){
-      const buf = new Uint8Array(restLen); crypto.getRandomValues(buf);
-      for(let i=0;i<restLen;i++) digits += String(buf[i] % 10);
-    }else{
-      for(let i=0;i<restLen;i++) digits += String(Math.floor(Math.random()*10));
-    }
-    if(/^0+$/.test(digits)) digits = digits.slice(0,-1) + "1";
-    return prefix + digits;
-  }
-
-  function openLabelFromRecord(rec){
-    const wb = normDigits(rec?.waybillNo);
-    if(!wb) return;
-    let url = `./label.html?waybill=${encodeURIComponent(wb)}`;
-    try{
-      const payload = {
-        waybillNo: wb,
-        type: rec?.type || "",
-        storeName: rec?.storeName || "",
-        addr: rec?.addr || rec?.receiver?.address || "",
-        weightKg: rec?.package?.weightKg ?? "",
-        kind: rec?.package?.kind || "",
-        memo: rec?.memo || "",
-        originalWaybillNo: rec?.originalWaybillNo || ""
-      };
-      const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
-        .replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-      url += `&payload=${b64}`;
-    }catch(e){}
-    window.open(url, "_blank");
-  }
-
-  function openUnshippableModal({onSubmit}){
-    const overlay = document.createElement("div");
-    overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:9999;";
-    overlay.innerHTML = `
-      <div class="card" style="width:min(520px, 96vw);">
-        <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
-          <div style="font-weight:900;">배송불가(반송) - 허브센터</div>
-          <button class="btn" type="button" id="__cl">닫기</button>
-        </div>
-        <div style="height:10px;"></div>
-        <div>
-          <label>사유</label>
-          <select id="__sel">
-            <option value="규격초과">규격초과</option>
-            <option value="무게불일치">무게불일치</option>
-            <option value="포장불량">포장불량</option>
-            <option value="금지품목">금지품목</option>
-            <option value="주소불명">주소불명</option>
-            <option value="기타">기타(직접입력)</option>
-          </select>
-        </div>
-        <div style="height:10px;"></div>
-        <div>
-          <label>직접 입력(선택)</label>
-          <input id="__txt" placeholder="예: 포장불량(누액)" />
-        </div>
-        <div style="height:12px;"></div>
-        <button class="btn bad" type="button" id="__go">배송불가 처리 + 반송운송장 발급</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    const close = () => overlay.remove();
-    overlay.addEventListener("click", (e) => { if(e.target === overlay) close(); });
-    overlay.querySelector("#__cl").onclick = close;
-    overlay.querySelector("#__go").onclick = () => {
-      const sel = overlay.querySelector("#__sel").value;
-      const txt = overlay.querySelector("#__txt").value.trim();
-      const reason = (sel === "기타") ? (txt || "기타") : (txt ? `${sel} - ${txt}` : sel);
-      close();
-      try{ onSubmit && onSubmit(reason); }catch(e){}
-    };
-  }
-
-  let currentRec = null;
-
-  function renderRec(rec){
-    const r = rec || {};
-    const wb = escapeHtml(normDigits(r.waybillNo) || "-");
-    const type = escapeHtml(r.type || "-");
-    const s = escapeHtml(r.sender?.name || "-");
-    const rc = escapeHtml(r.receiver?.name || "-");
-    const status = escapeHtml(r.status || "-");
-    const at = escapeHtml(r.updatedAt || r.waybillIssuedAt || r.createdAt || "-");
-    return `
-      <div class="item">
-        <div class="mono" style="font-weight:900;">${wb}</div>
-        <div class="sub">${type} · ${s} → ${rc}</div>
-        <div class="sub">상태: ${status} · ${at}</div>
-      </div>
-    `;
-  }
-
-  $("btnLoad").onclick = async () => {
-    const wb = $("wb").value.trim();
-    const rec = await findByWaybill(wb);
-    const resEl = $("result");
-    if(!rec){
-      resEl.style.display = "";
-      resEl.innerHTML = `<div class="item"><div class="err">등록된 운송장이 아님</div></div>`;
-      currentRec = null;
-      $("btnUn").disabled = true;
-      return;
-    }
-    if(rec.type !== "ECONOMY_CVS"){
-      resEl.style.display = "";
-      resEl.innerHTML = `<div class="item"><div class="err">반값택배만 센터에서 처리 가능해!</div></div>`;
-      currentRec = null;
-      $("btnUn").disabled = true;
-      return;
-    }
-    currentRec = rec;
-    resEl.style.display = "";
-    resEl.innerHTML = renderRec(rec);
-    $("btnUn").disabled = false;
-  };
-
-  $("btnUn").onclick = async () => {
-    const sess = loadSession();
-    if(!currentRec){ alert("먼저 조회해줘!"); return; }
-    openUnshippableModal({
-      onSubmit: async (reason) => {
-        const rec = currentRec;
-        const hubPlace = rec.hubName || HUB_C;
-        pushEvent(rec, hubPlace, `반송접수 하였습니다(사유:${reason})`);
-        rec.returnBlocked = true;
-        rec.returnReason = reason;
-        rec.returnAt = nowStr();
-
-        const rtn = {
-          reserveNo: `RTN-${new Date().toISOString().slice(0,10).replace(/-/g,"")}-${Math.random().toString(36).slice(2,6).toUpperCase()}`,
-          type: "RETURN",
-          pickup: "STORE",
-          createdAt: nowStr(),
-          status: "WAYBILL_ISSUED",
-          waybillNo: makeWaybill("37"),
-          waybillIssuedAt: nowStr(),
-          storeName: rec.storeName || "",
-          storeAcceptedAt: "",
-          courier: sess?.courier ? { code: sess.courier.code||"", name: sess.courier.name||"", phone: sess.courier.phone||"" } : { code:"", name:"", phone:"" },
-          pickedAt: "",
-          sender: { name: rec.receiver?.name || "", phone: rec.receiver?.phone || "", address: rec.receiver?.address || "" },
-          receiver: { name: rec.sender?.name || "", phone: rec.sender?.phone || "", address: rec.sender?.address || "" },
-          addr: rec.sender?.address || rec.addr || "",
-          package: rec.package || { weightKg: "", kind: "" },
-          events: [],
-          memo: `반송 사유: ${reason}`,
-          originalWaybillNo: String(rec.waybillNo || ""),
-        };
-        pushEvent(rtn, hubPlace, `반송운송장 발급 (원송장: ${String(rec.waybillNo||"-")})`);
-        rec.returnWaybillNo = rtn.waybillNo;
-
-        await upsertRes(rec);
-        await upsertRes(rtn);
-        currentRec = rec;
-        $("result").innerHTML = renderRec(rec) + `<div class="item"><div class="sub">반송운송장: <span class="mono" style="font-weight:900;">${escapeHtml(rtn.waybillNo)}</span></div><button class="btn primary" type="button" id="__print">라벨 출력</button></div>`;
-        document.getElementById("__print").onclick = () => openLabelFromRecord(rtn);
-      }
+  async function apiPost(path, body) {
+    const res = await fetch("/api" + path, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json; charset=utf-8", "Cache-Control":"no-store" },
+      body: JSON.stringify(body || {})
     });
-  };
+    const txt = await res.text();
+    let data = null;
+    try { data = txt ? JSON.parse(txt) : null; } catch { data = { raw: txt }; }
+    if (!res.ok) throw new Error(data?.error || data?.detail || ("HTTP " + res.status));
+    return data;
+  }
+  async function kvGet(key) {
+    const r = await apiGet("/kv/get?key=" + encodeURIComponent(key));
+    return r.value;
+  }
+  async function kvSet(key, value) {
+    await apiPost("/kv/set", { key, value });
+  }
+
+  function fmt(s) { return (s == null || s === "") ? "-" : String(s); }
+
+  function extractInfo(rec) {
+    const sender = rec.sender || {};
+    const receiver = rec.receiver || {};
+    const pkg = rec.package || {};
+    const storeName = rec.storeName || sender.name || "";
+    const info = {
+      service: rec.type || "-",
+      reserveNo: rec.reserveNo || "-",
+      waybillNo: rec.waybillNo || "-",
+      storeName: storeName || "-",
+      senderName: sender.name || rec.senderName || "-",
+      senderPhone: sender.phone || "-",
+      receiverName: receiver.name || rec.receiverName || "-",
+      receiverPhone: receiver.phone || "-",
+      weightKg: (pkg.weightKg != null ? pkg.weightKg : (rec.weightKg != null ? rec.weightKg : "-")),
+      kind: pkg.kind || rec.kind || "-",
+      memo: rec.memo || "-",
+    };
+    return info;
+  }
+
+  let session = null;
+  let currentRec = null;
+  let destList = [];
+  let railState = null;
+
+  function setLoggedIn(on) {
+    $("loginCard").style.display = on ? "none" : "";
+    $("opsCard").style.display = on ? "" : "none";
+    $("actionCard").style.display = on ? "" : "none";
+    $("railCard").style.display = on ? "" : "none";
+  }
+
+  async function ping() {
+    try {
+      const r = await apiGet("/ping");
+      $("ping").textContent = "API: OK (" + fmt(r.time) + ")";
+    } catch (e) {
+      $("ping").textContent = "API: 연결 실패 - " + e.message;
+    }
+  }
+
+  async function login() {
+    const code = $("courierCode").value.trim();
+    if (!code) return banner("warn","기사코드를 입력해.");
+    try {
+      const r = await apiPost("/couriers/login", { code });
+      session = r.courier || { code };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      $("loginAs").textContent = (session.name ? session.name + " ("+session.code+")" : "기사코드 " + session.code);
+      setLoggedIn(true);
+      banner("good","로그인 완료.");
+      await loadDestinations();
+      await loadRails();
+    } catch (e) {
+      banner("bad", e.message.includes("NO_COURIER") ? "없는 기사입니다." : ("로그인 실패: " + e.message));
+    }
+  }
+
+  function logout() {
+    session = null;
+    currentRec = null;
+    sessionStorage.removeItem(SESSION_KEY);
+    $("courierCode").value = "";
+    $("waybill").value = "";
+    $("railNo").value = "";
+    $("infoKv").innerHTML = '<div>상태</div><div class="muted">조회 전</div>';
+    setLoggedIn(false);
+    banner("good","로그아웃 됨.");
+  }
+
+  async function hydrateSession() {
+    const s = sessionStorage.getItem(SESSION_KEY);
+    if (!s) return;
+    try {
+      session = JSON.parse(s);
+      $("loginAs").textContent = (session.name ? session.name + " ("+session.code+")" : "기사코드 " + session.code);
+      setLoggedIn(true);
+      await loadDestinations();
+      await loadRails();
+    } catch {
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+  }
+
+  function renderInfo(rec) {
+    const i = extractInfo(rec);
+    const typeLabel = {
+      DOMESTIC:"국내택배",
+      INTERNATIONAL:"국제택배",
+      ECONOMY_CVS:"반값택배",
+      RETURN:"반품택배"
+    }[rec.type] || fmt(rec.type);
+
+    $("infoKv").innerHTML = `
+      <div>서비스</div><div>${typeLabel}</div>
+      <div>운송장</div><div><b>${fmt(i.waybillNo)}</b></div>
+      <div>예약번호</div><div>${fmt(i.reserveNo)}</div>
+      <div>접수지점</div><div>${fmt(i.storeName)}</div>
+      <div>보내는분</div><div>${fmt(i.senderName)} / ${fmt(i.senderPhone)}</div>
+      <div>받는분</div><div>${fmt(i.receiverName)} / ${fmt(i.receiverPhone)}</div>
+      <div>무게(kg)</div><div>${fmt(i.weightKg)}</div>
+      <div>종류</div><div>${fmt(i.kind)}</div>
+      <div>메모</div><div>${fmt(i.memo)}</div>
+    `;
+  }
+
+  async function lookup() {
+    const wb = $("waybill").value.trim();
+    if (!wb) return banner("warn","운송장 번호를 입력해.");
+    try {
+      const rec = await apiGet("/reservations/byWaybill/" + encodeURIComponent(wb));
+      currentRec = rec;
+      if (!Array.isArray(currentRec.events)) currentRec.events = [];
+      renderInfo(currentRec);
+      banner("good","조회 완료.");
+    } catch (e) {
+      currentRec = null;
+      $("infoKv").innerHTML = `<div>상태</div><div class="muted">조회 실패: ${fmt(e.message)}</div>`;
+      banner("bad","운송장을 찾지 못했어.");
+    }
+  }
+
+  function railNum() {
+    const n = parseInt(String($("railNo").value).trim(), 10);
+    if (!Number.isInteger(n) || n < 1 || n > 5) return null;
+    return n;
+  }
+
+  async function pushEvent(kind, extra) {
+    if (!currentRec) return banner("warn","먼저 운송장을 조회해.");
+    const place = HUB_NAME;
+    let msg = "";
+    if (kind === "IN") {
+      const rn = railNum(); if (!rn) return banner("warn","레일 번호(1~5)를 입력해.");
+      msg = `${rn}번 레일에서 간선하차했습니다`;
+    } else if (kind === "OUT") {
+      const rn = railNum(); if (!rn) return banner("warn","레일 번호(1~5)를 입력해.");
+      msg = `${rn}번 레일에서 간선상차했습니다`;
+    } else if (kind === "SORT") {
+      const rn = railNum(); if (!rn) return banner("warn","레일 번호(1~5)를 입력해.");
+      msg = `${rn}번 레일에서 분류완료되었습니다.`;
+    } else if (kind === "MOVE") {
+      const dest = String(extra?.dest || "").trim();
+      if (!dest) return banner("warn","도착 센터을 선택해.");
+      msg = `${dest}로 이동될 예정입니다`;
+    } else {
+      return;
+    }
+
+    const ev = { time: new Date().toISOString(), place, message: msg };
+    currentRec.events = Array.isArray(currentRec.events) ? currentRec.events : [];
+    currentRec.events.push(ev);
+
+    try {
+      const r = await apiPost("/reservations/upsert", currentRec);
+      currentRec = r.rec || currentRec;
+      renderInfo(currentRec);
+      banner("good","배송흐름에 기록했어.");
+    } catch (e) {
+      banner("bad","저장 실패: " + e.message);
+    }
+  }
+
+  function ensureDestShape(arr) {
+    const out = [];
+    for (const x of (arr || [])) {
+      if (!x) continue;
+      if (typeof x === "string") out.push({ name: x, createdAt: "" });
+      else if (typeof x === "object" && x.name) out.push({ name: String(x.name), createdAt: String(x.createdAt||"") });
+    }
+    // unique by name
+    const seen = new Set();
+    return out.filter(d => (seen.has(d.name) ? false : (seen.add(d.name), true)));
+  }
+
+  function renderDestinations() {
+    const sel = $("destSelect");
+    sel.innerHTML = `<option value="">선택…</option>` + destList.map(d => `<option value="${d.name}">${d.name}</option>`).join("");
+    const list = $("destList");
+    if (!destList.length) {
+      list.innerHTML = "<div>등록된 센터이 없어. 아래에서 추가해줘.</div>";
+      return;
+    }
+    list.innerHTML = destList.map(d => `
+      <div class="rail" style="margin-top:8px;">
+        <div>${d.name}</div>
+        <button data-del="${d.name}" class="bad" style="flex:0 0 auto; padding:7px 10px; border-radius:10px;">삭제</button>
+      </div>
+    `).join("");
+    list.querySelectorAll("button[data-del]").forEach(b => b.onclick = async () => {
+      const name = b.getAttribute("data-del");
+      destList = destList.filter(x => x.name !== name);
+      await kvSet(LIST_KEY, destList);
+      renderDestinations();
+      banner("good","삭제됨.");
+    });
+  }
+
+  async function loadDestinations() {
+    try {
+      const v = await kvGet(LIST_KEY);
+      destList = ensureDestShape(v);
+      await kvSet(LIST_KEY, destList); // normalize
+      renderDestinations();
+    } catch (e) {
+      destList = [];
+      renderDestinations();
+      banner("warn","센터 목록을 불러오지 못했어: " + e.message);
+    }
+  }
+
+  async function addDestination() {
+    const name = $("newDestName").value.trim();
+    if (!name) return banner("warn","이름을 입력해.");
+    destList = ensureDestShape([...destList, { name, createdAt: new Date().toISOString() }]);
+    try {
+      await kvSet(LIST_KEY, destList);
+      $("newDestName").value = "";
+      renderDestinations();
+      banner("good","추가됨.");
+    } catch (e) {
+      banner("bad","저장 실패: " + e.message);
+    }
+  }
+
+  function defaultRails() {
+    return { rails: [1,2,3,4,5].map(n => ({ no:n, status:"OK" })), updatedAt: new Date().toISOString() };
+  }
+
+  function normalizeRails(v) {
+    if (!v || typeof v !== "object") return defaultRails();
+    const rails = Array.isArray(v.rails) ? v.rails : [];
+    const map = new Map();
+    for (const r of rails) {
+      const no = parseInt(r?.no,10);
+      if (!Number.isInteger(no) || no<1 || no>5) continue;
+      const st = String(r?.status || "OK").toUpperCase();
+      map.set(no, (st==="OK"||st==="DOWN"||st==="FAULT") ? st : "OK");
+    }
+    const out = defaultRails();
+    out.rails = [1,2,3,4,5].map(n => ({ no:n, status: map.get(n) || "OK" }));
+    out.updatedAt = String(v.updatedAt || new Date().toISOString());
+    return out;
+  }
+
+  function statusMeta(st) {
+    if (st === "OK") return { label:"정상작동", color:"var(--good)", next:"DOWN" };
+    if (st === "DOWN") return { label:"미작동", color:"var(--bad)", next:"FAULT" };
+    return { label:"고장(점검중)", color:"var(--warn)", next:"OK" };
+  }
+
+  function renderRails() {
+    const wrap = $("rails");
+    wrap.innerHTML = railState.rails.map(r => {
+      const m = statusMeta(r.status);
+      return `
+        <div class="rail" data-rail="${r.no}">
+          <div class="row" style="gap:10px; align-items:center; flex-wrap:nowrap;">
+            <div class="dot" style="background:${m.color}"></div>
+            <div><b>${r.no}번 레일</b> <span class="pill">${m.label}</span></div>
+          </div>
+          <button style="flex:0 0 auto;">상태 변경</button>
+        </div>
+      `;
+    }).join("");
+    wrap.querySelectorAll("[data-rail]").forEach(el => {
+      el.onclick = async () => {
+        const no = parseInt(el.getAttribute("data-rail"),10);
+        const idx = railState.rails.findIndex(x => x.no === no);
+        if (idx < 0) return;
+        const cur = railState.rails[idx].status;
+        const next = statusMeta(cur).next;
+        railState.rails[idx].status = next;
+        railState.updatedAt = new Date().toISOString();
+        renderRails();
+        try {
+          await kvSet(RAIL_KEY, railState);
+          banner("good", `${no}번 레일 상태 저장됨.`);
+        } catch (e) {
+          banner("bad","저장 실패: " + e.message);
+        }
+      };
+    });
+  }
+
+  async function loadRails() {
+    try {
+      const v = await kvGet(RAIL_KEY);
+      railState = normalizeRails(v);
+      await kvSet(RAIL_KEY, railState); // normalize
+      renderRails();
+    } catch (e) {
+      railState = defaultRails();
+      renderRails();
+      banner("warn","레일 상태를 불러오지 못했어: " + e.message);
+    }
+  }
+
+  // Wire up
+  $("btnHome").onclick = () => window.location.href = "./index.html";
+  $("btnLogin").onclick = login;
+  $("btnLogout").onclick = logout;
+  $("btnLookup").onclick = lookup;
+  $("btnIn").onclick = () => pushEvent("IN");
+  $("btnOut").onclick = () => pushEvent("OUT");
+  $("btnSort").onclick = () => pushEvent("SORT");
+  $("btnMove").onclick = () => pushEvent("MOVE", { dest: $("destSelect").value });
+  $("btnAddDest").onclick = addDestination;
+
+  // init
+  ping();
+  hydrateSession();
 
 })();
 </script>
