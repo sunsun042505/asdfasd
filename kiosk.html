@@ -297,20 +297,6 @@
 
             <div style="grid-column:1/-1">
               <label>메모(선택)</label>
-
-            <div id="returnBlock" style="grid-column:1/-1; display:none;">
-              <label>원 운송장 번호(반품 필수) <span class="req">*</span></label>
-              <div class="row" style="grid-template-columns: 2fr 1fr; align-items:end;">
-                <div>
-                  <input id="w_origWaybill" class="mono" placeholder="예: 81/23/30로 시작하는 18자리" />
-                </div>
-                <div style="align-self:end;">
-                  <button class="btn" id="w_origLookup" type="button">조회</button>
-                </div>
-              </div>
-              <div class="hint">• 이름+전화번호로 내 운송장을 찾아서 선택하면 자동 입력돼. (반송 운송장은 제외)</div>
-            </div>
-
               <textarea id="w_memo" placeholder="예: 반값택배 안내: 최대 소요기간 6일"></textarea>
             </div>
           </div>
@@ -364,39 +350,21 @@
   </div>
 
 <script>
-const APP_VERSION = "1.2";
+  const $ = (id) => document.getElementById(id);
 
-(async()=>{
+  function safe(fn){
+    return async (...args)=>{
+      try{ await fn(...args); }
+      catch(e){
+        console.error(e);
+        const msg = (e && e.message) ? e.message : String(e);
+        alert("동작 실패: 서버/저장 연결을 확인해줘!\n" + msg);
+      }
+    };
+  }
 
-    // ===== SAFE DOM GETTER (missing element won't crash the whole app) =====
-  const $ = (id) => {
-    const el = document.getElementById(id);
-    if(el) return el;
-    return new Proxy({ __missing:true }, {
-      get(t, p){
-        if(p === "__missing") return true;
-        if(p === "style") return {};
-        if(p === "classList") return { add(){}, remove(){}, toggle(){}, contains(){ return false; } };
-        if(p === "dataset") return {};
-        if(p === "value") return "";
-        if(p === "checked") return false;
-        if(p === "innerHTML") return "";
-        if(p === "textContent") return "";
-        if(p === "appendChild") return ()=>{};
-        if(p === "removeChild") return ()=>{};
-        if(p === "insertAdjacentHTML") return ()=>{};
-        if(p === "querySelector") return ()=>null;
-        if(p === "querySelectorAll") return ()=>[];
-        if(p === "addEventListener") return ()=>{};
-        if(p === "removeEventListener") return ()=>{};
-        if(p === "focus") return ()=>{};
-        if(p === "click") return ()=>{};
-        return t[p];
-      },
-      set(t, p, v){ t[p] = v; return true; }
-    });
-  };
-function openLabel(arg){
+
+  function openLabel(arg){
     // arg can be waybill string/number OR a record object
     const wb = (typeof arg === "string" || typeof arg === "number") ? String(arg).trim() : String(arg?.waybillNo || "").trim();
     if(!wb){ alert("운송장 번호가 없어!"); return; }
@@ -469,6 +437,31 @@ function openLabel(arg){
     };
   }
   const API_BASE = "/api";
+  let apiOnline = true;
+  function showApiBanner(msg){
+    apiOnline = false;
+    const b = document.getElementById("apiBanner");
+    const m = document.getElementById("apiBannerMsg");
+    if(b){ b.style.display = ""; }
+    if(m && msg) m.textContent = msg;
+  }
+  function hideApiBanner(){
+    apiOnline = true;
+    const b = document.getElementById("apiBanner");
+    if(b) b.style.display = "none";
+  }
+  async function apiPing(){
+    try{
+      const r = await fetch(`${API_BASE}/ping`, { cache: "no-store" });
+      if(!r.ok) throw new Error("ping failed");
+      hideApiBanner();
+      return true;
+    }catch(e){
+      showApiBanner("서버(/api) 연결이 안 돼. 같은 도메인 Netlify 배포본으로 접속했는지 확인해줘!");
+      return false;
+    }
+  }
+
   const useLocalFallback = false;
   const mem = {};
 
@@ -528,6 +521,51 @@ function openLabel(arg){
     RETURN: "37"
   };
 
+  // --- Payment / Fee (B: 포인트, C: 계좌이체) ---
+  function normalizeWeightKg(x){
+    let v = Number(x);
+    if(!isFinite(v) || v <= 0) return 0;
+    // If user accidentally entered grams (e.g., 3423), convert to kg
+    if(v > 100) v = v / 1000;
+    return Math.round(v*1000)/1000;
+  }
+  function calcFeeKRW(type, weightKg){
+    const w = normalizeWeightKg(weightKg);
+    // Simple fee table (adjust anytime)
+    if(type === "ECONOMY_CVS") return 2000;              // 반값택배
+    if(type === "RETURN") return 3000;                   // 반품
+    if(type === "INTERNATIONAL") return 12000 + Math.ceil(Math.max(0, w-0.5)) * 6000; // 국제(대충)
+    // DOMESTIC default
+    return 4000 + Math.ceil(Math.max(0, w-2)) * 500;     // 국내
+  }
+  async function promptPayment(type, feeAmount){
+    const amount = Number(feeAmount)||0;
+    const label = TYPE_LABEL[type] || type;
+    const msg = `요금: ${amount.toLocaleString()}원\n결제방식 선택\n1) 포인트(선불)\n2) 계좌이체(입금대기)\n\n번호를 입력해줘 (1 또는 2)`;
+    const pick = (prompt(msg,"1")||"").trim();
+    if(pick !== "1" && pick !== "2"){ alert("결제방식을 선택해야 진행돼!"); return null; }
+    if(pick === "1"){
+      return {
+        amountKRW: amount,
+        method: "POINT",
+        status: "PAID",
+        depositorName: "",
+        paidAt: nowStr(),
+      };
+    }
+    const depositor = (prompt("계좌이체 - 입금자명을 입력해줘 (입금대기 저장)","")||"").trim();
+    if(!depositor){ alert("입금자명을 입력해야 해!"); return null; }
+    return {
+      amountKRW: amount,
+      method: "TRANSFER",
+      status: "PENDING",
+      depositorName: depositor,
+      paidAt: "",
+    };
+  }
+
+
+
   function nowStr(){
     const d = new Date();
     const pad = (n)=> String(n).padStart(2,"0");
@@ -542,7 +580,7 @@ function openLabel(arg){
   setInterval(tick, 1000); tick();
 
   async function loadAll(){
-    return await apiGetFresh(STORAGE_KEYS.RES, []);
+    return await apiGet(STORAGE_KEYS.RES, []);
   }
   async function saveAll(arr){
     await apiSet(STORAGE_KEYS.RES, arr);
@@ -571,81 +609,7 @@ function openLabel(arg){
     return s;
   }
 
-
-  function validateWaybill(no, prefix2){
-    const s = String(no||"...").trim();
-    if(!/^\d{18}$/.test(s)) return false;
-    if(prefix2 && String(prefix2).length===2 && !s.startsWith(prefix2)) return false;
-    const p = s.slice(0,2);
-    if(!["81","23","30","37"].includes(p)) return false;
-    return true;
-  }
-
-  function generateWaybill(prefix2){
-  // 18자리 숫자 / prefix(2자리) 고정 (81=국내, 23=국제, 30=반값, 37=반품)
-  const prefix = String(prefix2 || "81").trim().slice(0,2);
-  const restLen = 18 - prefix.length;
-
-  let digits = "";
-  if (window.crypto && crypto.getRandomValues){
-    const buf = new Uint8Array(restLen);
-    crypto.getRandomValues(buf);
-    for (let i=0;i<restLen;i++) digits += String(buf[i] % 10);
-  } else {
-    for (let i=0;i<restLen;i++) digits += String(Math.floor(Math.random()*10));
-  }
-
-  // 극단 케이스 방지
-  if (/^0+$/.test(digits)) digits = digits.slice(0, -1) + "1";
-  return prefix + digits;
-}
-
-
-async function apiGetFresh(key, fallback){
-  // 캐시(mem) 무시하고 서버에서 최신값을 가져온다 (중복 송장 방지용)
-  if(useLocalFallback){
-    try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
-    catch{ return fallback; }
-  }
-  try{
-    const res = await fetch(`${API_BASE}/kv/get?key=${encodeURIComponent(key)}`, { cache:"no-store" });
-    if(!res.ok) throw new Error("GET failed");
-    const json = await res.json();
-    return json.value ?? fallback;
-  }catch(e){
-    // 서버가 잠깐 죽었을 때는 안전하게 fallback
-    try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
-    catch{ return fallback; }
-  }
-}
-
-function normDigits(v){ return String(v ?? "").replace(/[^0-9]/g, ""); }
-
-async function findByWaybill(waybillNo){
-  const wb = normDigits(waybillNo);
-  if(!wb) return null;
-  const list = await apiGetFresh(STORAGE_KEYS.RES, []);
-  const hit = list.find(r => {
-    const cands = [
-      r?.waybillNo, r?.invoiceNo, r?.invoice_no, r?.waybill, r?.wb, r?.reserveNo
-    ].map(normDigits).filter(Boolean);
-    return cands.includes(wb);
-  });
-  return hit || null;
-}
-
-async function makeUniqueWaybill(prefix2){
-  // 중복 방지: 최대 N회 시도 (재귀 금지)
-  for (let i=0;i<80;i++){
-    const wb = generateWaybill(prefix2);
-    if(!validateWaybill(wb, prefix2)) continue;
-    const exists = await findByWaybill(wb);
-    if(!exists) return wb;
-  }
-  throw new Error("송장 발급 실패(중복). 다시 시도해줘.");
-}
-
-function makeWalkinReserveNo(){
+  function makeWalkinReserveNo(){
     const d = new Date();
     const y = d.getFullYear();
     const m = String(d.getMonth()+1).padStart(2,"0");
@@ -664,113 +628,6 @@ function makeWalkinReserveNo(){
     ["view_home","view_walkin","view_reserve"].forEach(v => $(v).style.display = "none");
     $(view).style.display = "";
   }
-
-
-  function normDigits(v){ return String(v ?? "").replace(/[^0-9]/g,""); }
-  function normPhone(v){ return normDigits(v); }
-  function normName(v){ return String(v ?? "").trim(); }
-
-  async function searchWaybillsByPerson(name, phone){
-    const n = normName(name);
-    const p = normPhone(phone);
-    if(!n || !p) return [];
-    const list = await apiGetFresh(STORAGE_KEYS.RES, []);
-    return (list || []).filter(r => {
-      const wb = normDigits(r?.waybillNo);
-      if(!wb || wb.length !== 18) return false;
-      if(String(r?.type||"") === "RETURN" || wb.startsWith("37")) return false;
-      const s = r?.sender || {};
-      const rc = r?.receiver || {};
-      const sOk = normName(s.name).includes(n) && normPhone(s.phone).includes(p);
-      const rOk = normName(rc.name).includes(n) && normPhone(rc.phone).includes(p);
-      return sOk || rOk;
-    }).slice(0, 50);
-  }
-
-  function openWaybillFinderModal({title, onPick}){
-    const overlay = document.createElement("div");
-    overlay.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:16px; z-index:9999;";
-    overlay.innerHTML = `
-      <div class="card" style="width:min(520px, 96vw);">
-        <div style="display:flex; justify-content:space-between; gap:12px; align-items:center;">
-          <div style="font-weight:900;">${escapeHtml(title || "운송장 찾기")}</div>
-          <button class="btn" type="button" id="__wbClose">닫기</button>
-        </div>
-        <div style="height:10px;"></div>
-        <div class="row" style="grid-template-columns: 1fr 1fr;">
-          <div>
-            <label>이름</label>
-            <input id="__wbName" placeholder="예: 홍길동" />
-          </div>
-          <div>
-            <label>전화번호</label>
-            <input id="__wbPhone" class="mono" placeholder="숫자만 (예: 01012345678)" />
-          </div>
-        </div>
-        <div class="actions" style="margin-top:10px;">
-          <button class="btn primary" type="button" id="__wbSearch">조회</button>
-        </div>
-        <div style="height:10px;"></div>
-        <div id="__wbList" class="list" style="max-height: 320px; overflow:auto;"></div>
-        <div class="hint">• 조회 결과에서 운송장을 선택하면 자동 입력돼. (반송 운송장은 제외)</div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-
-    const close = () => overlay.remove();
-    overlay.addEventListener("click", (e) => { if(e.target === overlay) close(); });
-    overlay.querySelector("#__wbClose").onclick = close;
-
-    const listEl = overlay.querySelector("#__wbList");
-    const render = (items) => {
-      if(!items || items.length === 0){
-        listEl.innerHTML = `<div class="item"><div style="color:var(--muted)">결과 없음</div></div>`;
-        return;
-      }
-      listEl.innerHTML = items.map((r, i) => {
-        const wb = escapeHtml(String(r.waybillNo||"-"));
-        const t = escapeHtml(({"DOMESTIC":"국내택배","INTERNATIONAL":"국제택배","ECONOMY_CVS":"반값택배","RETURN":"반품택배"}[r.type] || r.type || "-"));
-        const s = escapeHtml((r.sender?.name||"-"));
-        const rc = escapeHtml((r.receiver?.name||"-"));
-        const at = escapeHtml((r.waybillIssuedAt || r.createdAt || "-"));
-        return `
-          <div class="item" style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-            <div>
-              <div class="mono" style="font-weight:900;">${wb}</div>
-              <div class="sub">${t} · ${s} → ${rc}</div>
-              <div class="mono" style="font-size:12px; color:var(--muted);">${at}</div>
-            </div>
-            <div>
-              <button class="btn" type="button" data-pick="${i}">선택</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-      listEl.querySelectorAll("button[data-pick]").forEach(btn => {
-        btn.onclick = () => {
-          const idx = Number(btn.dataset.pick);
-          const hit = items[idx];
-          try{ onPick && onPick(hit); }catch(e){}
-          close();
-        };
-      });
-    };
-
-    const doSearch = async () => {
-      const name = overlay.querySelector("#__wbName").value;
-      const phone = overlay.querySelector("#__wbPhone").value;
-      listEl.innerHTML = `<div class="item"><div style="color:var(--muted)">조회 중...</div></div>`;
-      try{
-        const items = await searchWaybillsByPerson(name, phone);
-        render(items);
-      }catch(e){
-        listEl.innerHTML = `<div class="item"><div class="err">조회 실패: ${escapeHtml(String(e?.message||e))}</div></div>`;
-      }
-    };
-
-    overlay.querySelector("#__wbSearch").onclick = doSearch;
-  }
-
 
   // NAV
   $("goBack").onclick = () => window.location.href = "./index.html";
@@ -797,7 +654,6 @@ function makeWalkinReserveNo(){
     // International block
     $("intlBlock").style.display = (currentType === "INTERNATIONAL") ? "" : "none";
     if(currentType !== "INTERNATIONAL") $("w_country").value = "";
-    $("w_origWaybill").value = "";
 
     // Default memo
     $("w_memo").value = (currentType === "ECONOMY_CVS")
@@ -819,26 +675,6 @@ function makeWalkinReserveNo(){
       $("w_kind").value = "";
 
       configureWalkinForType();
-
-  const _wOrigLookupBtn = document.getElementById('w_origLookup');
-  if(_wOrigLookupBtn) _wOrigLookupBtn.onclick = () => openWaybillFinderModal({
-    title: "원 운송장 찾기",
-    onPick: (hit) => {
-      const wb = String(hit?.waybillNo||"").replace(/[^0-9]/g,"");
-      $("w_origWaybill").value = wb;
-      // 가능한 경우 자동 채우기(빈 칸만)
-      if(currentType === "RETURN"){
-        const s = hit?.sender || {};
-        const r = hit?.receiver || {};
-        if(!$("w_sName").value) $("w_sName").value = r.name || "";
-        if(!$("w_sPhone").value) $("w_sPhone").value = r.phone || "";
-        if(!$("w_rName").value) $("w_rName").value = s.name || "";
-        if(!$("w_rPhone").value) $("w_rPhone").value = s.phone || "";
-        // 주소는 상황 따라 다르니 자동 입력은 안 함
-      }
-    }
-  });
-
       show("view_walkin");
       renderWalkinList();
     });
@@ -909,9 +745,16 @@ function makeWalkinReserveNo(){
     }
 
     const prefix2 = PREFIX[currentType];
-    const waybill = await makeUniqueWaybill(prefix2);
+    const waybill = makeWaybill(prefix2);
+
+    const feeAmount = calcFeeKRW(currentType, weight);
+    const payInfo = await promptPayment(currentType, feeAmount);
+    if(!payInfo) return;
 
     const rec = {
+      fee: { amountKRW: feeAmount, currency: "KRW" },
+      payment: payInfo,
+
       reserveNo: makeWalkinReserveNo(),
       type: currentType,
       pickup: "STORE",
@@ -1041,7 +884,18 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
       return;
     }
     const prefix2 = PREFIX[rec.type];
-    const wb = await makeUniqueWaybill(prefix2);
+    const wb = makeWaybill(prefix2);
+
+    // Payment required (if not already set)
+    const wkg = rec?.package?.weightKg ?? 0;
+    const feeAmount = calcFeeKRW(rec.type, wkg);
+    if(!rec.fee) rec.fee = { amountKRW: feeAmount, currency: "KRW" };
+    if(!rec.payment){
+      const payInfo = await promptPayment(rec.type, feeAmount);
+      if(!payInfo) return;
+      rec.payment = payInfo;
+    }
+
     rec.waybillNo = wb;
     rec.status = "WAYBILL_ISSUED";
     rec.waybillIssuedAt = nowStr();
@@ -1094,10 +948,8 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
   initStoreGate();
   show("view_home");
 
-})();
-
-try{ const p=document.getElementById("appVersion"); if(p) p.textContent="v"+APP_VERSION; }catch(e){}
-
+  // API banner retry
+  try{ $("apiRetry").onclick = () => location.reload(); }catch(e){}
 </script>
 </body>
 </html>
