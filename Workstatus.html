@@ -1,321 +1,462 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>작업현황 · Workstatus</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <title>작업현황 (허브)</title>
   <style>
-    :root{
-      --bg:#0b1020; --text:#eaf0ff; --muted:#a9b3d7; --accent:#7aa2ff;
-      --good:#35d07f; --warn:#ffcc66; --bad:#ff6b6b;
-      --card: rgba(0,0,0,.18); --line: rgba(255,255,255,.10);
-      --shadow: 0 18px 40px rgba(0,0,0,.35); --radius:18px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial;
-      background:
-        radial-gradient(1200px 600px at 20% 10%, rgba(122,162,255,.18), transparent 55%),
-        radial-gradient(900px 500px at 80% 0%, rgba(53,208,127,.12), transparent 55%),
-        var(--bg);
-      color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px;
-    }
-    .panel{ width:min(1180px, 100%); background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.08); border-radius: var(--radius); box-shadow: var(--shadow); overflow:hidden; position:relative; }
-    header{ padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:space-between; gap:12px;
-      background: linear-gradient(180deg, rgba(122,162,255,.12), rgba(0,0,0,0)); }
-    .brand{display:flex; align-items:center; gap:12px;}
-    .logo{ width:38px; height:38px; border-radius:12px;
-      background: linear-gradient(135deg, rgba(122,162,255,.65), rgba(53,208,127,.55));
-      box-shadow: 0 10px 20px rgba(0,0,0,.28); }
-    h1{margin:0; font-size:16px;}
-    .sub{font-size:12px; color:var(--muted); margin-top:2px;}
-    .badge{ font-size:12px; padding:7px 10px; border:1px solid rgba(255,255,255,.12);
-      border-radius:999px; background: rgba(0,0,0,.18); color:var(--muted); display:flex; gap:10px; align-items:center; }
-    .pill{ font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:var(--muted); }
-    .content{ padding:18px 20px 22px; }
-    .grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; }
-    @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
-    .card{ background: var(--card); border:1px solid rgba(255,255,255,.08); border-radius: 16px; padding:14px; }
-    .card h2{ margin:0 0 8px; font-size:14px; }
-    .muted{ color:var(--muted); font-size:12px; }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    button{ cursor:pointer; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.18); color:var(--text); }
-    button.primary{ background: rgba(122,162,255,.20); border-color: rgba(122,162,255,.35); }
-    .sep{ height:1px; background: rgba(255,255,255,.08); margin:12px 0; }
-    table{ width:100%; border-collapse:collapse; }
-    th, td{ text-align:left; padding:8px 8px; border-bottom:1px solid rgba(255,255,255,.08); font-size:13px; }
-    th{ color:var(--muted); font-weight:600; font-size:12px; }
-    .dot{ width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:6px; }
-    .legend{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; color:var(--muted); font-size:12px; }
-    .legend span{ display:flex; align-items:center; gap:6px; }
-    .railBox{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
-    @media (max-width: 720px){ .railBox{grid-template-columns: repeat(2, 1fr);} }
-    .rail{ padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.12); }
-    .banner{ position:absolute; left:16px; right:16px; top:10px; transform: translateY(-120%); opacity:0;
-      transition: all .25s ease; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.10); background: rgba(0,0,0,.35); color:var(--text); }
-    .banner.show{ transform: translateY(0); opacity:1; }
-    .banner.good{ border-color: rgba(53,208,127,.35); background: rgba(53,208,127,.10); }
-    .banner.warn{ border-color: rgba(255,204,102,.35); background: rgba(255,204,102,.10); }
-    .banner.bad{ border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.10); }
-  </style>
+:root{
+  --bg1:#0b1220; --bg2:#0f1b2e; --card:#111a2b; --card2:#0f1828;
+  --text:#e9eefc; --muted:#a7b2d6; --line:rgba(255,255,255,.10);
+  --brand:#7aa7ff; --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --info:#60a5fa;
+  --shadow: 0 18px 50px rgba(0,0,0,.35);
+  --r:18px;
+  font-synthesis-weight:none;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial;
+  background:
+    radial-gradient(1200px 700px at 20% -10%, rgba(122,167,255,.25), transparent 60%),
+    radial-gradient(1000px 800px at 90% 0%, rgba(52,211,153,.18), transparent 55%),
+    linear-gradient(180deg, var(--bg1), var(--bg2));
+}
+a{color:inherit}
+.wrap{max-width:1100px; margin:0 auto; padding:18px}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; padding:14px 16px; border:1px solid var(--line);
+  background:rgba(17,26,43,.68); backdrop-filter: blur(10px);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+}
+.brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px}
+.pill{
+  font-size:12px; color:var(--muted);
+  padding:6px 10px; border:1px solid var(--line); border-radius:999px;
+  background:rgba(255,255,255,.03);
+}
+.row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+.btn{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  color:var(--text);
+  padding:10px 12px;
+  border-radius:12px;
+  cursor:pointer;
+  user-select:none;
+  font-weight:700;
+}
+.btn:hover{background:rgba(255,255,255,.07)}
+.btn.primary{border-color:rgba(122,167,255,.45); background:rgba(122,167,255,.14)}
+.btn.good{border-color:rgba(52,211,153,.45); background:rgba(52,211,153,.14)}
+.btn.warn{border-color:rgba(251,191,36,.45); background:rgba(251,191,36,.12)}
+.btn.bad{border-color:rgba(251,113,133,.45); background:rgba(251,113,133,.12)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.grid{display:grid; gap:12px; margin-top:14px}
+@media(min-width: 920px){ .grid.two{grid-template-columns: 1.1fr .9fr;} }
+.card{
+  border:1px solid var(--line);
+  background:rgba(17,26,43,.58);
+  backdrop-filter: blur(10px);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding:14px;
+}
+.h{margin:0 0 10px; font-size:16px}
+.small{font-size:12px; color:var(--muted)}
+.input, select{
+  width:100%;
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.18);
+  color:var(--text);
+  padding:11px 12px;
+  border-radius:12px;
+  outline:none;
+}
+label{font-size:12px; color:var(--muted); display:block; margin:10px 0 6px}
+.sep{height:1px; background:var(--line); margin:12px 0}
+.kpis{display:grid; grid-template-columns: repeat(2, 1fr); gap:10px}
+@media(min-width: 720px){ .kpis{grid-template-columns: repeat(4, 1fr);} }
+.kpi{
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:12px;
+  background:rgba(0,0,0,.16);
+}
+.kpi .t{font-size:12px; color:var(--muted)}
+.kpi .v{font-size:20px; font-weight:900; margin-top:6px}
+.table{width:100%; border-collapse: collapse; font-size:13px}
+.table th,.table td{border-bottom:1px solid var(--line); padding:10px 8px; text-align:left; vertical-align:top}
+.badge{display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03)}
+.dot{width:9px; height:9px; border-radius:999px; background:var(--info)}
+.dot.ok{background:var(--good)}
+.dot.stop{background:var(--bad)}
+.dot.broken{background:var(--warn)}
+.banner{
+  display:none;
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.18);
+  font-weight:700;
+}
+.banner.show{display:block}
+.banner.good{border-color:rgba(52,211,153,.45)}
+.banner.warn{border-color:rgba(251,191,36,.45)}
+.banner.bad{border-color:rgba(251,113,133,.45)}
+</style>
 </head>
 <body>
-  <div class="panel">
-    <div id="banner" class="banner"></div>
-    <header>
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <h1>작업현황</h1>
-          <div class="sub">오늘 처리량 · 현재 허브 보관물량 · 레일 작동 현황 (서버 저장 데이터 기준)</div>
-        </div>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div style="width:10px;height:10px;border-radius:999px;background:var(--brand)"></div>
+      <div>작업현황 (허브)</div>
+      <span class="pill">v1.1.3</span>
+    </div>
+    <div class="row">
+      <span id="clock" class="pill">--</span>
+      <span id="apiState" class="pill">API: 확인중…</span>
+      <button id="btnHome" class="btn" type="button">메인</button>
+      <button id="btnRefresh" class="btn primary" type="button">새로고침</button>
+    </div>
+  </div>
+
+  <div id="banner" class="banner"></div>
+
+  <div class="card" style="margin-top:14px">
+    <h3 class="h">오늘 처리량</h3>
+    <div class="kpis">
+      <div class="kpi"><div class="t">입고(간선하차)</div><div id="kpiIn" class="v">0</div></div>
+      <div class="kpi"><div class="t">출고(간선상차)</div><div id="kpiOut" class="v">0</div></div>
+      <div class="kpi"><div class="t">분류완료</div><div id="kpiSort" class="v">0</div></div>
+      <div class="kpi"><div class="t">반송접수</div><div id="kpiRet" class="v">0</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="small">기준: KST(오늘 00:00~현재) / “레일” 포함 허브 이벤트만 집계</div>
+  </div>
+
+  <div class="grid two" style="margin-top:14px">
+    <div class="card">
+      <h3 class="h">허브 체류 물량</h3>
+      <div class="small">마지막 이벤트가 허브의 “간선하차/분류완료/반송접수”인 물량</div>
+      <div class="sep"></div>
+      <div class="row" style="justify-content:space-between">
+        <span class="pill">체류: <b id="invCount">0</b>건</span>
       </div>
-      <div class="badge">
-        <span id="clock">—</span>
-        <span class="pill">v1.2</span>
+      <div style="overflow:auto; margin-top:10px">
+        <table class="table">
+          <thead><tr><th>운송장</th><th>허브</th><th>레일</th><th>마지막 상태</th><th>시간</th></tr></thead>
+          <tbody id="invTbody"></tbody>
+        </table>
       </div>
-    </header>
+    </div>
 
-    <div class="content">
-      <div class="row" style="justify-content:space-between; margin-bottom:12px;">
-        <div class="muted" id="apiState">API: 확인중…</div>
-        <div class="row">
-          <button id="btnHome">메인으로</button>
-          <button class="primary" id="btnRefresh">새로고침</button>
-        </div>
+    <div class="card">
+      <h3 class="h">레일 작동 현황</h3>
+      <div class="small">정상=초록 / 미작동=빨강 / 고장=노랑</div>
+      <div class="sep"></div>
+      <div id="railsSummary"></div>
+    </div>
+  </div>
+
+  <div class="grid two" style="margin-top:14px">
+    <div class="card">
+      <h3 class="h">레일별 처리량 (허브터미널)</h3>
+      <div style="overflow:auto; margin-top:10px">
+        <table class="table">
+          <thead><tr><th>레일</th><th>입고</th><th>출고</th><th>분류</th><th>반송</th></tr></thead>
+          <tbody id="railTerminalTbody"></tbody>
+        </table>
       </div>
+    </div>
 
-      <div class="grid">
-        <div class="card">
-          <h2>오늘 처리량</h2>
-          <div class="muted">허브(터미널/센터)에서 발생한 이벤트 기준</div>
-          <div class="sep"></div>
-          <table>
-            <thead><tr><th>구분</th><th>건수</th></tr></thead>
-            <tbody id="todayTbody">
-              <tr><td>입고(간선하차)</td><td>-</td></tr>
-              <tr><td>출고(간선상차)</td><td>-</td></tr>
-              <tr><td>반송</td><td>-</td></tr>
-            </tbody>
-          </table>
-
-          <div class="sep"></div>
-
-          <h2>현재 허브에 있는 물량</h2>
-          <div class="muted">마지막 허브 이벤트가 “간선하차/분류완료”이고, 이후 “간선상차/이동될 예정”이 없는 건</div>
-          <div class="sep"></div>
-          <table>
-            <thead><tr><th>운송장</th><th>서비스</th><th>최근 상태</th><th>시간</th></tr></thead>
-            <tbody id="invTbody">
-              <tr><td colspan="4" class="muted">불러오는 중…</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h2>레일 작동 현황</h2>
-          <div class="muted">터미널/센터 페이지에서 편집한 상태가 보여.</div>
-
-          <div class="sep"></div>
-
-          <div class="muted"><b>허브터미널</b></div>
-          <div id="railsTerminal" class="railBox"></div>
-
-          <div class="sep"></div>
-
-          <div class="muted"><b>허브센터</b></div>
-          <div id="railsCenter" class="railBox"></div>
-
-          <div class="legend">
-            <span><i class="dot" style="background:var(--good)"></i>정상작동</span>
-            <span><i class="dot" style="background:var(--warn)"></i>고장(점검중)</span>
-            <span><i class="dot" style="background:var(--bad)"></i>미작동</span>
-          </div>
-
-          <div class="sep"></div>
-
-          <div class="muted">
-            · 레일 상태는 <b>terminal.html</b> / <b>center.html</b>에서 변경 가능<br/>
-            · 숫자만으로는 부족하면, 허브 쪽에서 레일별 “작동/고장/점검중” 상태를 갱신해줘
-          </div>
-        </div>
+    <div class="card">
+      <h3 class="h">레일별 처리량 (허브센터)</h3>
+      <div style="overflow:auto; margin-top:10px">
+        <table class="table">
+          <thead><tr><th>레일</th><th>입고</th><th>출고</th><th>분류</th><th>반송</th></tr></thead>
+          <tbody id="railCenterTbody"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
+  <div class="card" style="margin-top:14px">
+    <h3 class="h">레일 상태 의미</h3>
+    <div class="row" style="gap:10px; flex-wrap:wrap">
+      <span class="badge"><span class="dot ok"></span>정상작동</span>
+      <span class="badge"><span class="dot stop"></span>미작동</span>
+      <span class="badge"><span class="dot broken"></span>고장</span>
+    </div>
+  </div>
+</div>
+
 <script>
-(() => {
-  const $ = (id) => document.getElementById(id);
-  const bannerEl = $("banner");
 
-  function banner(type, msg) {
-    bannerEl.className = "banner show " + (type||"");
-    bannerEl.textContent = msg;
-    window.clearTimeout(bannerEl._t);
-    bannerEl._t = window.setTimeout(() => { bannerEl.className = "banner"; }, 2600);
+const API_BASE = "/api";
+const STORAGE_KEYS = {
+  RES: "DELIVERY_RESERVATIONS_V1",
+  STORES: "DELIVERY_STORES_V1",
+  COURIERS: "DELIVERY_COURIERS_V1",
+  TERMINALS: "DELIVERY_TERMINALS_V1",
+  CENTERS: "DELIVERY_CENTERS_V1",
+  AIRLINES: "DELIVERY_AIRLINES_V1",
+};
+
+const $ = (id) => document.getElementById(id);
+
+function kstNow(){
+  const d = new Date();
+  const utc = d.getTime() + (d.getTimezoneOffset()*60000);
+  return new Date(utc + 9*3600000);
+}
+function fmtKst(dt){
+  const d = (dt instanceof Date) ? dt : new Date(dt);
+  const k = new Date(d.getTime() + (d.getTimezoneOffset()*60000) + 9*3600000);
+  const yy = k.getFullYear();
+  const mm = String(k.getMonth()+1).padStart(2,"0");
+  const dd = String(k.getDate()).padStart(2,"0");
+  const hh = String(k.getHours()).padStart(2,"0");
+  const mi = String(k.getMinutes()).padStart(2,"0");
+  const ss = String(k.getSeconds()).padStart(2,"0");
+  return `${yy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+function setClock(){
+  const el = $("clock");
+  if(!el) return;
+  el.textContent = fmtKst(new Date()) + " (KST)";
+}
+setInterval(setClock, 1000); setClock();
+
+function banner(kind, msg){
+  const b = $("banner");
+  if(!b) return;
+  b.className = `banner show ${kind||""}`;
+  b.textContent = msg || "";
+}
+
+async function apiPing(){
+  try{
+    const res = await fetch(`${API_BASE}/ping`, { cache:"no-store" });
+    return res.ok;
+  }catch(e){ return false; }
+}
+
+const mem = {};
+let useLocalFallback = false;
+
+async function apiGet(key, fallback){
+  if(useLocalFallback){
+    try{ return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+    catch{ return fallback; }
+  }
+  if(key in mem) return mem[key];
+  const ok = await apiPing();
+  if(!ok) throw new Error("API_OFFLINE");
+  const res = await fetch(`${API_BASE}/kv/get?key=${encodeURIComponent(key)}`, { cache:"no-store" });
+  if(!res.ok) throw new Error("GET_FAILED");
+  const json = await res.json();
+  mem[key] = (json.value ?? fallback);
+  return mem[key];
+}
+
+async function apiSet(key, value){
+  if(useLocalFallback){
+    localStorage.setItem(key, JSON.stringify(value));
+    mem[key] = value;
+    return;
+  }
+  const ok = await apiPing();
+  if(!ok) throw new Error("API_OFFLINE");
+  const res = await fetch(`${API_BASE}/kv/set`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json; charset=utf-8" },
+    body: JSON.stringify({ key, value })
+  });
+  if(!res.ok){
+    const t = await res.text();
+    throw new Error("SET_FAILED: " + t);
+  }
+  mem[key] = value;
+}
+
+async function getReservations(){ return await apiGet(STORAGE_KEYS.RES, []); }
+async function setReservations(arr){ await apiSet(STORAGE_KEYS.RES, arr); }
+
+async function upsertRes(rec){
+  const arr = await getReservations();
+  const i = arr.findIndex(x => x.reserveNo === rec.reserveNo);
+  if(i >= 0) arr[i] = rec; else arr.unshift(rec);
+  await setReservations(arr);
+  return rec;
+}
+
+function findByWaybillLocal(arr, waybill){
+  const wb = String(waybill||"").trim();
+  return arr.find(x => String(x.waybillNo||"") === wb) || null;
+}
+
+function ensureEvents(rec){
+  if(!rec.events || !Array.isArray(rec.events)) rec.events = [];
+  return rec.events;
+}
+
+function addEvent(rec, place, message){
+  ensureEvents(rec).push({ time: new Date().toISOString(), place, message });
+  rec.updatedAt = fmtKst(new Date());
+}
+
+function railFromText(s){
+  const m = String(s||"").match(/(\d)\s*번\s*레일/);
+  return m ? Number(m[1]) : null;
+}
+
+
+function setApiState(ok){
+  const el = $("apiState");
+  el.textContent = ok ? "API: OK" : "API: OFFLINE";
+}
+
+function isTodayKst(iso){
+  const t = new Date(iso);
+  const k = new Date(t.getTime() + (t.getTimezoneOffset()*60000) + 9*3600000);
+  const now = kstNow();
+  return k.getFullYear()===now.getFullYear() && k.getMonth()===now.getMonth() && k.getDate()===now.getDate();
+}
+
+function parseHubEvent(ev){
+  const place = String(ev.place||"");
+  const msg = String(ev.message||"");
+  const hub = place.includes("허브터미널") ? "terminal" : (place.includes("허브센터") ? "center" : null);
+  if(!hub) return null;
+  const rail = railFromText(msg);
+  const type =
+    msg.includes("간선하차") ? "in" :
+    msg.includes("간선상차") ? "out" :
+    msg.includes("분류완료") ? "sort" :
+    (msg.includes("반송접수") || msg.includes("반송")) ? "ret" :
+    null;
+  return { hub, rail, type };
+}
+
+function railDotClass(s){
+  if(s==="OK") return "ok";
+  if(s==="STOP") return "stop";
+  if(s==="BROKEN") return "broken";
+  return "";
+}
+
+async function load(){
+  const ok = await apiPing();
+  setApiState(ok);
+  if(!ok){
+    banner("bad","API가 꺼져있어. (/api/ping 실패)");
+    return;
   }
 
-  function tick() {
-    $("clock").textContent = new Date().toLocaleTimeString("ko-KR", {hour12:false});
-  }
-  setInterval(tick, 1000); tick();
+  const res = await getReservations();
+  const termRails = await apiGet("HUB_RAIL_STATUS_TERMINAL_V1", {1:"OK",2:"OK",3:"OK",4:"OK",5:"OK"});
+  const centRails = await apiGet("HUB_RAIL_STATUS_CENTER_V1", {1:"OK",2:"OK",3:"OK",4:"OK",5:"OK"});
 
-  async function apiGet(path) {
-    const res = await fetch("/api" + path, { cache:"no-store" });
-    const txt = await res.text();
-    let data = null;
-    try { data = txt ? JSON.parse(txt) : null; } catch { data = { raw: txt }; }
-    if (!res.ok) throw new Error(data?.error || data?.detail || ("HTTP " + res.status));
-    return data;
-  }
-  async function kvGet(key) {
-    const r = await apiGet("/kv/get?key=" + encodeURIComponent(key));
-    return r.value;
-  }
+  let inCnt=0,outCnt=0,sortCnt=0,retCnt=0;
 
-  function isToday(iso) {
-    const d = new Date(iso);
-    const now = new Date();
-    return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
-  }
-  function statusMeta(st) {
-    st = String(st||"OK").toUpperCase();
-    if (st==="OK") return { label:"정상", color:"var(--good)" };
-    if (st==="DOWN") return { label:"미작동", color:"var(--bad)" };
-    return { label:"점검중", color:"var(--warn)" };
-  }
-  function normalizeRails(v) {
-    const rails = (v && Array.isArray(v.rails)) ? v.rails : [];
-    const map = new Map();
-    for (const r of rails) {
-      const no = parseInt(r?.no,10);
-      if (!Number.isInteger(no) || no<1 || no>5) continue;
-      map.set(no, String(r?.status||"OK").toUpperCase());
+  const per = {
+    terminal: {1:{in:0,out:0,sort:0,ret:0},2:{in:0,out:0,sort:0,ret:0},3:{in:0,out:0,sort:0,ret:0},4:{in:0,out:0,sort:0,ret:0},5:{in:0,out:0,sort:0,ret:0}},
+    center:   {1:{in:0,out:0,sort:0,ret:0},2:{in:0,out:0,sort:0,ret:0},3:{in:0,out:0,sort:0,ret:0},4:{in:0,out:0,sort:0,ret:0},5:{in:0,out:0,sort:0,ret:0}},
+  };
+
+  const inv = [];
+
+  for(const rec of (res||[])){
+    const evs = Array.isArray(rec.events) ? rec.events : [];
+    for(const ev of evs){
+      if(!ev?.time) continue;
+      if(!isTodayKst(ev.time)) continue;
+      const pe = parseHubEvent(ev);
+      if(!pe || !pe.rail || !pe.type) continue;
+      per[pe.hub][pe.rail][pe.type] += 1;
+      if(pe.type==="in") inCnt++;
+      if(pe.type==="out") outCnt++;
+      if(pe.type==="sort") sortCnt++;
+      if(pe.type==="ret") retCnt++;
     }
-    return [1,2,3,4,5].map(no => ({ no, status: map.get(no) || "OK" }));
+    if(evs.length){
+      const last = evs[evs.length-1];
+      const pe = parseHubEvent(last);
+      if(pe && ["in","sort","ret"].includes(pe.type||"")){
+        inv.push({
+          waybill: rec.waybillNo || "-",
+          hub: pe.hub==="terminal" ? "허브터미널" : "허브센터",
+          rail: pe.rail || "-",
+          msg: last.message || "-",
+          time: last.time
+        });
+      }
+    }
   }
-  function renderRails(elId, rails) {
-    const el = $(elId);
-    el.innerHTML = rails.map(r => {
-      const m = statusMeta(r.status);
-      return `<div class="rail"><div class="muted"><span class="dot" style="background:${m.color}"></span><b>${r.no}번</b></div><div style="margin-top:6px;">${m.label}</div></div>`;
+
+  $("kpiIn").textContent = String(inCnt);
+  $("kpiOut").textContent = String(outCnt);
+  $("kpiSort").textContent = String(sortCnt);
+  $("kpiRet").textContent = String(retCnt);
+
+  $("invCount").textContent = String(inv.length);
+  const invBody = $("invTbody");
+  invBody.innerHTML = inv.length ? inv.map(x=>`
+    <tr>
+      <td>${x.waybill}</td>
+      <td>${x.hub}</td>
+      <td>${x.rail}</td>
+      <td>${x.msg}</td>
+      <td>${fmtKst(x.time)}</td>
+    </tr>
+  `).join("") : `<tr><td colspan="5" class="small">체류 물량 없음</td></tr>`;
+
+  const rs = $("railsSummary");
+  rs.innerHTML = `
+    <div class="card" style="background:rgba(0,0,0,.12)">
+      <div class="h" style="margin:0 0 8px">허브터미널</div>
+      ${[1,2,3,4,5].map(i=>`<div class="row" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line)">
+        <span class="badge"><span class="dot ${railDotClass(termRails[i])}"></span>${i}번 레일</span>
+        <span class="small">${termRails[i]==="OK"?"정상작동":(termRails[i]==="STOP"?"미작동":"고장")}</span>
+      </div>`).join("")}
+    </div>
+    <div style="height:10px"></div>
+    <div class="card" style="background:rgba(0,0,0,.12)">
+      <div class="h" style="margin:0 0 8px">허브센터</div>
+      ${[1,2,3,4,5].map(i=>`<div class="row" style="justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line)">
+        <span class="badge"><span class="dot ${railDotClass(centRails[i])}"></span>${i}번 레일</span>
+        <span class="small">${centRails[i]==="OK"?"정상작동":(centRails[i]==="STOP"?"미작동":"고장")}</span>
+      </div>`).join("")}
+    </div>
+  `;
+
+  function railRows(hub){
+    return [1,2,3,4,5].map(i=>{
+      const r = per[hub][i];
+      return `<tr><td>${i}</td><td>${r.in}</td><td>${r.out}</td><td>${r.sort}</td><td>${r.ret}</td></tr>`;
     }).join("");
   }
+  $("railTerminalTbody").innerHTML = railRows("terminal");
+  $("railCenterTbody").innerHTML = railRows("center");
 
-  function typeLabel(t) {
-    return ({DOMESTIC:"국내", INTERNATIONAL:"국제", ECONOMY_CVS:"반값", RETURN:"반품"})[t] || (t||"-");
-  }
+  banner("good", `현황 업데이트 완료. (데이터 ${res.length}건)`);
+}
 
-  function findLastHubEvent(events) {
-    if (!Array.isArray(events)) return null;
-    // last by time (events already appended in order, but safe sort)
-    const sorted = [...events].filter(e => e && e.time).sort((a,b)=> new Date(a.time)-new Date(b.time));
-    for (let i=sorted.length-1; i>=0; i--) {
-      const p = String(sorted[i].place||"");
-      if (/허브터미널|허브센터/.test(p)) return sorted[i];
-    }
-    return null;
-  }
-
-  async function load() {
-    try {
-      const ping = await apiGet("/ping");
-      $("apiState").textContent = "API: OK (" + (ping.time || "-") + ")";
-    } catch (e) {
-      $("apiState").textContent = "API: 연결 실패 - " + e.message;
-      banner("bad", "API 연결 실패");
-      return;
-    }
-
-    // rails
-    try {
-      const term = normalizeRails(await kvGet("HUB_RAIL_STATUS_TERMINAL_V1"));
-      renderRails("railsTerminal", term);
-    } catch {
-      renderRails("railsTerminal", [1,2,3,4,5].map(no=>({no,status:"OK"})));
-    }
-    try {
-      const cen = normalizeRails(await kvGet("HUB_RAIL_STATUS_CENTER_V1"));
-      renderRails("railsCenter", cen);
-    } catch {
-      renderRails("railsCenter", [1,2,3,4,5].map(no=>({no,status:"OK"})));
-    }
-
-    // reservations
-    let list = [];
-    try {
-      list = await apiGet("/reservations");
-      if (!Array.isArray(list)) list = [];
-    } catch (e) {
-      banner("bad", "예약 목록을 불러오지 못했어: " + e.message);
-      list = [];
-    }
-
-    // counts
-    let inCnt=0, outCnt=0, retCnt=0;
-    const inv = [];
-    for (const rec of list) {
-      const events = Array.isArray(rec.events) ? rec.events : [];
-      for (const ev of events) {
-        if (!ev || !ev.time) continue;
-        if (!isToday(ev.time)) continue;
-        const msg = String(ev.message||"");
-        const place = String(ev.place||"");
-        if (!/허브터미널|허브센터/.test(place)) continue;
-        if (msg.includes("간선하차")) inCnt++;
-        if (msg.includes("간선상차")) outCnt++;
-        if (msg.includes("반송")) retCnt++;
-      }
-
-      const lastHub = findLastHubEvent(events);
-      if (!lastHub) continue;
-      const msg = String(lastHub.message||"");
-      // in hub if last hub event is inbound/sort and not outbound/move
-      if (msg.includes("간선하차") || msg.includes("분류완료")) {
-        // check if there is a later hub event that indicates leaving
-        const sorted = [...events].filter(e => e && e.time).sort((a,b)=> new Date(a.time)-new Date(b.time));
-        const last = sorted[sorted.length-1];
-        // if last overall event is at hub inbound/sort, we consider it in hub; otherwise ignore
-        if (last && last === lastHub) {
-          inv.push({
-            waybill: rec.waybillNo || "-",
-            type: rec.type || "-",
-            msg: lastHub.place + " · " + msg,
-            time: new Date(lastHub.time).toLocaleString("ko-KR", {hour12:false})
-          });
-        }
-      }
-    }
-
-    $("todayTbody").innerHTML = `
-      <tr><td>입고(간선하차)</td><td><b>${inCnt}</b></td></tr>
-      <tr><td>출고(간선상차)</td><td><b>${outCnt}</b></td></tr>
-      <tr><td>반송</td><td><b>${retCnt}</b></td></tr>
-    `;
-
-    const tbody = $("invTbody");
-    if (!inv.length) {
-      tbody.innerHTML = `<tr><td colspan="4" class="muted">현재 허브에 있는 물량이 없어.</td></tr>`;
-    } else {
-      tbody.innerHTML = inv.slice(0,200).map(x => `
-        <tr>
-          <td><b>${x.waybill}</b></td>
-          <td>${typeLabel(x.type)}</td>
-          <td>${x.msg}</td>
-          <td class="muted">${x.time}</td>
-        </tr>
-      `).join("");
-    }
-
-    banner("good", "작업현황 갱신 완료");
-  }
-
-  $("btnHome").onclick = () => window.location.href = "./index.html";
-  $("btnRefresh").onclick = load;
-
+document.addEventListener("DOMContentLoaded", ()=>{
+  $("btnHome").addEventListener("click", ()=> location.href="index.html");
+  $("btnRefresh").addEventListener("click", load);
   load();
-})();
+});
 </script>
 </body>
 </html>

@@ -521,51 +521,6 @@
     RETURN: "37"
   };
 
-  // --- Payment / Fee (B: 포인트, C: 계좌이체) ---
-  function normalizeWeightKg(x){
-    let v = Number(x);
-    if(!isFinite(v) || v <= 0) return 0;
-    // If user accidentally entered grams (e.g., 3423), convert to kg
-    if(v > 100) v = v / 1000;
-    return Math.round(v*1000)/1000;
-  }
-  function calcFeeKRW(type, weightKg){
-    const w = normalizeWeightKg(weightKg);
-    // Simple fee table (adjust anytime)
-    if(type === "ECONOMY_CVS") return 2000;              // 반값택배
-    if(type === "RETURN") return 3000;                   // 반품
-    if(type === "INTERNATIONAL") return 12000 + Math.ceil(Math.max(0, w-0.5)) * 6000; // 국제(대충)
-    // DOMESTIC default
-    return 4000 + Math.ceil(Math.max(0, w-2)) * 500;     // 국내
-  }
-  async function promptPayment(type, feeAmount){
-    const amount = Number(feeAmount)||0;
-    const label = TYPE_LABEL[type] || type;
-    const msg = `요금: ${amount.toLocaleString()}원\n결제방식 선택\n1) 포인트(선불)\n2) 계좌이체(입금대기)\n\n번호를 입력해줘 (1 또는 2)`;
-    const pick = (prompt(msg,"1")||"").trim();
-    if(pick !== "1" && pick !== "2"){ alert("결제방식을 선택해야 진행돼!"); return null; }
-    if(pick === "1"){
-      return {
-        amountKRW: amount,
-        method: "POINT",
-        status: "PAID",
-        depositorName: "",
-        paidAt: nowStr(),
-      };
-    }
-    const depositor = (prompt("계좌이체 - 입금자명을 입력해줘 (입금대기 저장)","")||"").trim();
-    if(!depositor){ alert("입금자명을 입력해야 해!"); return null; }
-    return {
-      amountKRW: amount,
-      method: "TRANSFER",
-      status: "PENDING",
-      depositorName: depositor,
-      paidAt: "",
-    };
-  }
-
-
-
   function nowStr(){
     const d = new Date();
     const pad = (n)=> String(n).padStart(2,"0");
@@ -747,14 +702,7 @@
     const prefix2 = PREFIX[currentType];
     const waybill = makeWaybill(prefix2);
 
-    const feeAmount = calcFeeKRW(currentType, weight);
-    const payInfo = await promptPayment(currentType, feeAmount);
-    if(!payInfo) return;
-
     const rec = {
-      fee: { amountKRW: feeAmount, currency: "KRW" },
-      payment: payInfo,
-
       reserveNo: makeWalkinReserveNo(),
       type: currentType,
       pickup: "STORE",
@@ -885,17 +833,6 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
     }
     const prefix2 = PREFIX[rec.type];
     const wb = makeWaybill(prefix2);
-
-    // Payment required (if not already set)
-    const wkg = rec?.package?.weightKg ?? 0;
-    const feeAmount = calcFeeKRW(rec.type, wkg);
-    if(!rec.fee) rec.fee = { amountKRW: feeAmount, currency: "KRW" };
-    if(!rec.payment){
-      const payInfo = await promptPayment(rec.type, feeAmount);
-      if(!payInfo) return;
-      rec.payment = payInfo;
-    }
-
     rec.waybillNo = wb;
     rec.status = "WAYBILL_ISSUED";
     rec.waybillIssuedAt = nowStr();
@@ -951,5 +888,140 @@ ${rec.type === "INTERNATIONAL" ? `국가: ${escapeHtml(rec.package.country)}` : 
   // API banner retry
   try{ $("apiRetry").onclick = () => location.reload(); }catch(e){}
 </script>
+
+<!-- Payment Modal (v1.1.3) -->
+<div id="payModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9999; align-items:center; justify-content:center; padding:18px">
+  <div style="max-width:520px; width:100%; border:1px solid rgba(255,255,255,.10); border-radius:18px; background:rgba(17,26,43,.92); backdrop-filter: blur(10px); box-shadow: 0 18px 50px rgba(0,0,0,.35); padding:14px">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px">
+      <div style="font-weight:900">결제 방법 선택</div>
+      <button id="btnPayClose" type="button" style="border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); color:#e9eefc; border-radius:12px; padding:8px 10px; cursor:pointer">닫기</button>
+    </div>
+    <div style="margin-top:10px; color:#a7b2d6; font-size:12px">
+      • 포인트: 즉시 결제완료(PAID)<br>
+      • 가상계좌(계좌이체): 입금대기(PENDING)로 저장됨 (점포에서 입금확인 후 처리 권장)
+    </div>
+
+    <div style="margin-top:12px; display:grid; gap:10px">
+      <button id="btnPayPoint" type="button" style="border:1px solid rgba(52,211,153,.45); background:rgba(52,211,153,.14); color:#e9eefc; border-radius:14px; padding:12px; cursor:pointer; font-weight:800">포인트(선불)로 결제</button>
+
+      <div style="border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:12px; background:rgba(0,0,0,.14)">
+        <div style="font-weight:800; margin-bottom:8px">가상계좌(계좌이체)</div>
+        <div style="display:grid; gap:8px">
+          <input id="payDepositor" placeholder="입금자명 (필수)" style="width:100%; border:1px solid rgba(255,255,255,.10); background:rgba(0,0,0,.18); color:#e9eefc; padding:11px 12px; border-radius:12px; outline:none"/>
+          <button id="btnPayVBank" type="button" style="border:1px solid rgba(122,167,255,.45); background:rgba(122,167,255,.14); color:#e9eefc; border-radius:14px; padding:12px; cursor:pointer; font-weight:800">가상계좌로 진행(입금대기)</button>
+          <div id="vbankInfo" style="display:none; font-size:12px; color:#a7b2d6"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ===== Payment Patch v1.1.3 ===== */
+(function(){
+  const PAY_MODAL = document.getElementById("payModal");
+  if(!PAY_MODAL) return;
+
+  const closeBtn = document.getElementById("btnPayClose");
+  const btnPoint = document.getElementById("btnPayPoint");
+  const btnVBank = document.getElementById("btnPayVBank");
+  const depositor = document.getElementById("payDepositor");
+  const vbankInfo = document.getElementById("vbankInfo");
+
+  let pendingResolver = null;
+  let pendingRejecter = null;
+
+  function openModal(){
+    depositor.value = "";
+    vbankInfo.style.display = "none";
+    vbankInfo.textContent = "";
+    PAY_MODAL.style.display = "flex";
+  }
+  function closeModal(){ PAY_MODAL.style.display = "none"; }
+
+  function genVbank(){
+    const base = "605";
+    let rest = "";
+    for(let i=0;i<10;i++) rest += String(Math.floor(Math.random()*10));
+    return `${base}-${rest}`;
+  }
+
+  function resolve(obj){
+    if(pendingResolver){
+      pendingResolver(obj);
+      pendingResolver = null; pendingRejecter = null;
+    }
+    closeModal();
+  }
+  function reject(msg){
+    if(pendingRejecter){
+      pendingRejecter(new Error(msg || "PAY_CANCEL"));
+      pendingResolver = null; pendingRejecter = null;
+    }
+    closeModal();
+  }
+
+  closeBtn?.addEventListener("click", ()=> reject("PAY_CANCEL"));
+  PAY_MODAL.addEventListener("click", (e)=>{ if(e.target === PAY_MODAL) reject("PAY_CANCEL"); });
+
+  btnPoint?.addEventListener("click", ()=>{
+    resolve({ method:"POINT", status:"PAID", paidAt:new Date().toISOString() });
+  });
+
+  btnVBank?.addEventListener("click", ()=>{
+    const name = (depositor.value || "").trim();
+    if(!name){ alert("입금자명을 입력해줘."); return; }
+    const vbank = genVbank();
+    vbankInfo.style.display = "block";
+    vbankInfo.textContent = `가상계좌: ${vbank} (입금 확인 전까지 상태는 입금대기)`;
+    resolve({ method:"VBANK", status:"PENDING", depositorName:name, vbank, createdAt:new Date().toISOString() });
+  });
+
+  async function choosePayment(){
+    return await new Promise((res, rej)=>{
+      pendingResolver = res;
+      pendingRejecter = rej;
+      openModal();
+    });
+  }
+
+  // Hook issue-waybill function if exists.
+  const candidates = ["issueWaybill","issueWaybillForType","confirmIssueWaybill","finalIssueWaybill","doIssueWaybill"];
+  let hooked = false;
+
+  function wrap(fnName){
+    const orig = window[fnName];
+    if(typeof orig !== "function") return false;
+
+    window[fnName] = async function(...args){
+      const payment = await choosePayment();
+      const rec = args.find(a=>a && typeof a==="object" && ("reserveNo" in a || "waybillNo" in a || "type" in a)) || null;
+      if(rec){
+        rec.payment = rec.payment || {};
+        rec.payment.method = payment.method;
+        rec.payment.status = payment.status;
+        rec.payment.paidAt = payment.paidAt || "";
+        rec.payment.depositorName = payment.depositorName || "";
+        rec.payment.vbank = payment.vbank || "";
+        rec.payment.createdAt = payment.createdAt || "";
+      }
+      return await orig.apply(this, args);
+    };
+    return true;
+  }
+
+  for(const n of candidates){
+    if(wrap(n)){ hooked = true; break; }
+  }
+
+  window.choosePaymentForWaybill = choosePayment;
+
+  if(!hooked){
+    console.warn("[PaymentPatch] issueWaybill 함수 훅 실패. 필요하면 choosePaymentForWaybill()를 직접 호출해줘.");
+  }
+})();
+</script>
+
 </body>
 </html>
