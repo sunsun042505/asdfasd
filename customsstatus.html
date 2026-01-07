@@ -270,6 +270,21 @@
     return s;
   }
 
+
+  function fmtTime(s){
+    const t = (s||"").replace(/\D/g,"");
+    if (t.length >= 14){
+      return `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)} ${t.slice(8,10)}:${t.slice(10,12)}:${t.slice(12,14)}`;
+    }
+    if (t.length === 12){
+      return `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)} ${t.slice(8,10)}:${t.slice(10,12)}`;
+    }
+    if (t.length === 8){
+      return `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)}`;
+    }
+    return (s||"").trim();
+  }
+
   function parseTimeSortable(s){
     // yyyymmddhhmmss / yyyymmddhhmm / yyyymmdd 형태를 대충 정렬 가능하도록 숫자로 변환
     const t = (s||"").replace(/\D/g,"");
@@ -343,12 +358,18 @@
 
     // 타임라인 테이블 rows
     const rows = dtlsAll.map(n => {
-      const stage = pick(n, ["prcsStts", "csclPrgsStts", "cargTrcnRelaBsopTpcdNm", "prgsStts", "prgsStCd"]) 
-                || pickByKeywords(n, ["prcs","stts","prgs","bsop"]);
-      const time = pick(n, ["prcsDttm", "rlbrDttm", "prcsDt"]);
+      // 단계(상태명): 날짜/시간 태그(prcsDttm 등)로 잘못 잡히지 않게 "상태용 태그"만 우선 탐색
+      let stage = pick(n, ["cargTrcnRelaBsopTpcdNm", "prcsStts", "csclPrgsStts", "prgsStts", "prgsStCd"]);
+      if (!stage) stage = pickByKeywords(n, ["bsop","stts","prgs","rlbr","bfhn","dclr"]);
+      if (/^\d{8,14}$/.test((stage||"").trim())) stage = ""; // stage가 yyyymmdd(또는 yyyymmddhhmmss)처럼 나오면 무효
+
+      const timeRaw = pick(n, ["prcsDttm", "rlbrDttm", "prcsDt"]);
+      const time = fmtTime(timeRaw);
+
       const place = pick(n, ["shedNm", "shedSgn", "dsprNm", "ldprNm"]);
       const remark = pick(n, ["rlbrCn", "bfhnGdncCn", "ntceInfo"]);
-      return { stage, time, place, remark, _sort: parseTimeSortable(time) };
+
+      return { stage, time, place, remark, _sort: parseTimeSortable(timeRaw) };
     }).filter(r => r.stage || r.time || r.place || r.remark);
 
     rows.sort((a,b) => b._sort - a._sort);
