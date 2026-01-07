@@ -30,42 +30,31 @@
         var(--bg);
       color:var(--text);
     }
-    .wrap{max-width:980px;margin:0 auto;padding:22px}
-    .top{
-      display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;
-      margin-bottom:16px;
-    }
-    .brand{display:flex;flex-direction:column;gap:6px}
+    .wrap{max-width:1020px;margin:0 auto;padding:22px}
+    .top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+    .brand{display:flex;flex-direction:column;gap:6px;}
     .brand h1{margin:0;font-size:20px;letter-spacing:.2px}
-    .brand .sub{color:var(--muted);font-size:13px;line-height:1.45}
+    .brand .sub{color:var(--muted);font-size:13px;line-height:1.4}
     .chips{display:flex;gap:8px;flex-wrap:wrap}
-    .chip{
-      padding:8px 10px;border:1px solid var(--line);background:var(--chip);
-      border-radius:999px;font-size:12px;color:var(--muted)
-    }
-
+    .chip{padding:8px 10px;border:1px solid var(--line);background:var(--chip);border-radius:999px;font-size:12px;color:var(--muted)}
+    .chip b{color:var(--text)}
     .panel{
       background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 60%), var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
+      border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
     }
     .panel-head{
       padding:16px 16px 12px;border-bottom:1px solid var(--line);
       display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
     }
     .panel-head .title{font-weight:900}
-    .panel-head .small{font-size:12px;color:var(--muted);line-height:1.45}
+    .panel-head .small{font-size:12px;color:var(--muted)}
     .panel-body{padding:16px}
-
     .grid{
-      display:grid;grid-template-columns: 1.1fr 2fr 1fr auto;
+      display:grid;grid-template-columns: 1.2fr 2fr 1fr auto;
       gap:10px;align-items:end;
     }
     @media(max-width:860px){.grid{grid-template-columns:1fr 1fr}}
     @media(max-width:520px){.grid{grid-template-columns:1fr}}
-
     label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
     select,input,button{
       width:100%;padding:12px 12px;border-radius:14px;border:1px solid var(--line);
@@ -74,18 +63,13 @@
     input::placeholder{color:rgba(233,238,252,.45)}
     button{
       background:linear-gradient(135deg, rgba(92,124,250,.95), rgba(55,214,122,.70));
-      border:none;font-weight:900;cursor:pointer;
-      padding:12px 16px;
+      border:none;font-weight:900;cursor:pointer;padding:12px 16px;
     }
     button:disabled{opacity:.55;cursor:not-allowed}
-    .hint{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.55}
+    .hint{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.45}
     .hint b{color:var(--text)}
     .hr{height:1px;background:var(--line);margin:16px 0}
-
-    .statusbar{
-      display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;
-      margin-top:12px;
-    }
+    .statusbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px;}
     .badge{
       display:inline-flex;align-items:center;gap:8px;
       padding:8px 12px;border-radius:999px;border:1px solid var(--line);
@@ -100,36 +84,45 @@
     }
     @media(max-width:860px){.cards{grid-template-columns:1fr 1fr}}
     @media(max-width:520px){.cards{grid-template-columns:1fr}}
-    .kv{
-      padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03)
-    }
+    .kv{padding:12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03)}
     .k{font-size:11px;color:var(--muted);margin-bottom:6px}
     .v{font-size:14px;font-weight:900;word-break:break-word}
 
-    .table{
+    /* Timeline table */
+    .tbl-wrap{
       margin-top:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02);
       overflow:hidden;
     }
     table{width:100%;border-collapse:collapse}
-    th,td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
-    th{font-size:11px;color:var(--muted);text-align:left;background:rgba(255,255,255,.03)}
-    td{font-size:13px}
-    tr:last-child td{border-bottom:none}
-    .td-muted{color:var(--muted);font-size:12px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+    thead th{
+      text-align:left;font-size:12px;color:rgba(233,238,252,.78);
+      padding:12px 12px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--line);
+      letter-spacing:.2px;
+    }
+    tbody td{
+      padding:12px;border-bottom:1px solid rgba(255,255,255,.08);
+      vertical-align:top;font-size:13px;color:rgba(233,238,252,.92);
+    }
+    tbody tr:hover td{background:rgba(255,255,255,.03)}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .muted{color:var(--muted)}
+    .stage{font-weight:900}
+    .place{white-space:pre-line}
+    .note{white-space:pre-line}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.04);color:var(--muted);font-size:12px
+    }
 
     .error{
       margin-top:14px;padding:12px;border-radius:16px;border:1px solid rgba(255,77,109,.35);
-      background:rgba(255,77,109,.12);color:#ffdbe2;font-size:13px;line-height:1.6
+      background:rgba(255,77,109,.12);color:#ffdbe2;font-size:13px;line-height:1.5
     }
-    .raw{
-      margin-top:14px;
-      border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02);
-      overflow:hidden
-    }
+    .raw{margin-top:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02);overflow:hidden}
     .raw-head{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
     .raw-head b{font-size:13px}
-    .raw-head button{width:auto;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.10);border:1px solid var(--line);font-weight:900}
+    .raw-head button{width:auto;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.10);border:1px solid var(--line);font-weight:800;color:var(--text);cursor:pointer}
     pre{margin:0;padding:12px;white-space:pre-wrap;word-break:break-word;color:rgba(233,238,252,.9)}
   </style>
 </head>
@@ -139,14 +132,13 @@
       <div class="brand">
         <h1>선우택배 · 통관 진행 조회</h1>
         <div class="sub">
-          관세청(유니패스) 결과에서 <b>핵심필드</b>만 뽑아 카드/타임라인으로 보여줌.<br/>
-          ⚠️ 이 화면은 내부 확인용이라 <b>운송장번호를 그대로 표시</b>함.
+          ✅ <b>특송업체</b>=<span class="mono">&lt;frwrEntsConm&gt;</span> · ✅ <b>선사/항공사</b>=<span class="mono">&lt;shcoFlco&gt;</span><br/>
+          ✅ <b>처리단계</b>는 무조건 “처리단계 텍스트”만 표시(신고번호/코드/시간이 단계로 올라오는 버그 제거)
         </div>
       </div>
       <div class="chips">
-        <div class="chip">특송업체: <span class="mono">&lt;frwrEntsConm&gt;</span></div>
-        <div class="chip">선사/항공사: <span class="mono">&lt;shcoFlco&gt;</span></div>
-        <div class="chip">연도 자동보정/재시도</div>
+        <div class="chip">버전: <b id="ver">v4.7-stage</b></div>
+        <div class="chip">API: <b>/.netlify/functions/unipass</b></div>
       </div>
     </div>
 
@@ -154,9 +146,7 @@
       <div class="panel-head">
         <div>
           <div class="title">조회</div>
-          <div class="small">
-            HBL/MBL은 연도가 필요하지만, 이제는 <b>입력 형식 때문에 조회가 막히지 않게</b> 자동으로 보정/재시도함.
-          </div>
+          <div class="small">HBL/MBL은 보통 연도(blYy)가 필요하지만, 연도 검증으로 조회를 막지 않고 자동 보정/재시도함.</div>
         </div>
         <div class="small" id="last">마지막 조회: -</div>
       </div>
@@ -166,7 +156,7 @@
           <div>
             <label>조회 타입</label>
             <select id="type">
-              <option value="hbl">H B/L</option>
+              <option value="hbl">H B/L (특송/직구)</option>
               <option value="mbl">M B/L</option>
               <option value="carg">화물관리번호</option>
             </select>
@@ -177,7 +167,7 @@
           </div>
           <div>
             <label>B/L 연도(blYy)</label>
-            <input id="blYy" placeholder="예) 2026 또는 2026년" inputmode="numeric" />
+            <input id="blYy" placeholder="예) 2026 (비워도 됨)" inputmode="numeric" />
           </div>
           <div>
             <label>&nbsp;</label>
@@ -186,13 +176,13 @@
         </div>
 
         <div class="hint">
-          • 연도에 <b>공백/전각숫자/‘년’</b>이 섞여도 자동으로 4자리 연도로 정리해줌.<br/>
-          • 연도가 비어있으면 <b>올해 → 작년</b> 순서로 자동 재조회해서 결과 있는 연도를 잡아줌.
+          • 통관조회 화면은 내부용이라 <b>운송장번호 전체 표시</b>함.<br/>
+          • “단계”는 <b>처리단계</b>만 나오게 고정했음 (신고번호/코드가 단계로 뜨면 버그).
         </div>
 
         <div class="statusbar">
           <div class="badge"><span class="dot" id="dot"></span><span id="badge">대기</span></div>
-          <div class="badge">API: <span style="color:var(--text)">/.netlify/functions/unipass</span></div>
+          <div class="badge"><span class="muted">연도 처리:</span> <span id="yearHint" class="mono">-</span></div>
         </div>
 
         <div id="result"></div>
@@ -201,39 +191,17 @@
   </div>
 
 <script>
-  // ===== utilities =====
+(() => {
+  const VERSION = "v4.7-stage (2026-01-07)";
   const $ = (id) => document.getElementById(id);
+
+  $("ver").textContent = VERSION;
 
   const nowKST = () => new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
 
   function setState(kind, text){
     $("badge").textContent = text;
     $("dot").className = "dot" + (kind === "ok" ? " ok" : kind === "bad" ? " bad" : "");
-  }
-
-  function escapeHtml(s){
-    return (s||"")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
-  }
-
-  function toAsciiDigits(s){
-    // 전각 숫자(０-９) -> 반각(0-9)
-    const map = {
-      "０":"0","１":"1","２":"2","３":"3","４":"4",
-      "５":"5","６":"6","７":"7","８":"8","９":"9"
-    };
-    return (s||"").split("").map(ch => map[ch] ?? ch).join("");
-  }
-
-  function normalizeYear(raw){
-    const s = toAsciiDigits((raw||"").trim());
-    // 2026, 2026년, 2026-01 같은 입력에서 연도만 뽑기
-    const m = s.match(/(19\d{2}|20\d{2})/);
-    return m ? m[0] : "";
   }
 
   function xmlText(node, tag){
@@ -249,61 +217,84 @@
     return "";
   }
 
-  function pickByKeywords(xmlNode, keywords){
-    // tagName에 키워드가 포함된 첫 번째 "값 있는" 태그를 반환
-    const all = xmlNode.getElementsByTagName("*");
-    for (let i=0;i<all.length;i++){
-      const el = all[i];
-      const tag = (el.tagName || "").toLowerCase();
-      const val = (el.textContent || "").trim();
-      if (!val) continue;
-      for (const kw of keywords){
-        if (tag.includes(kw)) return val;
-      }
+  function escapeHtml(s){
+    return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+  }
+
+  function fmtDttm(s){
+    s = (s||"").trim();
+    if (/^\d{14}$/.test(s)){
+      return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)} ${s.slice(8,10)}:${s.slice(10,12)}:${s.slice(12,14)}`;
+    }
+    if (/^\d{12}$/.test(s)){
+      return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)} ${s.slice(8,10)}:${s.slice(10,12)}:00`;
+    }
+    if (/^\d{8}$/.test(s)){
+      return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+    }
+    return s;
+  }
+
+  function normalizeYear(input){
+    const raw = (input||"").toString();
+    const digits = raw.replace(/[^\d]/g, "");
+    if (digits.length >= 4) return digits.slice(0,4);
+    return "";
+  }
+
+  function containsKorean(s){
+    return /[가-힣]/.test(s||"");
+  }
+
+  function looksLikeIdOrCode(s){
+    s = (s||"").trim();
+    if (!s) return true;
+    if (/^\d{8,}$/.test(s)) return true;
+    if (/^[A-Z0-9]{8,}$/.test(s)) return true;
+    if (/^[0-9A-Z\/]{6,}$/.test(s) && !containsKorean(s)) return true;
+    return false;
+  }
+
+  function stageFromDtl(n){
+    // ✅ 단계는 이 후보만 보고, 한글 없는 값은 단계로 안 올림
+    const candidates = [
+      pick(n, ["prcsStts"]),
+      pick(n, ["cargTrcnRelaBsopTpcdNm"]),
+      pick(n, ["bfhnGdncCn"]),
+    ].map(v => (v||"").trim()).filter(Boolean);
+
+    for (const v of candidates){
+      if (!containsKorean(v)) continue;
+      if (looksLikeIdOrCode(v)) continue;
+      return v;
+    }
+    return "-";
+  }
+
+  function noteFromDtl(n){
+    const v = pick(n, ["rlbrCn", "bfhnGdncCn", "rmk", "remark"]);
+    return (v||"").trim() || "-";
+  }
+
+  function placeFromDtl(n){
+    const shedNm = pick(n, ["shedNm"]);
+    const cstmNm = pick(n, ["cstmNm", "csclCstmNm", "dclrCstmNm"]);
+    const place = (shedNm || cstmNm || "-").trim();
+    return place || "-";
+  }
+
+  function findFirstText(root, tags){
+    let v = pick(root, tags);
+    if (v) return v;
+    const dtlsAll = Array.from(root.getElementsByTagName("cargCsclPrgsInfoDtlQryVo"));
+    for (const d of dtlsAll){
+      v = pick(d, tags);
+      if (v) return v;
     }
     return "";
   }
 
-  function fmtDate8(s){
-    s = (s||"").trim();
-    if (/^\d{8}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
-    return s;
-  }
-
-
-  function fmtTime(s){
-    const t = (s||"").replace(/\D/g,"");
-    if (t.length >= 14){
-      return `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)} ${t.slice(8,10)}:${t.slice(10,12)}:${t.slice(12,14)}`;
-    }
-    if (t.length === 12){
-      return `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)} ${t.slice(8,10)}:${t.slice(10,12)}`;
-    }
-    if (t.length === 8){
-      return `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)}`;
-    }
-    return (s||"").trim();
-  }
-
-  function parseTimeSortable(s){
-    // yyyymmddhhmmss / yyyymmddhhmm / yyyymmdd 형태를 대충 정렬 가능하도록 숫자로 변환
-    const t = (s||"").replace(/\D/g,"");
-    if (!t) return 0;
-    return Number(t.slice(0,14).padEnd(14,"0"));
-  }
-
-  // ===== API =====
-  async function callAPI(type, no, blYy){
-    const qs = new URLSearchParams({ type, no });
-    if (blYy) qs.set("blYy", blYy);
-    const r = await fetch(`/.netlify/functions/unipass?${qs.toString()}`);
-    const text = await r.text();
-    if (!r.ok) throw new Error(text || `HTTP ${r.status}`);
-    return text;
-  }
-
-  // ===== parse & render =====
-  function parseUnipass(xmlDoc, inputNo){
+  function parseUnipass(xmlDoc){
     const root = xmlDoc;
 
     const tCnt = pick(root, ["tCnt"]);
@@ -311,128 +302,92 @@
 
     const vo = root.getElementsByTagName("cargCsclPrgsInfoQryVo")[0] || root;
 
-    const csclPrgsStts = pick(vo, ["csclPrgsStts", "prgsStts", "prgsStCd"]);
-    const prcsDttm = pick(vo, ["prcsDttm", "prcsDt", "dttm"]);
     const prnm = pick(vo, ["prnm", "gdsNm", "prdtNm"]);
-    const etprDt = fmtDate8(pick(vo, ["etprDt", "etprDt8", "etprYmd"]));
-    const ldpr = pick(vo, ["ldprNm", "ldprCd"]);
-    const dspr = pick(vo, ["dsprNm", "dsprCd"]);
+    const etprDt = pick(vo, ["etprDt", "etprDt8", "etprYmd"]);
+    const csclPrgsStts = pick(vo, ["csclPrgsStts", "prgsStts"]);
+    const prcsDttm = pick(vo, ["prcsDttm", "prcsDt"]);
 
-    // ✅ 정확 태그 고정 (너가 준 정답)
-    let expressNm = pick(vo, ["frwrEntsConm"]);
-    let carrierNm = pick(vo, ["shcoFlco", "shcoFlcoNm"]);
+    // ✅ 정확 고정
+    const expressNm = findFirstText(root, ["frwrEntsConm"]);
+    const carrierNm = findFirstText(root, ["shcoFlco", "shcoFlcoNm"]);
+    const customsNm = findFirstText(root, ["cstmNm", "csclCstmNm", "dclrCstmNm"]);
 
-    // 세관명: 태그가 비는 케이스가 있어서 후보 + 코드 fallback
-    let customsNm = pick(vo, ["cstmNm", "csclCstmNm", "dclrCstmNm", "cstm"]);
-    let customsCd = pick(vo, ["cstmCd", "csclCstmCd", "dclrCstmCd", "cstmcd", "cstmCd1"]);
-
-    // 상세 이력
     const dtlsAll = Array.from(root.getElementsByTagName("cargCsclPrgsInfoDtlQryVo"));
-
-    // 상세에서 2차 보강 (vo에 없을 때)
-    if (!expressNm) {
-      for (const n of dtlsAll){
-        const v = xmlText(n, "frwrEntsConm");
-        if (v) { expressNm = v; break; }
-      }
-    }
-    if (!carrierNm) {
-      for (const n of dtlsAll){
-        const v = xmlText(n, "shcoFlco");
-        if (v) { carrierNm = v; break; }
-        const v2 = xmlText(n, "shcoFlcoNm");
-        if (v2) { carrierNm = v2; break; }
-      }
-    }
-    if (!customsNm) {
-      for (const n of dtlsAll){
-        const v = pick(n, ["cstmNm", "csclCstmNm", "dclrCstmNm", "cstm"]);
-        if (v) { customsNm = v; break; }
-      }
-      if (!customsNm) customsNm = pickByKeywords(vo, ["cstm","custom"]);
-    }
-    if (!customsCd) {
-      customsCd = pickByKeywords(vo, ["cstmcd","cstm_cd","cstm"]);
-      customsCd = (customsCd && /^\d{6,}$/.test(customsCd.replace(/\D/g,""))) ? customsCd.replace(/\D/g,"") : (pick(vo, ["cstmCd"]) || "");
-    }
-
-    // 타임라인 테이블 rows
     const rows = dtlsAll.map(n => {
-      // 단계(상태명): 날짜/시간 태그(prcsDttm 등)로 잘못 잡히지 않게 "상태용 태그"만 우선 탐색
-      let stage = pick(n, ["cargTrcnRelaBsopTpcdNm", "prcsStts", "csclPrgsStts", "prgsStts", "prgsStCd"]);
-      if (!stage) stage = pickByKeywords(n, ["bsop","stts","prgs","rlbr","bfhn","dclr"]);
-      if (/^\d{8,14}$/.test((stage||"").trim())) stage = ""; // stage가 yyyymmdd(또는 yyyymmddhhmmss)처럼 나오면 무효
-
       const timeRaw = pick(n, ["prcsDttm", "rlbrDttm", "prcsDt"]);
-      const time = fmtTime(timeRaw);
+      return {
+        stage: stageFromDtl(n),
+        timeRaw: (timeRaw||"").trim(),
+        time: fmtDttm(timeRaw),
+        place: placeFromDtl(n),
+        note: noteFromDtl(n),
+      };
+    });
 
-      const place = pick(n, ["shedNm", "shedSgn", "dsprNm", "ldprNm"]);
-      const remark = pick(n, ["rlbrCn", "bfhnGdncCn", "ntceInfo"]);
+    rows.sort((a,b) => (b.timeRaw||"").localeCompare(a.timeRaw||""));
 
-      return { stage, time, place, remark, _sort: parseTimeSortable(timeRaw) };
-    }).filter(r => r.stage || r.time || r.place || r.remark);
-
-    rows.sort((a,b) => b._sort - a._sort);
-
-    return {
-      tCnt, ntceInfo,
-      no: (inputNo||"").trim(),
-      csclPrgsStts, prcsDttm,
-      customsNm: customsNm || (customsCd ? `세관코드 ${customsCd}` : ""),
-      customsCd,
-      expressNm,
-      carrierNm,
-      prnm, etprDt, ldpr, dspr,
-      rows: rows.slice(0, 20) // 최근 20건
-    };
+    return { tCnt, ntceInfo, csclPrgsStts, prcsDttm, prnm, etprDt, expressNm, carrierNm, customsNm, rows };
   }
 
-  function cardHTML(d, usedYear){
+  function timelineTableHTML(rows){
+    if (!rows || !rows.length){
+      return `<div class="error">상세 이력(dtl)이 비어있음</div>`;
+    }
+    const topPills = `
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pill">단계는 <b>처리단계</b>만 표시</span>
+        <span class="pill">신고번호/코드/시간은 단계로 올리지 않음</span>
+      </div>
+    `;
+
+    const body = rows.map(r => `
+      <tr>
+        <td class="stage">${escapeHtml(r.stage || "-")}</td>
+        <td class="mono">${escapeHtml(r.time || "-")}</td>
+        <td class="place">${escapeHtml(r.place || "-")}</td>
+        <td class="note">${escapeHtml(r.note || "-")}</td>
+      </tr>
+    `).join("");
+
+    return `
+      ${topPills}
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:26%">단계</th>
+              <th style="width:18%">시간</th>
+              <th style="width:28%">장소</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function cardHTML(inputNo, d){
     return `
       <div class="hr"></div>
 
       <div class="chips" style="margin-bottom:10px">
-        <div class="chip">번호: <b style="color:var(--text)">${escapeHtml(d.no || "-")}</b></div>
-        ${usedYear ? `<div class="chip">연도: <b style="color:var(--text)">${escapeHtml(usedYear)}</b></div>` : ``}
-        <div class="chip">상태: <b style="color:var(--text)">${escapeHtml(d.csclPrgsStts || "-")}</b></div>
-        <div class="chip">처리: <b style="color:var(--text)">${escapeHtml(d.prcsDttm || "-")}</b></div>
+        <div class="chip">번호: <b class="mono">${escapeHtml(inputNo)}</b></div>
+        <div class="chip">상태: <b>${escapeHtml(d.csclPrgsStts || "-")}</b></div>
+        <div class="chip">처리: <b class="mono">${escapeHtml(fmtDttm(d.prcsDttm || "-"))}</b></div>
       </div>
 
       <div class="cards">
         <div class="kv"><div class="k">특송업체</div><div class="v">${escapeHtml(d.expressNm || "-")}</div></div>
         <div class="kv"><div class="k">선사/항공사</div><div class="v">${escapeHtml(d.carrierNm || "-")}</div></div>
-        <div class="kv"><div class="k">세관</div><div class="v">${escapeHtml(d.customsNm || "-")}</div></div>
+        <div class="kv"><div class="k">세관명</div><div class="v">${escapeHtml(d.customsNm || "-")}</div></div>
 
-        <div class="kv"><div class="k">입항일</div><div class="v">${escapeHtml(d.etprDt || "-")}</div></div>
         <div class="kv"><div class="k">품명</div><div class="v">${escapeHtml(d.prnm || "-")}</div></div>
-        <div class="kv"><div class="k">항구(적재/양륙)</div><div class="v">${escapeHtml((d.ldpr||"-") + " / " + (d.dspr||"-"))}</div></div>
+        <div class="kv"><div class="k">입항일</div><div class="v mono">${escapeHtml(fmtDttm(d.etprDt || "-"))}</div></div>
+        <div class="kv"><div class="k">이력 건수</div><div class="v">${escapeHtml(String(d.rows?.length ?? 0))}</div></div>
       </div>
 
-      ${
-        d.rows && d.rows.length ? `
-        <div class="table">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:28%">단계</th>
-                <th style="width:22%">시간</th>
-                <th style="width:20%">장소</th>
-                <th>비고</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${d.rows.map(r => `
-                <tr>
-                  <td><b>${escapeHtml(r.stage || "-")}</b></td>
-                  <td class="td-muted">${escapeHtml(r.time || "-")}</td>
-                  <td class="td-muted">${escapeHtml(r.place || "-")}</td>
-                  <td class="td-muted">${escapeHtml(r.remark || "-")}</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>` : ""
-      }
+      ${timelineTableHTML(d.rows)}
     `;
   }
 
@@ -448,48 +403,63 @@
     `;
   }
 
-  function attachRawToggle(){
-    const btn = document.getElementById("toggleRaw");
-    const pre = document.getElementById("rawPre");
-    if (!btn || !pre) return;
-    let hidden = false;
-    btn.addEventListener("click", ()=>{
-      hidden = !hidden;
-      pre.style.display = hidden ? "none" : "block";
-    });
+  async function callAPI(type, no, blYy){
+    const qs = new URLSearchParams({ type, no });
+    if (blYy) qs.set("blYy", blYy);
+    const r = await fetch(`/.netlify/functions/unipass?${qs.toString()}`);
+    const text = await r.text();
+    if (!r.ok) throw new Error(text || `HTTP ${r.status}`);
+    return text;
   }
 
-  // ===== main flow =====
+  async function callWithYearStrategy(type, no, blYyInput){
+    const now = new Date();
+    const yNow = now.getFullYear();
+    const yPrev = yNow - 1;
+
+    const yNorm = normalizeYear(blYyInput);
+
+    if (type === "carg"){
+      $("yearHint").textContent = "연도 없음 (carg)";
+      return { xmlText: await callAPI(type, no, ""), usedYear: "" };
+    }
+
+    const tries = [];
+    if (yNorm) tries.push(yNorm);
+    if (!tries.includes(String(yNow))) tries.push(String(yNow));
+    if (!tries.includes(String(yPrev))) tries.push(String(yPrev));
+
+    $("yearHint").textContent = tries.join(" → ") + " 자동 시도";
+
+    let lastXml = "";
+    for (const y of tries){
+      const xmlText = await callAPI(type, no, y);
+      lastXml = xmlText;
+      const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+      const tCnt = pick(xmlDoc, ["tCnt"]);
+      const ntceInfo = pick(xmlDoc, ["ntceInfo"]);
+      if (ntceInfo){
+        return { xmlText, usedYear: y };
+      }
+      if (tCnt && tCnt !== "0"){
+        $("blYy").value = y;
+        return { xmlText, usedYear: y };
+      }
+    }
+
+    return { xmlText: lastXml, usedYear: tries[0] || "" };
+  }
+
   $("btn").addEventListener("click", async () => {
     const type = $("type").value;
     const no = ($("no").value || "").trim();
-    const blYyRaw = ($("blYy").value || "").trim();
+    const blYy = ($("blYy").value || "").trim();
 
     $("result").innerHTML = "";
-
     if (!no){
-      setState("bad","번호를 입력해줘");
+      setState("bad","번호 필요");
       $("result").innerHTML = `<div class="error">번호가 비었음</div>`;
       return;
-    }
-
-    // ✅ 더 이상 "연도 때문에" 조회를 막지 않음
-    let y = normalizeYear(blYyRaw);
-    const currentYear = String(new Date().getFullYear());
-    const yearsToTry = [];
-
-    if (type === "hbl" || type === "mbl"){
-      if (!y) y = currentYear;
-
-      // 1) 입력/보정된 연도
-      yearsToTry.push(y);
-
-      // 2) 결과가 0건이면 작년 자동 재시도
-      const yPrev = String(Number(y) - 1);
-      if (yPrev && yPrev !== y) yearsToTry.push(yPrev);
-
-      // 입력창도 정리된 값으로 맞춰두기 (전각/‘년’ 제거)
-      $("blYy").value = y;
     }
 
     $("btn").disabled = true;
@@ -497,71 +467,32 @@
     setState("", "조회 중");
 
     try{
+      const { xmlText } = await callWithYearStrategy(type, no, blYy);
+      const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+      const d = parseUnipass(xmlDoc);
+
       $("last").textContent = "마지막 조회: " + nowKST();
-
-      let finalXmlText = "";
-      let finalDoc = null;
-      let usedYear = "";
-
-      if (type === "carg"){
-        finalXmlText = await callAPI(type, no, "");
-        finalDoc = new DOMParser().parseFromString(finalXmlText, "text/xml");
-      } else {
-        for (const yr of yearsToTry){
-          const xmlText = await callAPI(type, no, yr);
-          const doc = new DOMParser().parseFromString(xmlText, "text/xml");
-          const tCnt = pick(doc, ["tCnt"]);
-          const ntce = pick(doc, ["ntceInfo"]);
-
-          // 안내/에러는 바로 노출
-          if (ntce){
-            finalXmlText = xmlText;
-            finalDoc = doc;
-            usedYear = yr;
-            break;
-          }
-
-          if (tCnt && tCnt !== "0"){
-            finalXmlText = xmlText;
-            finalDoc = doc;
-            usedYear = yr;
-            break;
-          }
-
-          // tCnt=0이면 다음 연도로 재시도
-          finalXmlText = xmlText;
-          finalDoc = doc;
-          usedYear = yr;
-        }
-        $("blYy").value = usedYear; // 실제 사용 연도 표시
-      }
-
-      const d = parseUnipass(finalDoc, no);
 
       if (d.ntceInfo){
         setState("bad","안내/에러");
-        $("result").innerHTML = `<div class="error">${escapeHtml(d.ntceInfo)}</div>` + rawBox(finalXmlText);
-        attachRawToggle();
-        return;
-      }
-
-      if (d.tCnt === "0"){
+        $("result").innerHTML = `<div class="error">${escapeHtml(d.ntceInfo)}</div>` + rawBox(xmlText);
+      } else if (d.tCnt === "0"){
         setState("bad","결과 없음");
-        $("result").innerHTML = `
-          <div class="error">
-            조회 결과가 0건(tCnt=0)이야.<br/>
-            • 번호가 맞는지 확인<br/>
-            • 연도(blYy)가 실제 입항연도랑 맞는지 확인 (지금은 ${escapeHtml(usedYear || "-")}로 조회함)
-          </div>
-        ` + rawBox(finalXmlText);
-        attachRawToggle();
-        return;
+        $("result").innerHTML = `<div class="error">조회 결과가 0건(tCnt=0)이야. 번호/연도(blYy) 확인 ㄱㄱ</div>` + rawBox(xmlText);
+      } else {
+        setState("ok","조회 완료");
+        $("result").innerHTML = cardHTML(no, d) + rawBox(xmlText);
+
+        const btn = document.getElementById("toggleRaw");
+        const pre = document.getElementById("rawPre");
+        if (btn && pre){
+          let hidden = false;
+          btn.addEventListener("click", ()=>{
+            hidden = !hidden;
+            pre.style.display = hidden ? "none" : "block";
+          });
+        }
       }
-
-      setState("ok","조회 완료");
-      $("result").innerHTML = cardHTML(d, usedYear) + rawBox(finalXmlText);
-      attachRawToggle();
-
     }catch(e){
       setState("bad","조회 실패");
       $("result").innerHTML = `<div class="error">에러: ${escapeHtml(String(e.message||e))}</div>`;
@@ -570,6 +501,8 @@
       $("btn").textContent = "조회";
     }
   });
+
+})();
 </script>
 </body>
 </html>
