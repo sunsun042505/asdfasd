@@ -45,8 +45,6 @@
       padding:8px 10px;border:1px solid var(--line);background:var(--chip);
       border-radius:999px;font-size:12px;color:var(--muted)
     }
-    .muted{color:var(--muted);font-size:12px}
-
 
     .panel{
       background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 60%), var(--card);
@@ -116,17 +114,7 @@
     }
     .tl-title{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
     .tl-title .t{font-weight:900}
-    
-    .tblwrap{overflow:auto;border:1px solid rgba(255,255,255,.10);border-radius:14px;background:rgba(0,0,0,.12)}
-    table.tbl{width:100%;border-collapse:collapse;min-width:860px}
-    .tbl th,.tbl td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
-    .tbl th{font-size:12px;color:var(--muted);font-weight:900;background:rgba(255,255,255,.03);position:sticky;top:0}
-    .tbl td{font-size:13px;color:rgba(233,238,252,.92);font-weight:650}
-    .tbl tr:last-child td{border-bottom:none}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-    .pill2{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);font-size:12px;color:rgba(233,238,252,.88)}
-
-.step{display:flex;gap:12px;padding:10px 6px;border-top:1px dashed rgba(255,255,255,.12)}
+    .step{display:flex;gap:12px;padding:10px 6px;border-top:1px dashed rgba(255,255,255,.12)}
     .step:first-child{border-top:none}
     .s-left{min-width:10px;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:2px}
     .s-ball{width:10px;height:10px;border-radius:999px;background:rgba(92,124,250,.95)}
@@ -154,7 +142,7 @@
     <div class="top">
       <div class="brand">
         <h1>선우택배 · 통관 진행 조회</h1>
-        <div class="sub">관세청(유니패스) 결과에서 <b>핵심필드만 뽑아</b> 카드로 보여줌 · 통관조회에서는 운송장번호 표시</div>
+        <div class="sub">관세청(유니패스) 결과에서 <b>핵심필드만 뽑아</b> 카드로 보여줌 · 운송장번호는 화면에 숨김</div>
       </div>
       <div class="chips">
         <div class="chip">보안: 번호 마스킹</div>
@@ -222,7 +210,7 @@
   }
 
   function maskNo(s){
-    // 통관조회 페이지에서는 운송장번호를 그대로 표시
+    // 통관조회 화면에서는 운송장/BL 번호를 그대로 표시
     return (s||"").toString().trim();
   }
 
@@ -262,67 +250,38 @@
     const ldpr = pick(vo, ["ldprNm", "ldprCd"]);                             // 적재항
     const dspr = pick(vo, ["dsprNm", "dsprCd"]);                             // 양륙항
 
-    // ✅ 핵심(정확 매핑)
-    // - 특송업체: <frwrEntsConm>
-    // - 선사/항공사: <shcoFlco>
-    const customsNm = pick(vo, ["cstmNm", "csclCstmNm", "dclrCstmNm", "cstm", "cstmNm"]);
+    // ✅ 핵심: "정확 태그 고정" (요청 반영)
+    // 특송업체: <frwrEntsConm>
+    // 선사/항공사: <shcoFlco> (없으면 shcoFlcoNm 보조)
+    // 세관명은 케이스마다 태그가 달라서 후보 + 코드 fallback
     let expressNm = pick(vo, ["frwrEntsConm"]);
     let carrierNm = pick(vo, ["shcoFlco", "shcoFlcoNm"]);
 
-    // 상세 이력
-    const dtls = Array.from(root.getElementsByTagName("cargCsclPrgsInfoDtlQryVo"));
+    let customsNm = pick(vo, ["cstmNm", "csclCstmNm", "dclrCstmNm", "cstm"]);
+    let customsCd = pick(vo, ["cstmCd", "csclCstmCd", "dclrCstmCd"]);
 
-    // VO에 값이 없을 때는 상세이력에서 2차 탐색 (케이스별로 여기에 들어오는 경우가 있음)
-    if (!expressNm) {
-      for (const n of dtls) {
-        const v = pick(n, ["frwrEntsConm"]);
-        if (v) { expressNm = v; break; }
-      }
-    }
-    if (!carrierNm) {
-      for (const n of dtls) {
-        const v = pick(n, ["shcoFlco", "shcoFlcoNm"]); 
-        if (v) { carrierNm = v; break; }
-      }
-    }
-    const steps = dtls.slice(0, 12).map(n => {
-      const stage =
-        pick(n, [
-          "prcsStts",               // 처리단계(가장 흔함)
-          "csclPrgsStts",           // 통관진행상태
-          "cargTrcnRelaBsopTpcdNm", // 업무구분명
-          "cargTrcnRelaBsopTpcd",   // 업무구분코드
-          "bfhnGdncCn",             // 안내/비고
-          "rlbrCn"                  // 반출/반입 설명
-        ]) || "";
+    // 상세 이력(타임라인)
+    const steps = dtlsAll.slice(0, 12).map(n => {
+      const title = pick(n, ["cargTrcnRelaBsopTpcdNm", "prcsStts", "csclPrgsStts", "bfhnGdncCn", "rlbrCn"]);
+      const time = pick(n, ["prcsDttm", "rlbrDttm", "prcsDt"]);
+      const place = pick(n, ["shedNm", "shedSgn", "cstmNm", "dsprNm"]);
 
-      const time =
-        pick(n, ["prcsDttm", "prcsDt", "rlbrDttm"]) || "";
+      const express = pick(n, ["frwrEntsConm"]);
+      const carrier = pick(n, ["shcoFlco", "shcoFlcoNm"]);
 
-      const location =
-        pick(n, ["shedNm", "shedSgn", "cstmNm", "dsprNm", "ldprNm"]) || "";
+      const customsStep = pick(n, ["cstmNm", "csclCstmNm", "dclrCstmNm", "cstmNm"]);
+      const customsCodeStep = pick(n, ["cstmCd", "csclCstmCd", "dclrCstmCd", "cstm"]);
 
-      const express =
-        pick(n, ["frwrEntsConm"]) || "";
-
-      const carrier =
-        pick(n, ["shcoFlco", "shcoFlcoNm"]) || "";
-
-      const note =
-        pick(n, ["rlbrCn", "bfhnGdncCn", "ntceInfo"]) || "";
-
-      // 빈 단계는 버림 (처리 처리 같은 기본값이 뜨지 않게)
-      if (!stage && !time && !location && !note && !express && !carrier) return null;
-
-      return { stage, time, location, express, carrier, note };
-    }).filter(Boolean);
-
+      return { title, time, place, express, carrier, customsStep, customsCodeStep };
+    }).filter(s => (s.title || s.time || s.place));
 
     return {
       tCnt, ntceInfo,
-      noMasked: maskNo(inputNo),
+      noFull: maskNo(inputNo),
       csclPrgsStts, prcsDttm,
-      customsNm, expressNm, carrierNm,
+      customsNm, customsCd,
+      expressNm, carrierNm,
+      bondedPlace,
       prnm, etprDt, ldpr, dspr,
       steps
     };
@@ -333,7 +292,7 @@
       <div class="hr"></div>
 
       <div class="chips" style="margin-bottom:10px">
-        <div class="chip">번호: <b style="color:var(--text)">${d.noMasked}</b></div>
+        <div class="chip">번호: <b style="color:var(--text)">${d.noFull}</b></div>
         <div class="chip">상태: <b style="color:var(--text)">${d.csclPrgsStts || "-"}</b></div>
         <div class="chip">처리: <b style="color:var(--text)">${d.prcsDttm || "-"}</b></div>
       </div>
@@ -341,10 +300,12 @@
       <div class="cards">
         <div class="kv"><div class="k">특송업체</div><div class="v">${d.expressNm || "-"}</div></div>
         <div class="kv"><div class="k">선사/항공사</div><div class="v">${d.carrierNm || "-"}</div></div>
-        <div class="kv"><div class="k">세관명</div><div class="v">${d.customsNm || "-"}</div></div>
-        <div class="kv"><div class="k">입항일</div><div class="v">${d.etprDt || "-"}</div></div>
+        <div class="kv"><div class="k">세관</div><div class="v">${d.customsNm || "-"}</div></div>
 
+        <div class="kv"><div class="k">장치장/특송센터</div><div class="v">${d.bondedPlace || "-"}</div></div>
+        <div class="kv"><div class="k">입항일</div><div class="v">${d.etprDt || "-"}</div></div>
         <div class="kv"><div class="k">품명</div><div class="v">${d.prnm || "-"}</div></div>
+
         <div class="kv"><div class="k">적재항</div><div class="v">${d.ldpr || "-"}</div></div>
         <div class="kv"><div class="k">양륙항</div><div class="v">${d.dspr || "-"}</div></div>
       </div>
@@ -353,40 +314,21 @@
         d.steps && d.steps.length ? `
         <div class="timeline">
           <div class="tl-title">
-            <div class="t">진행 타임라인 (최근 ${Math.min(d.steps.length,12)}건)</div>
-            <div class="muted">최신 순</div>
+            <div class="t">진행 타임라인 (최근 ${Math.min(d.steps.length,8)}건)</div>
+            <div class="muted">민감번호는 표시 안 함</div>
           </div>
-
-          <div class="tblwrap">
-            <table class="tbl">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>단계</th>
-                  <th>처리시각</th>
-                  <th>장소/세관</th>
-                  <th>특송업체</th>
-                  <th>선사/항공사</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${d.steps.map((s,i)=>`
-                  <tr>
-                    <td class="mono">${String(i+1).padStart(2,"0")}</td>
-                    <td>
-                      <div class="pill2">${s.stage || "-"}</div>
-                      ${s.note ? `<div class="muted" style="margin-top:6px">${s.note}</div>` : ``}
-                    </td>
-                    <td class="mono">${s.time || "-"}</td>
-                    <td>${s.location || "-"}</td>
-                    <td>${s.express || "-"}</td>
-                    <td>${s.carrier || "-"}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          ${d.steps.map((s,i)=>`
+            <div class="step">
+              <div class="s-left">
+                <div class="s-ball"></div>
+                ${i === d.steps.length - 1 ? "" : `<div class="s-line"></div>`}
+              </div>
+              <div class="s-main">
+                <div class="s1">${s.title || "-"}</div>
+                <div class="s2">${[(s.time||"").trim(), (s.place||""), (s.express ? "특송: " + s.express : ""), (s.carrier ? "선사/항공: " + s.carrier : "")].filter(Boolean).join(" · ")}</div>
+              </div>
+            </div>
+          `).join("")}
         </div>` : ""
       }
     `;
