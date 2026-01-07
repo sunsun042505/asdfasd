@@ -2,563 +2,445 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>선우택배 · 통관 진행 조회</title>
   <style>
     :root{
-      --bg0:#0a1020;
-      --bg1:#0b1630;
-      --card:rgba(255,255,255,.06);
-      --card2:rgba(255,255,255,.08);
+      --bg:#070B14;
+      --panel:#0E1627;
+      --panel2:#0B1220;
       --line:rgba(255,255,255,.10);
-      --text:#e9eefc;
-      --muted:rgba(233,238,252,.70);
-      --muted2:rgba(233,238,252,.55);
-      --ok:#37d67a;
-      --warn:#ffcc66;
-      --bad:#ff6b6b;
-      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --text:#EAF0FF;
+      --muted:rgba(234,240,255,.70);
+      --accent:#5C7CFA;
+      --good:#37D67A;
+      --bad:#FF4D6D;
+      --warn:#FFCC00;
+      --shadow:0 20px 70px rgba(0,0,0,.45);
       --r:18px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
     }
     *{box-sizing:border-box}
     body{
       margin:0;
-      font-family:var(--sans);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Apple SD Gothic Neo, Noto Sans KR, Arial, sans-serif;
       color:var(--text);
       background:
-        radial-gradient(1000px 600px at 20% 10%, rgba(92,124,250,.25), transparent 60%),
-        radial-gradient(1000px 700px at 80% 10%, rgba(55,214,122,.18), transparent 55%),
-        radial-gradient(900px 700px at 50% 90%, rgba(255,204,102,.10), transparent 60%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      min-height:100vh;
+        radial-gradient(900px 500px at 18% 8%, rgba(92,124,250,.20), transparent 60%),
+        radial-gradient(900px 500px at 85% 18%, rgba(55,214,122,.14), transparent 60%),
+        radial-gradient(900px 500px at 40% 90%, rgba(255,77,109,.10), transparent 60%),
+        var(--bg);
     }
-    .wrap{max-width:1100px; margin:0 auto; padding:26px 18px 40px;}
+    .wrap{max-width:1050px;margin:0 auto;padding:22px}
     .top{
-      display:flex; align-items:flex-end; justify-content:space-between; gap:14px; flex-wrap:wrap;
+      display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;
       margin-bottom:14px;
     }
-    .title{
-      display:flex; flex-direction:column; gap:6px;
+    .brand h1{margin:0;font-size:20px;letter-spacing:.2px}
+    .brand .sub{margin-top:6px;color:var(--muted);font-size:12.5px;line-height:1.45}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      border:1px solid var(--line);background:rgba(255,255,255,.06);
+      color:var(--muted);font-size:12px
     }
-    .title h1{margin:0; font-size:22px; letter-spacing:-.2px;}
-    .title .sub{color:var(--muted); font-size:13px;}
-    .chip{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:6px 10px; border-radius:999px; border:1px solid var(--line);
-      background:rgba(255,255,255,.04); color:var(--muted);
-      font-size:12px;
-    }
+    .dot{width:9px;height:9px;border-radius:999px;background:var(--warn)}
+    .dot.ok{background:var(--good)}
+    .dot.bad{background:var(--bad)}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
     .panel{
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 60%), var(--panel);
       border:1px solid var(--line);
-      border-radius:22px;
+      border-radius:var(--r);
       box-shadow:var(--shadow);
       overflow:hidden;
     }
-    .search{
-      padding:16px;
-      display:flex; gap:10px; align-items:stretch; flex-wrap:wrap;
-    }
-    .field{
-      flex:1 1 360px;
-      background:rgba(0,0,0,.25);
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:16px;
-      padding:10px 12px;
-      display:flex; flex-direction:column; gap:6px;
-      min-width:260px;
-    }
-    .field label{font-size:12px; color:var(--muted2);}
-    .field input{
-      width:100%;
-      background:transparent;
-      border:0;
-      outline:none;
-      color:var(--text);
-      font-size:18px;
-      font-family:var(--mono);
-      letter-spacing:.2px;
-    }
-    .btn{
-      border:0;
-      border-radius:16px;
-      padding:12px 16px;
-      cursor:pointer;
-      font-weight:800;
-      color:#061026;
-      background:linear-gradient(135deg, rgba(92,124,250,.98), rgba(55,214,122,.85));
-      box-shadow:0 14px 40px rgba(92,124,250,.20);
-      min-width:120px;
-    }
-    .btn:active{transform:translateY(1px)}
-    .hint{
-      padding:0 16px 14px;
-      color:var(--muted);
-      font-size:12px;
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    }
-    .hint b{color:var(--text)}
+    .ph{padding:16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .ph b{font-size:14px}
+    .ph .hint{color:var(--muted);font-size:12px}
+    .pb{padding:16px}
     .grid{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap:12px;
-      padding:14px 16px 16px;
-      border-top:1px solid var(--line);
+      display:grid;grid-template-columns: 1fr auto;
+      gap:10px;align-items:end;
     }
-    @media (max-width: 920px){
-      .grid{grid-template-columns:repeat(2, minmax(0,1fr));}
-    }
-    @media (max-width: 560px){
-      .grid{grid-template-columns:repeat(1, minmax(0,1fr));}
-    }
-    .card{
-      background:rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:18px;
-      padding:12px 12px 11px;
-      min-height:66px;
-    }
-    .k{font-size:12px; color:var(--muted2); margin-bottom:6px;}
-    .v{font-size:15px; font-weight:800; letter-spacing:-.1px;}
-    .v.mono{font-family:var(--mono); font-weight:900;}
-    .v.small{font-size:13px; font-weight:700; color:var(--text);}
-    .status-ok{color:var(--ok)}
-    .status-warn{color:var(--warn)}
-    .status-bad{color:var(--bad)}
-    .section{
-      margin-top:12px;
-      padding:0 16px 16px;
-    }
-    .sectionHead{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px; flex-wrap:wrap;
-      padding:10px 0;
-      color:var(--muted);
-      font-size:12px;
-    }
-    table{
+    @media(max-width:640px){.grid{grid-template-columns:1fr}}
+    label{display:block;color:var(--muted);font-size:12px;margin:0 0 6px}
+    input,button{
       width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      overflow:hidden;
-      border-radius:18px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.22);
-    }
-    thead th{
-      text-align:left;
-      font-size:12px;
-      color:var(--muted);
       padding:12px 12px;
-      border-bottom:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      position:sticky; top:0;
-    }
-    tbody td{
-      padding:12px 12px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      vertical-align:top;
-      font-size:13px;
-      color:rgba(233,238,252,.92);
-    }
-    tbody tr:last-child td{border-bottom:0}
-    .col-stage{width:26%}
-    .col-time{width:18%; white-space:nowrap}
-    .col-place{width:36%}
-    .col-remark{width:20%}
-    .muted{color:var(--muted)}
-    .mono{font-family:var(--mono)}
-    .pill{
-      display:inline-flex; align-items:center; gap:6px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.04);
-      font-size:12px;
-      color:var(--muted);
-    }
-    .xmlwrap{
-      margin-top:12px;
-      border-top:1px solid var(--line);
-      padding:14px 16px 16px;
-    }
-    .xmlhead{
-      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .toggle{
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.04);
-      color:var(--text);
-      padding:8px 12px;
       border-radius:14px;
-      cursor:pointer;
-      font-weight:800;
-      font-size:12px;
+      border:1px solid var(--line);
+      background:var(--panel2);
+      color:var(--text);
+      outline:none;
     }
-    pre{
-      margin:0;
-      padding:12px;
+    input::placeholder{color:rgba(234,240,255,.45)}
+    button{
+      width:auto;
+      padding:12px 16px;
+      border:none;
+      font-weight:900;
+      cursor:pointer;
+      background:linear-gradient(135deg, rgba(92,124,250,.95), rgba(55,214,122,.70));
+    }
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .msg{
+      margin-top:12px;
+      padding:12px 12px;
       border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.35);
-      color:rgba(233,238,252,.90);
-      font-size:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:13px;
       line-height:1.5;
-      overflow:auto;
-      display:none;
     }
     .err{
-      margin:12px 16px 0;
-      padding:12px;
-      border-radius:16px;
-      border:1px solid rgba(255,107,107,.35);
-      background:rgba(255,107,107,.10);
-      color:rgba(255,220,220,.95);
-      display:none;
-      white-space:pre-wrap;
+      border-color: rgba(255,77,109,.35);
+      background: rgba(255,77,109,.12);
+      color:#ffdbe2;
     }
-    .foot{
+    .ok{
+      border-color: rgba(55,214,122,.35);
+      background: rgba(55,214,122,.10);
+      color:#dbffe9;
+    }
+    .cards{
+      display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px;
+    }
+    @media(max-width:880px){.cards{grid-template-columns:1fr 1fr}}
+    @media(max-width:520px){.cards{grid-template-columns:1fr}}
+    .card{
+      padding:12px;border-radius:16px;border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+    .k{font-size:11px;color:var(--muted);margin-bottom:6px}
+    .v{font-size:14px;font-weight:900;word-break:break-word}
+    .v.small{font-weight:800;font-size:13px;color:rgba(234,240,255,.88)}
+    .table{
       margin-top:14px;
-      color:var(--muted2);
-      font-size:12px;
-      padding:0 4px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      background:rgba(255,255,255,.02);
     }
-    .ver{
-      position:fixed;
-      right:14px; bottom:14px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.28);
-      color:rgba(233,238,252,.60);
-      font-size:11px;
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:top}
+    th{font-size:12px;color:var(--muted);font-weight:900;background:rgba(255,255,255,.03)}
+    td{font-size:13px;color:rgba(234,240,255,.92)}
+    tr:last-child td{border-bottom:none}
+    .muted{color:var(--muted)}
+    .raw{
+      margin-top:14px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.02)
     }
+    .rawh{
+      padding:10px 12px;border-bottom:1px solid var(--line);
+      display:flex;justify-content:space-between;align-items:center;gap:10px
+    }
+    .rawh b{font-size:13px}
+    .rawh button{
+      background:rgba(255,255,255,.10);border:1px solid var(--line);
+      padding:8px 10px;border-radius:12px;font-weight:900
+    }
+    pre{margin:0;padding:12px;white-space:pre-wrap;word-break:break-word;color:rgba(234,240,255,.9)}
+    .foot{margin-top:10px;color:rgba(234,240,255,.55);font-size:11.5px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="top">
-      <div class="title">
-        <h1>통관 진행 조회</h1>
-        <div class="sub">HBL(운송장번호)만 입력하면, 시스템이 <b>연도(blYy)</b>를 자동으로 찾아 조회해요.</div>
+      <div class="brand">
+        <h1>선우택배 · 통관 진행 조회</h1>
+        <div class="sub">
+          HBL(운송장번호)만 입력하면 됨. 연도(blYy)는 시스템이 <b>자동으로</b> 찾아서 조회함.<br/>
+          <span class="muted">v5.7-ui (endpoint fix)</span>
+        </div>
       </div>
-      <div class="chip">선우택배 · customsstatus.html</div>
+      <div class="row">
+        <div class="pill"><span class="dot" id="dot"></span><span id="state">대기</span></div>
+        <div class="pill"><span class="mono">/.netlify/functions/unipass</span></div>
+      </div>
     </div>
 
     <div class="panel">
-      <div class="search">
-        <div class="field">
-          <label>운송장번호(HBL) <span class="muted">(예: 300046199451)</span></label>
-          <input id="hbl" inputmode="numeric" autocomplete="off" placeholder="HBL 운송장번호" />
+      <div class="ph">
+        <b>조회</b>
+        <div class="hint">※ 지금 404/400 뜨던 건 “/api/unipass 경로” + “파라미터 이름(type/no)”이 안 맞아서였음. 이번 버전은 고정.</div>
+      </div>
+      <div class="pb">
+        <div class="grid">
+          <div>
+            <label>HBL(운송장번호)</label>
+            <input id="hbl" placeholder="예) 300046199451" autocomplete="off" inputmode="numeric" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="btn">조회</button>
+          </div>
         </div>
-        <button class="btn" id="btn">조회</button>
-      </div>
+        <div class="msg" id="msg" style="display:none"></div>
 
-      <div class="hint">
-        <span class="pill">표시 정책</span>
-        <span>통관조회 화면에서는 운송장번호가 <b>표시</b>됩니다.</span>
-        <span class="muted">※ 다른 화면(키오스크/점포/기사/작업현황)은 기존대로 숨김 유지</span>
-      </div>
-
-      <div class="err" id="err"></div>
-
-      <div class="grid" id="cards" style="display:none">
-        <div class="card"><div class="k">특송업체</div><div class="v" id="c_express">-</div></div>
-        <div class="card"><div class="k">선사/항공사</div><div class="v" id="c_carrier">-</div></div>
-        <div class="card"><div class="k">세관</div><div class="v" id="c_customs">-</div></div>
-
-        <div class="card"><div class="k">상태</div><div class="v" id="c_status">-</div></div>
-        <div class="card"><div class="k">처리(최신)</div><div class="v small" id="c_last">-</div></div>
-        <div class="card"><div class="k">이력 건수</div><div class="v mono" id="c_cnt">-</div></div>
-
-        <div class="card"><div class="k">품명</div><div class="v" id="c_item">-</div></div>
-        <div class="card"><div class="k">입항일</div><div class="v small" id="c_arrive">-</div></div>
-        <div class="card"><div class="k">HBL</div><div class="v mono" id="c_hbl">-</div></div>
-      </div>
-
-      <div class="section" id="timelineSec" style="display:none">
-        <div class="sectionHead">
-          <div>처리단계는 <b>“처리단계 텍스트”만 표시</b> (신고번호/코드/시간은 단계로 올리지 않음)</div>
-          <div class="muted" id="usedYear"></div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th class="col-stage">처리단계</th>
-              <th class="col-time">처리일시</th>
-              <th class="col-place">장치장/장치위치</th>
-              <th class="col-remark">반출입(처리)내용</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-
-      <div class="xmlwrap">
-        <div class="xmlhead">
-          <div class="pill">원문(XML)</div>
-          <button class="toggle" id="toggleXml">접기/펼치기</button>
-        </div>
-        <pre id="xml"></pre>
-        <div class="foot">세관명/처리단계가 비면, 보통은 XML에 값이 없거나 “단계줄/상세줄”이 분리되어 내려오는 케이스입니다. 이 페이지는 그 둘을 자동으로 병합해서 표를 최대한 원본처럼 맞춥니다.</div>
+        <div id="result"></div>
       </div>
     </div>
 
-    <div class="ver">v5.6.1-ui-restore (2026-01-08)</div>
+    <div class="foot">
+      팁: 새 배포가 적용 안 되면 <b>Ctrl+F5</b> (강력 새로고침). 그래도 안 되면 브라우저 캐시 삭제.
+    </div>
   </div>
 
-  <script>
+<script>
+(() => {
   const $ = (id) => document.getElementById(id);
 
-  function showErr(msg){
-    const el = $("err");
+  const setState = (kind, text) => {
+    $("state").textContent = text;
+    const d = $("dot");
+    d.className = "dot" + (kind === "ok" ? " ok" : kind === "bad" ? " bad" : "");
+  };
+
+  const showMsg = (text, kind="") => {
+    const el = $("msg");
     el.style.display = "block";
-    el.textContent = msg;
-  }
-  function clearErr(){
-    const el = $("err");
+    el.className = "msg" + (kind === "err" ? " err" : kind === "ok" ? " ok" : "");
+    el.innerHTML = text;
+  };
+
+  const hideMsg = () => {
+    const el = $("msg");
     el.style.display = "none";
     el.textContent = "";
-  }
+    el.className = "msg";
+  };
 
-  function t(node, tag){
+  const esc = (s) => (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+
+  const fmtDttm = (s) => {
+    s = (s||"").trim();
+    // YYYYMMDDHHMMSS
+    if (/^\d{14}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)} ${s.slice(8,10)}:${s.slice(10,12)}:${s.slice(12,14)}`;
+    // YYYYMMDDHHMM
+    if (/^\d{12}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)} ${s.slice(8,10)}:${s.slice(10,12)}:00`;
+    // YYYYMMDD
+    if (/^\d{8}$/.test(s)) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+    return s;
+  };
+
+  const firstText = (node, tag) => {
     const el = node.getElementsByTagName(tag)[0];
     return el ? (el.textContent || "").trim() : "";
-  }
-  function firstDocTag(doc, tag){
-    const el = doc.getElementsByTagName(tag)[0];
-    return el ? (el.textContent || "").trim() : "";
-  }
-  function clean(s){
-    return (s || "").replace(/\s+/g, " ").trim();
-  }
-  function looksLikeCode(s){
-    // AE041..., 25MUZ..., 0400... 같은 코드
-    return /^[A-Z0-9]{8,}$/.test(s) || /^[0-9]{8,}[A-Z0-9]+$/.test(s);
-  }
-  function looksLikeTimeStamp(s){
-    return /^\d{12,14}$/.test(s) || /^\d{4}-\d{2}-\d{2}/.test(s);
-  }
-  function fmtDttm(raw){
-    const r = (raw || "").replace(/[^0-9]/g,"");
-    if (r.length < 12) return clean(raw);
-    const y=r.slice(0,4), mo=r.slice(4,6), d=r.slice(6,8), hh=r.slice(8,10), mm=r.slice(10,12), ss=r.slice(12,14) || "00";
-    return `${y}-${mo}-${d} ${hh}:${mm}:${ss}`;
-  }
+  };
 
-  function pickStage(n){
-    // "처리단계"는 이 태그들에서만 가져온다 (원본 표의 처리단계 계열)
-    const cand = clean(t(n,"cargTrcnRelaBsopTpcdNm")) || clean(t(n,"prcsStts")) || "";
-    if (!cand) return "";
-    if (looksLikeTimeStamp(cand) || looksLikeCode(cand)) return "";
-    // 부가사항은 별도 표시
-    if (cand.startsWith("[부가사항]")) return "부가사항";
-    return cand;
-  }
-
-  function pickRemark(n){
-    const cand = clean(t(n,"rlbrCn")) || clean(t(n,"bfhnGdncCn")) || "";
-    // remark에 코드만 있으면 버림
-    if (cand && (looksLikeCode(cand) || looksLikeTimeStamp(cand))) return "";
-    return cand;
-  }
-
-  function pickPlace(n){
-    const nm = clean(t(n,"shedNm"));
-    return nm || clean(t(n,"shedSgn"));
-  }
-
-  function parseRows(doc){
-    const nodes = Array.from(doc.getElementsByTagName("cargCsclPrgsInfoDtlQryVo"));
-    const raw = nodes.map(n => {
-      const stage = pickStage(n);
-      const timeRaw = clean(t(n,"prcsDttm"));
-      const place = pickPlace(n);
-      const remark = pickRemark(n);
-      const dclrNo = clean(t(n,"dclrNo"));
-      const rlbrBssNo = clean(t(n,"rlbrBssNo"));
-      return {
-        stage,
-        timeRaw,
-        time: timeRaw ? fmtDttm(timeRaw) : "-",
-        place: place || "-",
-        remark: remark || "-",
-        dclrNo, rlbrBssNo
-      };
-    }).filter(r => (r.timeRaw || r.stage || (r.remark && r.remark !== "-") || (r.place && r.place !== "-")));
-
-    // 원본처럼 "단계줄/상세줄"이 분리되어 내려오면 자동 병합
-    const merged = [];
-    for (const r of raw){
-      const prev = merged[merged.length-1];
-      const sameSlot = prev && r.timeRaw && prev.timeRaw === r.timeRaw && (
-        (prev.place === r.place) || (prev.place === "-" && r.place !== "-") || (r.place === "-" && prev.place !== "-")
-      );
-
-      if (!r.stage && sameSlot){
-        // 상세줄: 이전 단계줄에 붙여넣기
-        if (prev.remark === "-" && r.remark !== "-") prev.remark = r.remark;
-        if (prev.place === "-" && r.place !== "-") prev.place = r.place;
-        continue;
-      }
-
-      // stage가 비어있지만 remark만 있는 줄이 연속으로 오면, stage가 있는 최신 줄에 붙여주고 싶지만
-      // 실제로는 여러 이벤트가 섞일 수 있어, "같은 슬롯"만 붙인다.
-      merged.push({...r});
+  const anyText = (node, tags) => {
+    for (const t of tags) {
+      const v = firstText(node, t);
+      if (v) return v;
     }
+    return "";
+  };
 
-    // 그래도 stage가 "-"인 줄은 최대한 제거/정리:
-    // - remark가 부가사항이면 stage를 부가사항으로
-    // - 둘 다 "-"면 제거
-    const cleaned = [];
-    for (const r of merged){
-      let stage = r.stage || "-";
-      if (stage === "-" && r.remark && r.remark.startsWith("[부가사항]")) stage = "부가사항";
-      if (stage === "-" && (r.remark === "-" || !r.remark) && (r.place === "-" || !r.place)) continue;
-      cleaned.push({...r, stage});
+  const looksLikeCode = (v) => {
+    v = (v||"").trim();
+    if (!v) return true;
+    if (/^\d{8,}$/.test(v)) return true;                // date/time
+    if (/^[A-Z0-9]{8,}$/.test(v)) return true;           // codes like AE..., 25MUZ...
+    if (/^[0-9A-Z-_/]{8,}$/.test(v) && !/[가-힣]/.test(v)) return true;
+    return false;
+  };
+
+  async function fetchXml(hbl, blYy){
+    // ✅ IMPORTANT: correct params for our Netlify function:
+    // type=hbl, no=<HBL>, blYy=<year>
+    const qs = new URLSearchParams({ type: "hbl", no: hbl, blYy: String(blYy) });
+    const url = `/.netlify/functions/unipass?${qs.toString()}`;
+    const r = await fetch(url);
+    const t = await r.text();
+    if (!r.ok) {
+      const msg = esc(t || `HTTP ${r.status}`);
+      throw new Error(`API 오류 (year=${blYy}) → HTTP ${r.status}<br/><span class="mono">${esc(url)}</span><br/>${msg}`);
     }
-
-    return cleaned;
+    return { xmlText: t, url };
   }
 
-  function fill(doc, xmlText, usedYear){
-    // root vo
-    const root = doc.getElementsByTagName("cargCsclPrgsInfoQryRtnVo")[0] || doc;
+  function parse(xmlDoc, hbl){
+    const root = xmlDoc;
+
+    const tCnt = anyText(root, ["tCnt"]);
+    const ntce = anyText(root, ["ntceInfo"]);
+
     const vo = root.getElementsByTagName("cargCsclPrgsInfoQryVo")[0] || root;
 
-    const express = clean(t(vo,"frwrEntsConm")) || clean(firstDocTag(doc,"frwrEntsConm")) || "-";  // 특송업체
-    const carrier = clean(t(vo,"shcoFlco")) || clean(firstDocTag(doc,"shcoFlco")) || "-";        // 선사/항공사
-    const cstmNm = clean(t(vo,"cstmNm")) || clean(firstDocTag(doc,"cstmNm")) || "";
-    const cstmCd = clean(t(vo,"cstmCd")) || clean(firstDocTag(doc,"cstmCd")) || "";
-    const customs = cstmNm ? (cstmCd ? `${cstmNm} (${cstmCd})` : cstmNm) : (cstmCd ? `세관코드 ${cstmCd}` : "-");
+    const summary = {
+      hbl,
+      tCnt,
+      ntce,
+      status: anyText(vo, ["csclPrgsStts","prcsStts","prgsStts"]),
+      prcsDttm: fmtDttm(anyText(vo, ["prcsDttm","rlbrDttm","prcsDt"])),
+      prnm: anyText(vo, ["prnm","gdsNm","prdtNm"]),
+      etprDt: fmtDttm(anyText(vo, ["etprDt","etprYmd","etprDt8"])),
+      // ✅ tags you told:
+      express: anyText(root, ["frwrEntsConm"]),        // 특송업체
+      carrier: anyText(root, ["shcoFlco","shcoFlcoNm"]), // 선사/항공사
+      customsNm: anyText(root, ["cstmNm","csclCstmNm","dclrCstmNm"]),
+      customsCd: anyText(root, ["cstmCd","csclCstmCd"]),
+      // (optional) storage location
+      shedNm: anyText(vo, ["shedNm"]),
+      // count
+      dtlCount: 0,
+      steps: []
+    };
 
-    const status = clean(t(vo,"csclPrgsStts")) || clean(firstDocTag(doc,"csclPrgsStts")) || "-";
-    const prnm = clean(t(vo,"prnm")) || clean(firstDocTag(doc,"prnm")) || "-";
-    const etprDt = clean(t(vo,"etprDt")) || clean(firstDocTag(doc,"etprDt")) || "";
-    const arrive = etprDt ? fmtDttm(etprDt).slice(0,10) : "-";
+    const dtls = Array.from(root.getElementsByTagName("cargCsclPrgsInfoDtlQryVo"));
+    summary.dtlCount = dtls.length;
 
-    const hbl = clean(t(vo,"hblNo")) || clean(firstDocTag(doc,"hblNo")) || clean($("hbl").value) || "-";
+    summary.steps = dtls.map(n => {
+      let stage = anyText(n, ["cargTrcnRelaBsopTpcdNm","prcsStts","csclPrgsStts"]);
+      // fallback: sometimes stage can appear in guidance/content, but NEVER use codes/time
+      if (!stage || looksLikeCode(stage)) stage = "";
+      const time = fmtDttm(anyText(n, ["prcsDttm","rlbrDttm","prcsDt"]));
+      const place = anyText(n, ["shedNm","shedSgn","dsprNm"]);
+      const remark = anyText(n, ["rlbrCn","bfhnGdncCn","ntceInfo"]);
+      return { stage, time, place, remark };
+    }).sort((a,b)=> (b.time||"").localeCompare(a.time||""));
 
-    const rows = parseRows(doc);
-    const lastTime = rows[0]?.time || "-"; // 유니패스가 보통 최신부터 내려줌
-    const cnt = rows.length ? String(rows.length) : "-";
+    // If customs name missing but code exists, show code in name slot
+    if (!summary.customsNm && summary.customsCd) summary.customsNm = `세관코드 ${summary.customsCd}`;
 
-    $("c_express").textContent = express;
-    $("c_carrier").textContent = carrier;
-    $("c_customs").textContent = customs;
-    $("c_status").textContent = status;
-    $("c_last").textContent = lastTime;
-    $("c_cnt").textContent = cnt;
-    $("c_item").textContent = prnm;
-    $("c_arrive").textContent = arrive;
-    $("c_hbl").textContent = hbl;
-
-    $("cards").style.display = "grid";
-    $("timelineSec").style.display = "block";
-    $("usedYear").textContent = usedYear ? `사용 연도(blYy): ${usedYear}` : "";
-
-    const tb = $("tbody");
-    tb.innerHTML = "";
-    for (const r of rows){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="col-stage">${escapeHtml(r.stage || "-")}</td>
-        <td class="col-time mono">${escapeHtml(r.time || "-")}</td>
-        <td class="col-place">${escapeHtml(r.place || "-")}</td>
-        <td class="col-remark">${escapeHtml(r.remark || "-")}</td>`;
-      tb.appendChild(tr);
-    }
-
-    // xml
-    $("xml").textContent = xmlText || "";
+    return summary;
   }
 
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  async function fetchXml(qs){
-    // 1순위: /api/unipass (netlify.toml redirect 기반)
-    const urls = [
-      `/api/unipass?${qs.toString()}`,
-      `/.netlify/functions/unipass?${qs.toString()}`
+  function render(summary, xmlText, usedYear, usedUrl){
+    const cards = [
+      ["특송업체", summary.express || "-"],
+      ["선사/항공사", summary.carrier || "-"],
+      ["세관", summary.customsNm || "-"],
+      ["상태", summary.status || "-"],
+      ["처리", summary.prcsDttm || "-"],
+      ["이력 건수", String(summary.dtlCount || 0)],
+      ["품명", summary.prnm || "-"],
+      ["입항일", summary.etprDt || "-"],
+      ["HBL", summary.hbl || "-"],
     ];
-    let lastErr = "";
-    for (const url of urls){
-      try{
-        const r = await fetch(url, { cache: "no-store" });
-        if (!r.ok){
-          lastErr = `${url} → HTTP ${r.status}`;
-          continue;
-        }
-        const txt = await r.text();
-        return { url, txt };
-      }catch(e){
-        lastErr = `${url} → ${String(e)}`;
-      }
+
+    const cardsHtml = `
+      <div class="cards">
+        ${cards.map(([k,v]) => `
+          <div class="card">
+            <div class="k">${esc(k)}</div>
+            <div class="v">${esc(v)}</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+    const rows = summary.steps.map(s => `
+      <tr>
+        <td>${esc(s.stage || "-")}</td>
+        <td class="mono">${esc(s.time || "-")}</td>
+        <td>${esc(s.place || "-")}</td>
+        <td>${esc(s.remark || "-")}</td>
+      </tr>
+    `).join("");
+
+    const tableHtml = `
+      <div class="msg ok">
+        조회 연도: <b>${esc(String(usedYear))}</b> ·
+        호출: <span class="mono">${esc(usedUrl)}</span>
+      </div>
+      ${cardsHtml}
+      <div class="table" style="margin-top:14px">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:26%">처리단계</th>
+              <th style="width:18%">처리일시</th>
+              <th style="width:32%">장치장/장치위치</th>
+              <th>반출입(처리)내용</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || `<tr><td colspan="4" class="muted">이력 없음</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+      <div class="raw">
+        <div class="rawh">
+          <b>원문(XML)</b>
+          <button id="toggleRaw" type="button">접기/펼치기</button>
+        </div>
+        <pre id="rawPre">${esc(xmlText)}</pre>
+      </div>
+    `;
+
+    $("result").innerHTML = tableHtml;
+
+    const btn = $("toggleRaw");
+    const pre = $("rawPre");
+    if (btn && pre) {
+      let hidden = false;
+      btn.onclick = () => {
+        hidden = !hidden;
+        pre.style.display = hidden ? "none" : "block";
+      };
     }
-    throw new Error(lastErr || "fetch failed");
   }
 
   async function query(){
-    clearErr();
-
-    const hbl = clean($("hbl").value).replace(/\s+/g,"");
-    if (!hbl){
-      showErr("HBL(운송장번호)을 입력해줘.");
+    const hbl = ($("hbl").value || "").trim();
+    if (!hbl) {
+      setState("bad", "번호 필요");
+      showMsg("HBL(운송장번호)을 입력해줘.", "err");
       return;
     }
-    if (!/^[0-9A-Za-z]{8,20}$/.test(hbl)){
-      showErr("HBL 형식이 이상해 보여. (숫자/영문 8~20자)");
-      return;
-    }
+    hideMsg();
+    $("result").innerHTML = "";
+    setState("", "조회 중");
+    $("btn").disabled = true;
+    $("btn").textContent = "조회중…";
 
-    $("cards").style.display = "none";
-    $("timelineSec").style.display = "none";
+    const yearNow = new Date().getFullYear();
+    const years = [yearNow, yearNow-1, yearNow-2, yearNow-3, yearNow-4, yearNow-5];
 
-    const nowY = new Date().getFullYear();
-    const years = [nowY, nowY-1, nowY-2, nowY-3, nowY-4];
+    let lastErr = null;
 
-    let lastMsg = "";
-    for (const y of years){
-      const qs = new URLSearchParams();
-      qs.set("type", "hblNo");
-      qs.set("hblNo", hbl);
-      qs.set("blYy", String(y));
+    for (const y of years) {
+      try {
+        const { xmlText, url } = await fetchXml(hbl, y);
+        const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+        const data = parse(xmlDoc, hbl);
 
-      try{
-        const { txt } = await fetchXml(qs);
-        // tCnt 체크
-        const doc = new DOMParser().parseFromString(txt, "text/xml");
-        const tCnt = clean(firstDocTag(doc, "tCnt"));
-        if (tCnt && tCnt !== "0"){
-          fill(doc, txt, String(y));
-          return;
+        // If notice says error or tCnt=0, try next year
+        if (data.ntce || data.tCnt === "0") {
+          lastErr = new Error(data.ntce || `tCnt=0 (year=${y})`);
+          continue;
         }
-        lastMsg = `연도 ${y} 조회 결과: tCnt=${tCnt || "?"}`;
-      }catch(e){
-        lastMsg = String(e);
+
+        setState("ok", "조회 완료");
+        render(data, xmlText, y, url);
+        $("btn").disabled = false;
+        $("btn").textContent = "조회";
+        return;
+      } catch (e) {
+        lastErr = e;
+        continue;
       }
     }
 
-    showErr(`조회 결과가 없어.\n- HBL이 맞는지 확인\n- 해당 건이 아직 유니패스에 조회되지 않는 건일 수 있음\n\n마지막 시도: ${lastMsg}`);
+    setState("bad", "조회 실패");
+    showMsg(
+      `여러 연도(${years.join(", ")})로 시도했는데 결과를 못 찾았어.<br/>` +
+      `에러/힌트: <span class="mono">${esc(String(lastErr?.message || lastErr || "-"))}</span>`,
+      "err"
+    );
+    $("btn").disabled = false;
+    $("btn").textContent = "조회";
   }
 
   $("btn").addEventListener("click", query);
-  $("hbl").addEventListener("keydown", (e) => { if (e.key === "Enter") query(); });
-
-  $("toggleXml").addEventListener("click", () => {
-    const pre = $("xml");
-    pre.style.display = (pre.style.display === "block") ? "none" : "block";
+  $("hbl").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") query();
   });
-  </script>
+
+})();
+</script>
 </body>
 </html>
