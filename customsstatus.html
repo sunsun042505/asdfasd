@@ -286,8 +286,8 @@
     const csclPrgsStts = pick(root, ["csclPrgsStts"]) || pick(vo, ["csclPrgsStts", "prgsStts", "prgsStCd"]);
     const prcsDttm = fmt14(pick(vo, ["prcsDttm", "prcsDt", "dttm"]));
 
-    // ✅ 세관명: XML에 실제로 있음 (cstmNm / cstmCd)
-    const cstmNm = pick(vo, ["cstmNm"]) || pick(root, ["cstmNm"]);
+    // ✅ 세관명: XML에 실제로 있음 (cstmNm / cstmCd) <etprCstm>군산세관</etprCstm>
+    const cstmNm = pick(vo, ["etprCstm"]) || pick(root, ["etprCstm"]);
     const cstmCd = pick(vo, ["cstmCd"]) || pick(root, ["cstmCd"]);
     const customs = cstmNm ? `${cstmNm}${cstmCd ? " ("+cstmCd+")" : ""}` : (cstmCd ? `세관코드 ${cstmCd}` : "-");
 
