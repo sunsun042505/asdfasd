@@ -482,24 +482,53 @@
       }
     }catch(e){}
 
-    // QR to tracking link
-    const url = new URL("tracking.html", location.origin);
-    url.searchParams.set("invoice_no", wb);
-    const qrHost = $("qr");
-    qrHost.innerHTML = "";
-    try{
-      if(window.QRCode && window.QRCode.toCanvas){
-        QRCode.toCanvas(url.toString(), { width: 96, margin: 1 }, (err, canvas)=>{
-          if(!err && canvas) qrHost.appendChild(canvas);
-          else qrHost.textContent = "QR 생성 실패";
-        });
-      } else {
-        qrHost.textContent = "QR 로딩중…";
-      }
-    }catch(e){
-      qrHost.textContent = "QR 생성 실패";
+    const text = url.toString();
+const qrHost = $("qr");
+qrHost.innerHTML = "";
+const size = 96;
+
+const attachCanvas = (c)=>{
+  c.style.width = size+"px";
+  c.style.height = size+"px";
+  qrHost.appendChild(c);
+};
+const attachImg = (src)=>{
+  const img = new Image();
+  img.alt = "QR";
+  img.src = src;
+  img.width = size; img.height = size;
+  qrHost.appendChild(img);
+};
+
+try{
+  if(window.QRCode){
+    // 1) toCanvas(canvas, text, opts, cb)
+    if(typeof QRCode.toCanvas === "function"){
+      const canvas = document.createElement("canvas");
+      QRCode.toCanvas(canvas, text, { width:size, margin:1, errorCorrectionLevel:"M" }, (err)=>{
+        if(!err){ attachCanvas(canvas); return; }
+        // 2) fallback toDataURL
+        if(typeof QRCode.toDataURL === "function"){
+          QRCode.toDataURL(text, { width:size, margin:1, errorCorrectionLevel:"M" }, (e, u)=>{
+            if(!e && u) attachImg(u);
+            else qrHost.textContent = "QR 생성 실패";
+          });
+        } else qrHost.textContent = "QR 생성 실패";
+      });
+    } else if(typeof QRCode.toDataURL === "function"){
+      QRCode.toDataURL(text, { width:size, margin:1, errorCorrectionLevel:"M" }, (e, u)=>{
+        if(!e && u) attachImg(u);
+        else qrHost.textContent = "QR 생성 실패";
+      });
+    } else {
+      qrHost.textContent = "QR 라이브러리 오류";
     }
+  } else {
+    qrHost.textContent = "QR 라이브러리 로딩중…";
   }
+}catch(e){
+  qrHost.textContent = "QR 생성 실패";
+}}
 
   function looksLikeStoreName(s){
     const v = String(s||"").trim();

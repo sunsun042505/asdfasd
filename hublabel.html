@@ -131,23 +131,59 @@
 
     const url = new URL("Workstatus.html", location.origin);
     url.searchParams.set("wb", wb);
-    const qrHost = $("qr");
-    qrHost.innerHTML = "";
-    try{
-      if(window.QRCode && window.QRCode.toCanvas){
-        QRCode.toCanvas(url.toString(), { width:96, margin:1 }, (err, canvas)=>{
-          if(!err && canvas) qrHost.appendChild(canvas);
-          else qrHost.textContent = "QR 실패";
-        });
-      } else qrHost.textContent = "QR 로딩중…";
-    }catch(e){ qrHost.textContent = "QR 실패"; }
+    const text = url.toString();
+const qrHost = $("qr");
+qrHost.innerHTML = "";
+const size = 96;
+
+const attachCanvas = (c)=>{
+  c.style.width = size+"px";
+  c.style.height = size+"px";
+  qrHost.appendChild(c);
+};
+const attachImg = (src)=>{
+  const img = new Image();
+  img.alt = "QR";
+  img.src = src;
+  img.width = size; img.height = size;
+  qrHost.appendChild(img);
+};
+
+try{
+  if(window.QRCode){
+    // 1) toCanvas(canvas, text, opts, cb)
+    if(typeof QRCode.toCanvas === "function"){
+      const canvas = document.createElement("canvas");
+      QRCode.toCanvas(canvas, text, { width:size, margin:1, errorCorrectionLevel:"M" }, (err)=>{
+        if(!err){ attachCanvas(canvas); return; }
+        // 2) fallback toDataURL
+        if(typeof QRCode.toDataURL === "function"){
+          QRCode.toDataURL(text, { width:size, margin:1, errorCorrectionLevel:"M" }, (e, u)=>{
+            if(!e && u) attachImg(u);
+            else qrHost.textContent = "QR 생성 실패";
+          });
+        } else qrHost.textContent = "QR 생성 실패";
+      });
+    } else if(typeof QRCode.toDataURL === "function"){
+      QRCode.toDataURL(text, { width:size, margin:1, errorCorrectionLevel:"M" }, (e, u)=>{
+        if(!e && u) attachImg(u);
+        else qrHost.textContent = "QR 생성 실패";
+      });
+    } else {
+      qrHost.textContent = "QR 라이브러리 오류";
+    }
+  } else {
+    qrHost.textContent = "QR 라이브러리 로딩중…";
   }
+}catch(e){
+  qrHost.textContent = "QR 생성 실패";
+}}
 
   window.addEventListener("load", async ()=>{
     const wb = digits(qp("waybill") || qp("invoice_no") || qp("invoiceNo") || qp("wb"));
     const hub = (qp("hub")||"terminal").toLowerCase();
-    const rail = qp("rail");
-    const next = qp("next");
+    const rail = qp("rail") || qp("railNo") || qp("rail_no") || qp("lane");
+    const next = qp("next") || qp("nextHub") || qp("nextDest") || qp("destination") || qp("dest") || qp("to");
 
     if(!wb){
       $("statusText").textContent = "운송장 번호가 없어. hublabel.html?waybill=... 로 열어줘.";
@@ -155,7 +191,7 @@
       return;
     }
     render(wb, hub, rail, next);
-    $("statusText").textContent = `라벨 준비됨 ✅\n- waybill: ${wb}\n(인쇄/저장 가능)`;
+    $("statusText").textContent = `라벨 준비됨 ✅\n- waybill: ${wb}\n- rail: ${rail||"-"}\n- next: ${next||"-"}\n(인쇄/저장 가능)`;
 
     $("btnReload").addEventListener("click", ()=>location.reload());
     $("btnPrint").addEventListener("click", ()=>window.print());
