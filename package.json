@@ -1,8 +1,9 @@
 {
-  "name": "sunwoo-takbae",
+  "name": "sunwoobank-supabase-demo",
   "private": true,
-  "type": "module",
+  "version": "1.0.0",
+  "type": "commonjs",
   "dependencies": {
-    "@netlify/blobs": "^8.1.0"
+    "@supabase/supabase-js": "^2.45.4"
   }
 }
